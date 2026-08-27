@@ -1,0 +1,35 @@
+{
+  "enabledPlugins": {
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "vercel@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "npx tsc --noEmit 1>&2 || echo '{\"continue\": false, \"stopReason\": \"TypeScript check failed — fix errors before pushing. Run: npx tsc --noEmit\"}'",
+            "statusMessage": "Type-checking before push...",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v gh >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || exit 0\ngit rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0\nprs=$(gh pr list --state open --json number,title,statusCheckRollup 2>/dev/null) || exit 0\nprintf '%s' \"$prs\" | jq '[ .[] | select(any(.statusCheckRollup[]?; ((.conclusion // .state // \"\") | ascii_upcase) as $c | ($c==\"FAILURE\" or $c==\"ERROR\" or $c==\"TIMED_OUT\" or $c==\"CANCELLED\" or $c==\"ACTION_REQUIRED\" or $c==\"STARTUP_FAILURE\"))) | \"#\\(.number) \\(.title)\" ] | if length==0 then empty else {hookSpecificOutput:{hookEventName:\"SessionStart\", additionalContext:(\"⚠️ Open PRs with FAILING CI checks (mention these to the user at the start of your reply):\\n\" + join(\"\\n\"))}} end' 2>/dev/null || true\n",
+            "timeout": 15,
+            "statusMessage": "Checking for PRs with failing CI..."
+          }
+        ]
+      }
+    ]
+  }
+}

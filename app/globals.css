@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   STREAMFORGE DESIGN SYSTEM — themeable
+   -----------------------------------------------------------------------------
+   This file is intentionally free of hardcoded colors. The active theme's
+   tokens are injected as `:root { --color-*: ... }` by `app/layout.tsx`
+   (see `config/theme.ts` -> `themeCssVars()`). To change the look, edit or
+   switch the theme in `config/brand.ts` — never hardcode hex values here or in
+   components. Components style themselves with the Tailwind utilities mapped
+   below (e.g. `bg-primary`, `text-text-primary`, `border-border`).
+   ============================================================================= */
+
+/* ── Tailwind v4 theme extension ─────────────────────────────────────────────
+   Maps utility names → CSS variables provided by the active theme. Keep these
+   keys in sync with `ThemeColors` in `config/themes/types.ts`. */
+@theme inline {
+  /* Fonts (next/font sets the underlying --font-heading / --font-body) */
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+  --font-sans: var(--font-body);
+
+  /* Colors */
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-subtle: var(--color-primary-subtle);
+  --color-primary-border: var(--color-primary-border);
+
+  --color-secondary: var(--color-secondary);
+  --color-secondary-dark: var(--color-secondary-dark);
+  --color-secondary-subtle: var(--color-secondary-subtle);
+
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-subtle: var(--color-accent-subtle);
+
+  --color-surface-page: var(--color-surface-page);
+  --color-surface-card: var(--color-surface-card);
+  --color-surface-subtle: var(--color-surface-subtle);
+  --color-surface-admin: var(--color-surface-admin);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverted: var(--color-text-inverted);
+
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-focus: var(--color-border-focus);
+
+  --color-status-pending: var(--color-status-pending);
+  --color-status-confirmed: var(--color-status-confirmed);
+  --color-status-completed: var(--color-status-completed);
+  --color-status-cancelled: var(--color-status-cancelled);
+  --color-status-no-show: var(--color-status-no-show);
+}
+
+/* ── Base styles ─────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--color-surface-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  color: var(--color-text-primary);
+}
+
+/* ── Focus ring ──────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface-page);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
