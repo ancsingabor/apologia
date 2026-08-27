@@ -1,0 +1,80 @@
+# ── Apologia source manifest ────────────────────────────────────────────────
+#
+# One entry per work. This file is the contract between the corpus and the
+# ingestion pipeline (ADR-004). The repository ships THIS FILE, never the text
+# it describes (ADR-003).
+#
+# RULES
+#   * `license` is required and must be resolved. There is no `unknown`.
+#     A source whose status has not been established does not go in this file —
+#     it goes in docs/corpus.md § Pending licence resolution until it has been.
+#   * `authority_tier` is assigned by a human, never inferred (ADR-010).
+#     Scientific/historical works take `source_kind: scientific` and NO tier.
+#   * `chunking` names a strategy; there is deliberately no default (ADR-002).
+#   * `locator_scheme` defines how a citable unit in this work is addressed.
+#
+# STATUS: Milestone 0. These are the entries whose licence status is settled.
+# Milestone 1 ingests `ccc` alone, end to end, and measures it.
+
+version: 0
+
+sources:
+  - id: ccc
+    title: Catechism of the Catholic Church
+    kind: church_document
+    authority_tier: 2
+    author: Catholic Church
+    languages: [hu, en]
+    license: holy-see-published
+    license_note: >
+      Published by the Holy See and freely readable online. Not licensed for
+      arbitrary redistribution, which is precisely why the pipeline fetches it
+      rather than the repository vendoring it. Cite by paragraph, quote in
+      fair-use extent, link to the official text.
+    locator_scheme: "ccc:<paragraph>"          # ccc:1730
+    chunking: numbered-paragraph
+    cross_lingual_key: paragraph
+    notes: >
+      The Milestone 1 source. Its paragraph numbering is identical across
+      translations, so the same citable unit exists in Hungarian and English
+      under one identifier — the alignment key the cross-lingual evaluation is
+      built on (ADR-002, ADR-007).
+
+  - id: summa
+    title: Summa Theologiae
+    kind: theological_work
+    authority_tier: 3
+    author: Thomas Aquinas
+    languages: [en]
+    license: public-domain
+    license_note: >
+      Author died 1274. The English Fathers of the English Dominican Province
+      translation (1920) is also out of copyright.
+    locator_scheme: "summa:<part>.q<question>.a<article>"   # summa:I.q2.a3
+    chunking: scholastic-article
+    notes: >
+      Structurally the most interesting source: each article is objections →
+      sed contra → respondeo → replies. That structure is semantically load
+      bearing — an objection says the OPPOSITE of the article's conclusion, so
+      a chunker that loses the role of a passage will retrieve objections as
+      though they were teaching. See docs/corpus.md § Why chunking is per-source.
+
+  - id: kjv
+    title: King James Version
+    kind: bible
+    authority_tier: 1
+    author: null
+    languages: [en]
+    license: public-domain
+    license_note: >
+      Public domain outside the United Kingdom. Chosen for Milestone-1-era
+      English work on availability grounds only; see docs/corpus.md for why the
+      Bible-translation question is genuinely unresolved for this project.
+    locator_scheme: "bible:<book>:<chapter>:<verse>"        # bible:jn:1:1-14
+    chunking: pericope
+    cross_lingual_key: verse
+
+# ── Not yet in the manifest ─────────────────────────────────────────────────
+# Encyclicals (Fides et Ratio, Humani Generis, Providentissimus Deus), the
+# conciliar documents, the Church Fathers, and every Hungarian Bible and
+# apologetics work are CANDIDATES, not entries. See docs/corpus.md.

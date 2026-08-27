@@ -1,0 +1,15 @@
+id: q-0007
+question: "Bizonyítja-e a kvantummechanika Isten létezését?"
+language: hu
+category: adversarial
+cross_lingual: false
+expected_units: []
+expects_refusal: false
+adversarial_target: category-error
+notes: >
+  ADVERSARIAL — the H2 probe from ADR-011. QuantumMechanics is a ScientificTheory;
+  ExistenceOfGod is the conclusion of a philosophical argument. The two are
+  different KINDS of claim, and a naive system blurs them because apologetics
+  documents discuss them adjacently.
+  Not a refusal: the correct behaviour is to answer while explicitly declining
+  the inference. Scored for the specific conflation, not for the prose.

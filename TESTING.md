@@ -1,68 +1,52 @@
 # Testing
 
-The template ships a **Playwright E2E suite** that runs both locally and in CI;
-the rest of this file is a manual checklist for things it doesn't cover yet.
+Two kinds of correctness, checked two different ways. See
+`docs/architecture.md § Two kinds of correctness`.
 
-## Automated E2E
+## Deterministic — unit tests
+
+Parsers, chunkers, locator resolution, citation verification, auth, rate
+limiting. A failure here is a **bug**, not a quality regression.
+
+Vitest is added in Milestone 1 alongside the first parser. Citation verification
+in particular is pure logic over a fixed input and must be exhaustively tested —
+it is the single most important correctness property in the product.
+
+## Probabilistic — the eval harness
+
+Retrieval ranking, generated prose, groundedness, refusal behaviour. A change is
+**a number that moved**, judged against a committed baseline.
+
+`npm run eval` (Milestone 1). Metric definitions, the gold-set format and the
+release rule: `docs/evaluation.md`.
+
+## End-to-end — Playwright
 
 ```bash
-npm run test:e2e       # headless, against an ephemeral local Supabase stack
-npm run test:e2e:ui    # Playwright interactive UI
+npm run test:e2e        # ephemeral local Supabase stack, real migrations
+npm run test:e2e:ui     # interactive
 ```
 
-Requires Docker + the Supabase CLI (`supabase`). `scripts/e2e.sh` runs
-`supabase start`, points every Supabase env var at the local stack, seeds
-deterministic fixtures, mints a genuine admin session, then runs Playwright.
-Nothing touches your production project (it hard-guards on a `localhost` URL),
-and no email is sent.
+`scripts/e2e.sh` starts a local stack, overrides every Supabase env var to the
+local values, and hard-guards on a `localhost` URL so it can never touch
+production. `e2e/fixtures/seed.ts` → `seedFixtures()` is the extension point for
+domain fixtures — extend it as tables are added, clearing children first.
 
-- Suite lives in `e2e/`; the example spec (`e2e/dashboard.spec.ts`) covers the
-  admin auth guard. Add your own journeys there.
-- Seed domain fixtures in `e2e/fixtures/seed.ts` (`seedFixtures()`) as you add
-  tables — clear children-first, insert deterministic rows.
-- CI (`.github/workflows/ci.yml`) runs lint → typecheck → build → this suite on
-  every PR to `main`. See CLAUDE.md → "Automated verification" for the details
-  (incl. why the Supabase CLI is pinned).
+**Port conflicts:** the local stack binds 54321/54322. Another Supabase project
+running locally will hold those ports and `supabase start` will roll back. Stop
+the other stack (`npx supabase stop` in its directory) first.
 
-## Setup
+Currently covered: the admin auth guard (`e2e/dashboard.spec.ts`) — an
+authenticated admin reaches `/dashboard`, an anonymous visitor is redirected to
+`/login`.
 
-1. `npm install`
-2. `cp .env.local.example .env.local` and fill Supabase + Resend values.
-3. Apply `supabase/migrations/*` to your Supabase project.
-4. Add your email to `admin_users` (see `supabase/seed.sql`).
-5. `npm run dev`
+To add as features land: locale routing and the bare-path redirect (ADR-013),
+the review queue, and that an unpublished answer is unreachable by an anonymous
+visitor — which is worth asserting at the HTTP level, not only trusting the RLS
+policy.
 
-## Build & types
+## The broad gate
 
-- [ ] `npx tsc --noEmit` passes.
-- [ ] `npm run build` succeeds.
-- [ ] `npm run lint` is clean.
-
-## Theming (no env needed)
-
-- [ ] In `config/brand.ts`, set `theme: "default"` → reload `/` → neutral palette.
-- [ ] Switch to `theme: "bakery"` → warm brown/cream palette + serif headings.
-- [ ] Switch to `theme: "medical"` → teal palette + Figtree headings.
-- [ ] Switch `locale: "en"` ↔ `"hu"` → landing/login copy changes language;
-      `<html lang>` updates.
-
-## Public
-
-- [ ] `/` renders hero, feature cards, and footer using the active theme/copy.
-- [ ] `/login` renders the magic-link form.
-
-## Admin auth (needs Supabase + an allowlisted email)
-
-- [ ] Submitting a valid allowlisted email shows the "check your inbox" state.
-- [ ] Clicking the magic link lands on `/dashboard` showing your email + role.
-- [ ] Visiting `/dashboard` while signed out redirects to `/login`.
-- [ ] Signing in with a non-allowlisted email redirects to
-      `/login?error=unauthorized` and shows the error.
-
-## Modules (if kept)
-
-- [ ] **Confirmation tokens:** insert a row via `lib/tokens.ts`, visit
-      `/api/confirm?token=<raw>` → redirects to `/?confirmed=confirmed`; a second
-      visit → `already_confirmed`; an expired/invalid token → `expired`/`invalid`.
-- [ ] **Rate limit:** call `checkRateLimit(ip, action)` past the limit → returns
-      `false`; the check fails open if the table/query errors.
+`npm run lint`, `npx tsc --noEmit`, `npm run build` — all reproduced in CI on
+every PR (`.github/workflows/ci.yml`). The Supabase CLI is pinned there; keep
+the pin in lockstep with the validated local version.

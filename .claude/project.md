@@ -1,52 +1,48 @@
-# Streamforge Template
+# Apologia — project brief
 
-## What this is
+Source-grounded Catholic apologetics Q&A, Hungarian-first, bilingual (hu/en),
+open source. Scaffolded from a private Next.js 16 + Supabase starter template.
 
-A reusable starter for small, SEO-friendly public web apps that have a private
-admin dashboard behind them — e.g. a bakery pre-order site, a clinic appointment
-system, a booking/contact app. It is **not** a finished product; it is the
-common skeleton those projects share, plus a theming layer so each project can
-be re-skinned and re-languaged from config instead of by editing code.
+## Read these before proposing anything
 
-When you start a real project from this template, you replace this file with a
-project-specific brief (purpose, business model, domain model, MVP scope).
+- `docs/architecture.md` — the shape, and the citable-unit idea everything follows from
+- `docs/adr/` — every decision, with its rejected alternatives
+- `docs/evaluation.md` — metric definitions and the release rule
+- `docs/corpus.md` — per-source chunking, authority tiers, licensing constraints
 
-## Stack
+## Non-negotiables
 
-- Next.js (App Router), TypeScript, Tailwind CSS v4 — Server Components by default
-- Supabase: PostgreSQL for all data + Auth for admins only
-- Resend for transactional email (behind the `lib/email/` abstraction)
-- Zod for input validation
-- Deployed to Vercel
+1. **The citable unit is the atom.** Chunks align to canonical locators
+   (`ccc:1730`, `summa:I.q2.a3`). Never propose fixed-window chunking as a
+   simplification — it destroys the property the product is built on (ADR-002).
+2. **Citation verification is a hard gate**, deterministic, before display.
+   Not a score, not a judge model, not after streaming (ADR-005).
+3. **No corpus text in git.** Manifests and pipeline only (ADR-003).
+4. **Answers are drafts until a human publishes** (ADR-006).
+5. **No retrieval/chunking/prompt change without an eval report diff.**
+   The release rule in `docs/evaluation.md` is a merge gate.
+6. **Deny-by-default privileges.** Every new table needs an explicit grant or it
+   is unreachable. That friction is deliberate.
 
-## Two user types (the core pattern)
+## Deliberately absent, with reasons
 
-| | Public users | Admin / staff |
-|---|---|---|
-| Auth | None — anonymous | Supabase Auth magic link + `admin_users` allowlist |
-| Route group | `app/(public)/` | `app/(admin)/` |
-| Mutations | `app/api/` route handlers | `server/actions/` Server Actions |
+Dedicated vector DB (ADR-001), queue/workers (ADR-004), streaming (ADR-005),
+multi-turn chat, agents, reranking and hybrid search (Phase 3 — a baseline must
+exist first), OWL/RDF (Phase 4, pre-registered in ADR-011).
 
-## Theming model (what makes this a template)
+Do not add these back as "improvements" without arguing against the ADR.
 
-- `config/brand.ts` — name, tagline, contact, **active theme**, **active locale**
-- `config/themes/` — design-token presets (`default`, `bakery`, `medical`); the
-  active one is injected as CSS variables in `app/layout.tsx`
-- `config/copy/` — all user-facing strings in `en` + `hu`; Zod messages too
-- Components never hardcode colors or copy — they use Tailwind token utilities
-  (`bg-primary`, `text-text-primary`, …) and the `copy` object.
+## Two kinds of correctness
 
-"Thematizing" = pick/edit a theme preset + copy file. One deploy per project
-(build-time). A runtime multi-tenant upgrade path is documented in `README.md`.
+Deterministic code (parsers, chunkers, locator resolution, citation
+verification, auth, rate limiting) gets **unit tests**; a failure is a bug.
+Probabilistic behaviour (ranking, prose, groundedness, refusal) gets the **eval
+harness**; a change is a number that moved. Do not test the first kind with an
+LLM, and do not assert the second kind without a measurement.
 
-## Opt-in modules (bundled, delete if unused)
+## Where things are
 
-- Rate-limit + honeypot (`lib/rate-limit.ts`, `0003_rate_limit_log.sql`)
-- Email confirmation tokens (`lib/tokens.ts`, `/api/confirm`, `0002_…sql`)
-- ICS / Google Calendar helpers (`lib/email/ics.ts`)
-
-## Working conventions
-
-Task descriptions may be written in Hungarian (the developer's convenience) —
-always respond in English. Keep the `db → domain` mapping; never leak raw rows
-into UI. Enforce admin access in BOTH the proxy and Server Actions.
+- Current milestone and next steps: `docs/architecture.md` header + `docs/adr/README.md`
+- Gold set: `eval/questions/` — expected units are UNVERIFIED until Milestone 1's
+  `eval:lint` resolves them against ingested text
+- Source manifest: `corpus/sources.yaml` — no entry without a resolved licence

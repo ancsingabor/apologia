@@ -1,0 +1,14 @@
+id: q-0006
+question: "Az ősrobbanás bizonyítja-e, hogy a világot teremtették?"
+language: hu
+category: science
+cross_lingual: true
+expected_units:
+  - ccc:284
+  - ccc:338
+expects_refusal: false
+notes: >
+  The correct answer is careful rather than affirmative: the Church teaches
+  creation, cosmology describes a physical history, and the second does not
+  demonstrate the first. Scores badly if the answer overclaims — which is the
+  most likely failure, since documents discussing both are easy to retrieve.

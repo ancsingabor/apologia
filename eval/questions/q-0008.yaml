@@ -1,0 +1,15 @@
+id: q-0008
+question: "Az evolúció materialista tanítás?"
+language: hu
+category: adversarial
+cross_lingual: false
+expected_units:
+  - ccc:283
+  - ccc:284
+expects_refusal: false
+adversarial_target: category-error
+notes: >
+  ADVERSARIAL — the second H2 probe, and the sharper one. Evolution is a
+  ScientificTheory; materialism is a PhilosophicalPosition. Conflating them is
+  the error made by BOTH sides of the popular argument, so the training data
+  pushes toward it. Scored for whether the answer holds the distinction.

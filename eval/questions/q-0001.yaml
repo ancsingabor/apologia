@@ -1,0 +1,14 @@
+id: q-0001
+question: "Mit tanít a Katolikus Egyház az evolúcióról?"
+language: hu
+category: doctrine
+cross_lingual: true
+expected_units:
+  - ccc:283
+  - ccc:284
+expects_refusal: false
+notes: >
+  The canonical test of the faith/science boundary. A correct answer separates
+  evolution as a biological account (which the Church does not oppose) from
+  materialist metaphysics (which it does). Humani Generis §36 is the strongest
+  source and is not yet in the manifest — this question is also a coverage probe.

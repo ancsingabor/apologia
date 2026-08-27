@@ -1,120 +1,118 @@
-# Streamforge Template
+# Apologia
 
-A themeable **Next.js 16 + React 19 + Supabase + Tailwind v4** starter for
-small, SEO-friendly public web apps with a private admin dashboard.
+Source-grounded answers to questions of Catholic apologetics, theology and
+philosophy — in Hungarian and English.
 
-It is the shared skeleton behind projects like a bakery pre-order site or a
-clinic appointment system — extracted into a reusable baseline with a **theming
-layer** so each new project is configured rather than rewritten.
+Every claim is traced to a specific, canonically addressable passage
+(CCC §1730, *Summa* I q.2 a.3, Jn 1:1–14), and every citation is **checked
+mechanically** before anyone sees it. Answers are drafted by the system and
+**published by a human**.
 
-## Features
+It is a research aid that shows its work. It is not catechesis, not spiritual
+direction, and not the Magisterium.
 
-- **Auth** — Supabase magic-link admin login with an `admin_users` email
-  allowlist, enforced by both the proxy and server-side guards.
-- **Theming** — swap colors, fonts, and copy from `config/` without touching
-  components. Ships with `default`, `bakery`, and `medical` presets.
-- **Bilingual** — `en` + `hu` copy out of the box; switch via `config/brand.ts`.
-- **Production patterns** — typed `db → domain` layers, Zod validation, Server
-  Actions, a Resend email abstraction, and lefthook pre-commit/pre-push hooks.
-- **Automated verification** — Playwright E2E against an ephemeral local Supabase
-  stack, plus a GitHub Actions `verify` gate (lint → typecheck → build → E2E) on
-  every PR. See "Testing & CI" below.
-- **Opt-in modules** — rate-limit + honeypot, confirmation tokens, ICS helpers.
-- **Email boundary** — the app sends transactional mail from a `noreply@`; the
-  client owns the mailbox that humans reply to. Policy, options and handover
-  runbook in `docs/email-boundary.md`.
+> **Status: Milestone 0.** The architecture is decided and documented; the
+> pipeline is not built. This README does not describe features that do not
+> exist — see [`docs/architecture.md`](docs/architecture.md) for what is planned
+> and what is real.
 
-## Quickstart
+## Why this repository might be worth reading
+
+It is an attempt to show how a **production-oriented** AI application is
+designed, rather than how quickly one can be assembled. The interesting parts
+are the decisions, and they are written down:
+
+- **[docs/adr/](docs/adr/)** — every meaningful decision, including the ones
+  that went *against* the more impressive-looking option, and the trade-offs
+  each one accepted.
+- **[docs/architecture.md](docs/architecture.md)** — the shape, and the one idea
+  the rest follows from.
+- **[docs/evaluation.md](docs/evaluation.md)** — what "better retrieval" is
+  allowed to mean here, written before the retriever, with a release rule.
+- **[docs/corpus.md](docs/corpus.md)** — why one chunking strategy for the whole
+  corpus would be wrong, and the Hungarian Bible licensing problem that
+  constrains the product.
+- **[ADR-011](docs/adr/011-semantic-layer-preregistration.md)** — a
+  pre-registered experiment, with hypotheses, a kill criterion, and a prediction
+  recorded before the result is known.
+
+A few things it deliberately does **not** do: no dedicated vector database, no
+queue, no streaming, no agent framework. Each of those is a decision with an ADR
+behind it, not an oversight.
+
+## Architecture in one diagram
+
+```
+                          ┌─ ingestion (offline CLI) ─────────────┐
+  corpus/sources.yaml ───▶│ fetch → parse → citable units →       │
+  (manifest, not text)    │ chunk per strategy → embed → upsert   │
+                          └───────────────┬───────────────────────┘
+                                          ▼
+                                   Postgres + pgvector
+                                          ▲
+                          ┌───────────────┴───────────────────────┐
+  question ──────────────▶│ validate → rate limit → retrieve →    │
+                          │ compose context → generate →          │
+                          │ ▸ VERIFY CITATIONS ◂ → draft          │
+                          └───────────────┬───────────────────────┘
+                                          ▼
+                              human review → published
+                                          ▼
+                            /hu/kerdes/<slug>   (permanent, cited)
+```
+
+## Getting started
 
 ```bash
 npm install
-cp .env.local.example .env.local   # fill in Supabase + Resend
-npm run dev                          # http://localhost:3000
+cp .env.example .env.local     # fill in Supabase + provider keys
+npx supabase db push           # or paste supabase/migrations/* into the SQL editor
+npm run dev
 ```
 
-Apply the database migrations (`supabase/migrations/`) via the Supabase
-Dashboard SQL editor or `npx supabase db push`, then add your email to
-`admin_users` so you can sign in.
+Add yourself to `admin_users` to reach `/dashboard`.
 
-## Testing & CI
+**The corpus is not in this repository**, by design — see
+[ADR-003](docs/adr/003-ship-manifests-not-corpus.md). `corpus/sources.yaml`
+describes each source and how to obtain it; the ingestion CLI (Milestone 1)
+fetches and indexes it locally.
 
-```bash
-npm run test:e2e     # Playwright E2E (needs Docker + the Supabase CLI)
-```
+## Commands
 
-`scripts/e2e.sh` spins up a free, ephemeral local Supabase stack (schema from
-your migrations, rows from a small deterministic seed), points the app at it,
-mints a genuine admin session, and runs Playwright — never touching production
-and never sending email. The same gate runs unattended on every PR to `main`
-via `.github/workflows/ci.yml` (lint → typecheck → build → E2E). Extend
-`e2e/fixtures/seed.ts` and add specs under `e2e/` as your domain grows. Full
-rationale in `CLAUDE.md` → "Automated verification"; manual checklist in
-`TESTING.md`.
+| | |
+|---|---|
+| `npm run dev` | dev server |
+| `npm run build` | production build |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | type-check (also runs on `git push`) |
+| `npm run test:e2e` | Playwright against an ephemeral local Supabase stack |
+| `npm run ingest` | *(Milestone 1)* build the index from `corpus/sources.yaml` |
+| `npm run eval` | *(Milestone 1)* score the gold set, write a report |
 
-## Theming
+## Secrets
 
-Edit `config/brand.ts`:
+No credentials are committed. `.env.example` documents every variable by name.
+Note that the ingestion keys — the Supabase service role key and the embedding
+provider key — are needed only by an operator running the CLI, never by the
+deployed app. That is a side effect of
+[ADR-004](docs/adr/004-offline-ingestion-cli.md), and a welcome one.
 
-```ts
-export const brand: Brand = {
-  name: "Acme",
-  tagline: "...",
-  theme: "medical",   // "default" | "bakery" | "medical"
-  locale: "hu",       // "en" | "hu"
-  contact: { email: "hello@acme.com" },
-};
-```
+## Provenance
 
-- **Presets** live in `config/themes/`. Copy one to start a new palette; each is
-  a plain `Theme` object (colors, fonts, shadows) typed by `config/themes/types.ts`.
-- The active theme is injected as CSS variables in `app/layout.tsx`; components
-  use Tailwind token utilities (`bg-primary`, `text-text-primary`, …), so a theme
-  swap re-skins everything.
-- **Copy** lives in `config/copy/{en,hu}.ts` (typed by `Copy`). Add keys to
-  `types.ts` as your UI grows; Zod messages come from `copy.validation`.
+Scaffolded from a private Next.js + Supabase starter template, which supplied
+the admin auth (proxy guard + `requireAdmin()` double guard), the Supabase
+client factories, the deny-by-default privilege model, the theming and copy
+layers, and the Playwright + local-Supabase CI harness.
 
-To add a font: declare it in `app/layout.tsx`, register it in the `FONTS` map,
-and add its name to `GoogleFontName` in `config/themes/types.ts`.
+What was changed and why is in
+[docs/architecture.md § Inherited from the template](docs/architecture.md#inherited-from-the-template).
+The most interesting change is `lib/rate-limit.ts`, which was inverted from
+fail-open to fail-closed — the template protects contact forms, where losing an
+enquiry is the expensive outcome; here the expensive outcome is an unbounded
+bill. Same code, opposite correct answer. See
+[ADR-009](docs/adr/009-fail-closed-rate-limiting.md).
 
-## Project structure
+## Licence
 
-```
-app/            (public)/ + (admin)/ route groups, api/, auth/, login/
-components/     shared/ UI kit (+ admin/ public/ for your features)
-config/         brand, theme + themes/, copy/ (en, hu)
-lib/            auth, supabase clients, email (+ ics), tokens, rate-limit
-server/         validators/ (Zod) + actions/ (Server Actions)
-types/          db → domain → api layers
-supabase/       config.toml, migrations/, seed.sql
-```
-
-See `CLAUDE.md` for the full architecture guide and a step-by-step "spin up a
-new project" checklist.
-
-## Optional add-ons (not installed)
-
-Kept out of the baseline to stay lean; add per project as needed. Reference
-implementations exist in the sibling `gazdapek` project.
-
-- **Twilio SMS** — `npm i twilio`; mirror the `lib/email/` abstraction as
-  `lib/sms/`.
-- **Web push (VAPID)** — `npm i web-push`; add a `push_subscriptions` table and
-  `/api/push/*` routes.
-- **Charts** — `npm i recharts` for admin analytics.
-- **Vercel cron** — add a `crons` entry to `vercel.json` and a protected
-  `/api/cron/*` route guarded by `CRON_SECRET`.
-
-## Upgrade path: runtime multi-tenancy
-
-The template is build-time themed (one deploy per project). To serve many
-tenants from one deployment later:
-
-1. Add a `tenants` table and a `tenant_id` FK to every domain table.
-2. Scope RLS policies by `tenant_id`.
-3. Resolve the tenant from the subdomain/host in `proxy.ts`.
-4. Move `activeTheme`/`locale` resolution from `config/` to the resolved tenant
-   row (load the `Theme` object from the DB and inject the same CSS variables).
-
-## License
-
-Private — internal template.
+MIT for the code. The corpus is not covered — each source carries its own terms,
+recorded in `corpus/sources.yaml`.

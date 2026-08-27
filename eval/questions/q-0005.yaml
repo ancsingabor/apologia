@@ -1,0 +1,12 @@
+id: q-0005
+question: "What is the difference between essence and existence in Aquinas?"
+language: en
+category: philosophy
+cross_lingual: false
+expected_units:
+  - summa:I.q3.a4
+expects_refusal: false
+notes: >
+  English question, English source — the same-language control against which the
+  cross-lingual slice is compared. Without controls like this, a cross-lingual
+  gap cannot be distinguished from a generally weak retriever.

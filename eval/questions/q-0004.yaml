@@ -1,0 +1,13 @@
+id: q-0004
+question: "Mi Aquinói Szent Tamás kozmológiai érve?"
+language: hu
+category: philosophy
+cross_lingual: true
+expected_units:
+  - summa:I.q2.a3
+expects_refusal: false
+notes: >
+  Hungarian question, English source — a core cross-lingual case. A correct
+  answer draws on the respondeo (the Five Ways), NOT the objections. If retrieval
+  returns the objection text and the answer presents it as Aquinas's position,
+  that is the failure docs/corpus.md § Why chunking is per-source describes.

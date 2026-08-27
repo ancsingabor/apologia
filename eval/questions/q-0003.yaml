@@ -1,0 +1,17 @@
+id: q-0003
+question: "Miért engedi meg Isten a rosszat, ha jó és mindenható?"
+language: hu
+category: doctrine
+cross_lingual: true
+expected_units:
+  - ccc:309
+  - ccc:310
+  - ccc:311
+  - summa:I.q2.a3
+expects_refusal: false
+notes: >
+  MULTI-SOURCE by design — this is the question that gives `full-recall@k`
+  meaning. A good answer draws on the Catechism's treatment of providence and on
+  Aquinas. Note summa:I.q2.a3 contains the problem of evil as an OBJECTION to
+  God's existence, not as teaching: this question doubles as a test of whether
+  the parser preserved passage role (see docs/corpus.md).

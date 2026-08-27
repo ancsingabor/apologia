@@ -53,3 +53,6 @@ next-env.d.ts
 
 # claude — machine-specific local permissions only; the personas & settings.json ARE committed
 /.claude/settings.local.json
+
+# eval reports (committed baselines are force-added)
+/eval/reports

@@ -1,0 +1,12 @@
+id: q-0002
+question: "Mit tanít az Egyház a hit és az értelem viszonyáról?"
+language: hu
+category: doctrine
+cross_lingual: false
+expected_units:
+  - ccc:159
+expects_refusal: false
+notes: >
+  CCC 159 states directly that faith and reason cannot contradict one another.
+  A short, well-addressed target — useful as a sanity check that basic retrieval
+  works before harder questions are trusted.
