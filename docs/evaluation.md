@@ -79,6 +79,7 @@ most likely to be weak.
 | Metric | Definition | Kind |
 |---|---|---|
 | **`citation validity`** | % of citations that resolve to a real unit **and** were present in the supplied context | deterministic |
+| **`quote fidelity`** | % of quoted spans matching their source unit's text exactly | deterministic |
 | `groundedness` | % of claim-bearing sentences carrying ≥1 citation | deterministic parse |
 | `citation support` | % of cited units whose text actually supports the sentence | judge model + human spot-check |
 | **`authority correctness`** | % of answers where a magisterial claim ("the Church teaches…") is backed by a tier-1/2 source | judge model + human spot-check |
@@ -96,6 +97,11 @@ thing in the harness. Groundedness is not orthodoxy: an answer can be perfectly
 grounded, perfectly cited, and still misrepresent the Church by presenting a
 theologian's opinion as binding teaching. This is the metric that catches it.
 
+**`quote fidelity` enforces ADR-014 mechanically.** Like citation validity it is
+exact string comparison and should read 100%. It is what stops the model from
+quietly rendering an English passage into Hungarian inside quotation marks — a
+fabricated quotation that every other metric would score as well-grounded.
+
 **Over-refusal is measured explicitly.** Eval sets routinely score "did it refuse
 the bad question?" and forget "did it wrongly refuse the good one?" — producing a
 system that scores well by refusing everything.
@@ -110,7 +116,7 @@ p50 / p95 end-to-end latency, cost per answer, cache hit rate.
 > eval report diff to its PR.
 >
 > A regression of **>2pp in `recall@10`**, or **any** drop in
-> `citation validity`, blocks the merge.
+> `citation validity` or `quote fidelity`, blocks the merge.
 
 This is what converts the harness from a demo into a gate. Without it, the eval
 becomes a thing that gets run once, screenshotted, and never looked at again.

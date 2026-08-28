@@ -18,10 +18,17 @@ open source. Scaffolded from a private Next.js 16 + Supabase starter template.
 2. **Citation verification is a hard gate**, deterministic, before display.
    Not a score, not a judge model, not after streaming (ADR-005).
 3. **No corpus text in git.** Manifests and pipeline only (ADR-003).
-4. **Answers are drafts until a human publishes** (ADR-006).
-5. **No retrieval/chunking/prompt change without an eval report diff.**
+   Full text is ingested for retrieval; display is locator + link + our prose.
+   Embedding is not redistribution — that is what makes restricted magisterial
+   sources usable.
+4. **Translate the explanation, never the quotation** (ADR-014). Answer prose is
+   generated in the reader's language. Source passages are shown only in a
+   language with an authoritative text — never machine-translated. A quoted span
+   must match its unit's text exactly; this is checked, not requested.
+5. **Answers are drafts until a human publishes** (ADR-006).
+6. **No retrieval/chunking/prompt change without an eval report diff.**
    The release rule in `docs/evaluation.md` is a merge gate.
-6. **Deny-by-default privileges.** Every new table needs an explicit grant or it
+7. **Deny-by-default privileges.** Every new table needs an explicit grant or it
    is unreachable. That friction is deliberate.
 
 ## Deliberately absent, with reasons

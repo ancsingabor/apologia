@@ -16,13 +16,14 @@ value; the decision itself is usually the least interesting line.
 | [004](004-offline-ingestion-cli.md) | Ingestion is an offline CLI | Accepted |
 | [005](005-verify-then-display.md) | Verify citations before display; no streaming in v1 | Accepted |
 | [006](006-draft-review-publish.md) | Answers are drafts until a human publishes them | Accepted |
-| 007 | Cross-lingual retrieval strategy | Deferred — decided by measurement |
+| 007 | Cross-lingual retrieval strategy | Deferred — constrained by [014](014-translation-and-quotation.md), decided by measurement |
 | 008 | Provider boundary (embeddings + generation) | Deferred — Milestone 1 |
 | [009](009-fail-closed-rate-limiting.md) | Cost and abuse containment; the limiter fails closed | Accepted |
 | [010](010-authority-tiers.md) | Authority tiers as first-class metadata | Accepted |
 | [011](011-semantic-layer-preregistration.md) | Pre-registration of the semantic-layer experiment | Accepted |
 | 012 | Graph in Postgres + offline reasoner vs. triple store | Deferred — Phase 4 |
 | [013](013-per-request-locale.md) | Locale resolved per request from the URL | Accepted |
+| [014](014-translation-and-quotation.md) | Translate the explanation, never the quotation | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a

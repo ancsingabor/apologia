@@ -54,48 +54,68 @@ instead. This is deliberate. Ecclesial authority is not a scale a physics paper
 belongs on; placing it there would encode the exact category error the system
 exists to avoid.
 
+## Licensing: where the real asymmetry is
+
+A natural assumption — and one this project initially made — is that English
+sources are broadly free and Hungarian ones broadly encumbered. That is true for
+some tiers and **false for the most important one**:
+
+| Tier | English | Hungarian | Asymmetry |
+|---|---|---|---|
+| Summa, Fathers, philosophy | public-domain translations (~1920) | mostly modern → copyrighted | **Yes — English wins decisively** |
+| Bible | KJV, Douay-Rheims, ASV | Káldi 1626 (Catholic, PD); Károli 1908 (Protestant, PD) | Minor — both have PD options |
+| **CCC, encyclicals, conciliar documents** | **LEV copyright** | **LEV copyright** | **None** |
+
+Libreria Editrice Vaticana holds the Catechism and the encyclicals and licenses
+national editions (USCCB in the United States, Szent István Társulat in Hungary).
+**English is not freer than Hungarian for magisterial texts.** Any plan that
+proposes going English-only to escape Hungarian copyright does not, in fact,
+escape anything for the sources that matter most.
+
+What resolves it is not choosing a different language's text but **not
+reproducing text at all**: ingest for retrieval, display a locator, a link to the
+official edition, and our own prose. See
+[ADR-014](adr/014-translation-and-quotation.md).
+
 ## Pending licence resolution
 
-These are wanted and not yet usable. Each needs its status established before it
-becomes a manifest entry.
+Wanted, not yet manifest entries. Each needs its status established first.
 
 | Candidate | Tier | What has to be resolved |
 |---|---|---|
-| *Fides et Ratio*, *Humani Generis*, *Providentissimus Deus*, *Dei Verbum*, *Gaudium et Spes* | 2 | Same posture as the CCC (Holy See published). Needs the same explicit note per document, plus a stable fetch location for the Hungarian texts. |
-| Church Fathers (Augustine, Athanasius, …) | 3 | Originals are public domain; **specific translations may not be**. Resolve per translation, not per author. |
-| Szent István Társulat Bible | 1 | Under live copyright. Almost certainly not ingestible; needs a definite answer, not an assumption. |
-| Káldi-Neovulgáta | 1 | Under live copyright. Same. |
-| Károli 1908 | 1 | Public domain, but Protestant and archaic. A *licensing* solution to a *domain* problem — see below. |
-| Contemporary Hungarian apologetics | 5 | Per work, per author. Some may be usable with permission; asking is cheap. |
+| *Fides et Ratio*, *Humani Generis*, *Providentissimus Deus*, *Dei Verbum*, *Gaudium et Spes* | 2 | Same LEV posture as the CCC. Needs a per-document note and a stable fetch location for both language editions. |
+| Church Fathers (Augustine, Athanasius, …) | 3 | Originals are public domain; **specific translations may not be**. Resolve per translation, never per author. |
+| Káldi 1626 (Hungarian Catholic Bible) | 1 | Translation dates to 1626 — the text is certainly public domain. Confirm the specific edition/typesetting taken (an 1865-or-earlier printing is safe); modern re-typesettings may carry their own rights. |
+| Káldi-Neovulgáta (1997) | 1 | Live copyright. The modern revision, not to be confused with Káldi 1626. Not ingestible without permission. |
+| Szent István Társulat Bible | 1 | Live copyright. Same posture — cite and link, do not reproduce. |
+| Contemporary Hungarian apologetics | 5 | Per work, per author. Some may be usable with permission; asking is cheap and the answer is durable. |
 
-### The Hungarian Bible problem
+### The Hungarian Bible question
 
-This is the sharpest constraint in the project and it deserves stating plainly
-rather than being discovered later.
+Narrower than it first appears, but not gone.
 
-The Hungarian Bible translations a Catholic reader would expect to see cited are
-under copyright. The one that is unambiguously free is Károli — a Protestant
-translation from 1908 in archaic Hungarian. Using it because it is *available*
-would be letting a licensing constraint make a theological choice, and an
-attentive Hungarian Catholic reader would notice immediately.
+An earlier draft of this document claimed the only public-domain Hungarian option
+was Károli — Protestant and archaic — and concluded that licensing would be
+making a theological choice. That was wrong: **Káldi György's 1626 translation is
+Catholic and out of copyright.** It is the Hungarian counterpart of the
+Douay-Rheims: archaic, but doctrinally unproblematic and free.
 
-Three honest options, none of them free:
+So the real constraint is register, not licensing. Káldi's Hungarian is 17th
+century and will read as remote to a modern enquirer, in the way the
+Douay-Rheims does in English. Three postures, and they compose:
 
-1. **Cite Scripture in Hungarian from within magisterial documents.** The CCC
-   and encyclicals quote Scripture extensively, and those quotations come with
-   the document's own licence posture. Limits coverage to what the documents
-   happen to quote.
-2. **Seek permission** from a Hungarian publisher. Slow, possibly successful,
-   and worth attempting because the answer is durable.
-3. **Link rather than ingest** — retrieve and cite by reference, sending the
-   reader to an official online text instead of reproducing it. Weakens
-   retrieval, since unquoted verses are not searchable.
+1. **Káldi 1626 as the ingestible Hungarian Scripture text** — free, Catholic,
+   searchable. Archaic phrasing is a real cost to readability.
+2. **Cite modern translations without reproducing them** — locator plus a link
+   to an official online edition. Costs nothing legally, and lets a reader reach
+   the phrasing they actually use.
+3. **Scripture reached through the magisterial documents that quote it** — the
+   CCC and the encyclicals quote extensively, and those quotations arrive with
+   the document's own posture.
 
-Option 1 is the Milestone 1 posture: Scripture reaches Hungarian readers through
-the magisterial documents that quote it. Option 2 is worth pursuing in parallel.
-This is recorded here because it constrains what the product can be in
-Hungarian, and it is not a decision that should be made silently by whichever
-file happened to be easiest to download.
+Milestone 1 uses (2) and (3); (1) is added when Scripture retrieval in Hungarian
+proves necessary. Recorded here because it constrains what the product can be in
+Hungarian, and should not be settled by whichever file was easiest to download.
 
 ## Adding a source
 

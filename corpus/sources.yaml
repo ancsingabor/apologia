@@ -25,20 +25,23 @@ sources:
     authority_tier: 2
     author: Catholic Church
     languages: [hu, en]
-    license: holy-see-published
+    license: lev-copyright-cite-and-link
     license_note: >
-      Published by the Holy See and freely readable online. Not licensed for
-      arbitrary redistribution, which is precisely why the pipeline fetches it
-      rather than the repository vendoring it. Cite by paragraph, quote in
-      fair-use extent, link to the official text.
+      Copyright Libreria Editrice Vaticana, which licenses national editions
+      (Szent István Társulat in Hungary, USCCB in the United States). NOTE: it is
+      equally restricted in English — going English-only buys nothing here.
+      Posture: ingest full text for retrieval, display locator + link to the
+      official edition, quote minimally if at all. Embedding into a private index
+      is not redistribution. See ADR-014.
     locator_scheme: "ccc:<paragraph>"          # ccc:1730
     chunking: numbered-paragraph
     cross_lingual_key: paragraph
     notes: >
-      The Milestone 1 source. Its paragraph numbering is identical across
-      translations, so the same citable unit exists in Hungarian and English
-      under one identifier — the alignment key the cross-lingual evaluation is
-      built on (ADR-002, ADR-007).
+      The Milestone 1 source, ingested in BOTH languages. Paragraph numbering is
+      identical across translations, so the same citable unit exists in Hungarian
+      and English under one identifier — the free alignment key the cross-lingual
+      evaluation is built on (ADR-002, ADR-007). Ingesting both costs nothing
+      extra in licensing, since both editions carry the same LEV terms.
 
   - id: summa
     title: Summa Theologiae
@@ -67,14 +70,15 @@ sources:
     languages: [en]
     license: public-domain
     license_note: >
-      Public domain outside the United Kingdom. Chosen for Milestone-1-era
-      English work on availability grounds only; see docs/corpus.md for why the
-      Bible-translation question is genuinely unresolved for this project.
+      Public domain outside the United Kingdom. Chosen on availability grounds.
+      For Hungarian Scripture the public-domain Catholic option is Káldi 1626 —
+      see docs/corpus.md § The Hungarian Bible question. Modern translations in
+      either language are cited and linked, never reproduced (ADR-014).
     locator_scheme: "bible:<book>:<chapter>:<verse>"        # bible:jn:1:1-14
     chunking: pericope
     cross_lingual_key: verse
 
 # ── Not yet in the manifest ─────────────────────────────────────────────────
-# Encyclicals (Fides et Ratio, Humani Generis, Providentissimus Deus), the
-# conciliar documents, the Church Fathers, and every Hungarian Bible and
-# apologetics work are CANDIDATES, not entries. See docs/corpus.md.
+# Encyclicals, the conciliar documents, the Church Fathers, Káldi 1626, and
+# contemporary Hungarian apologetics are CANDIDATES, not entries. Each needs its
+# licence resolved first. See docs/corpus.md § Pending licence resolution.

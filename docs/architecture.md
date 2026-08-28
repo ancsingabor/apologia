@@ -83,6 +83,7 @@ question
   → VERIFY CITATIONS    ── deterministic hard gate ──
                         every cited id exists ∧ was in the supplied context
                         every claim-bearing sentence carries ≥1 citation
+                        every quoted span matches its unit's text EXACTLY
                         otherwise: drop the citation, or fail the answer.
                         Never silently pass.
   → persist             draft answer + citations + retrieval trace
@@ -95,13 +96,44 @@ URL unreviewed. That decision (ADR-006) is what makes the trust story survive a
 hostile reader, and as a side effect it removes almost all of the cost and abuse
 exposure that an anonymous public LLM endpoint would otherwise carry.
 
+## Two languages, one corpus
+
+Apologia answers in Hungarian and English over a corpus that is unavoidably
+mixed — the public-domain tier is overwhelmingly English, while the magisterial
+tier is copyrighted in *every* language.
+
+The rule that makes this work, and the second-most load-bearing decision in the
+system after the citable unit:
+
+> **Translate the explanation. Never translate the quotation.**
+
+The answer prose is ours, and generating it in Hungarian from English source
+context is authorship, not translation. The quoted passage is not ours, and it is
+shown only in a language in which an authoritative text exists — English, clearly
+labelled, when no Hungarian edition exists.
+
+Machine-translating a quotation would show the reader a sentence no source ever
+wrote, attributed to a real locator, while the verification gate certified the
+untranslated original. That is a fabricated quotation passing a green check, in a
+domain where misattributed authority is the characteristic failure. So the gate
+gains a third deterministic check: **a quoted span must match its unit's text
+exactly.**
+
+Full text is ingested for retrieval; what is *displayed* is the locator, a link
+to the official edition, and our own prose. Embedding into a private index is not
+redistribution — which is what lets restricted magisterial sources be used
+properly without a licence that will never come.
+
+See [ADR-014](adr/014-translation-and-quotation.md) and
+[docs/corpus.md](corpus.md).
+
 ## Data model *(planned, Milestone 1)*
 
 | Table | Holds |
 |---|---|
 | `sources` | work level: authority tier, author, license, language, canonical URL |
 | `documents` | a version of a source, with a content hash |
-| `units` | **the citable unit**: locator, text, ordinal, parent |
+| `units` | **the citable unit**: locator, text, **language**, ordinal, parent |
 | `chunks` | embedding, unit refs, strategy id, language |
 | `questions` | normalised text, hash, language, asked_at |
 | `answers` | `draft` \| `published`, body, model, prompt version, corpus hash |

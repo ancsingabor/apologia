@@ -30,8 +30,11 @@ are the decisions, and they are written down:
 - **[docs/evaluation.md](docs/evaluation.md)** — what "better retrieval" is
   allowed to mean here, written before the retriever, with a release rule.
 - **[docs/corpus.md](docs/corpus.md)** — why one chunking strategy for the whole
-  corpus would be wrong, and the Hungarian Bible licensing problem that
-  constrains the product.
+  corpus would be wrong, and where the licensing asymmetry between English and
+  Hungarian sources actually is (not where you would expect).
+- **[ADR-014](docs/adr/014-translation-and-quotation.md)** — why the system
+  answers in Hungarian but will not translate a quotation, and how that is
+  enforced by a string comparison rather than by asking the model nicely.
 - **[ADR-011](docs/adr/011-semantic-layer-preregistration.md)** — a
   pre-registered experiment, with hypotheses, a kill criterion, and a prediction
   recorded before the result is known.
