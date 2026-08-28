@@ -88,6 +88,7 @@ built now, because building it before observing the problem is speculation.
 **Hashed-IP limiting is weak against a distributed caller.** Known. The global
 budget is the backstop, and it is the control that actually has a worst case.
 
-**These controls are not yet built.** Phase 2, after `docs/threat-model.md`
-establishes what each one defends against. Writing controls before the threat
+**These controls are not yet built.** Phase 2, after a threat model (planned as
+`docs/threat-model.md`, not yet written) establishes what each one defends
+against. Writing controls before the threat
 model is how a security checklist becomes theatre.
