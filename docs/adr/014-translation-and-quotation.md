@@ -1,6 +1,15 @@
 # ADR-014 — Translate the explanation, never the quotation
 
 Status: **Accepted** · Milestone 0
+Amended by [ADR-017](017-quotation-as-verified-invariant.md) — display posture only.
+
+> The core rule here is unchanged and is not up for revision: answer prose is
+> generated in the reader's language, source passages are never machine
+> translated, and a quoted span must match its unit's text exactly. What
+> ADR-017 revisits is the *conservative display posture* below ("quote minimally
+> if at all"), which was chosen when the alternative looked like an unbounded
+> rights question. It replaces that sentence with machine-checked limits under
+> the Hungarian quotation right. Nothing in the translation rule moves.
 
 ## Context
 

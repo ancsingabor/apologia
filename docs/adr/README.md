@@ -25,6 +25,8 @@ value; the decision itself is usually the least interesting line.
 | [013](013-per-request-locale.md) | Locale resolved per request from the URL | Accepted |
 | [014](014-translation-and-quotation.md) | Translate the explanation, never the quotation | Accepted |
 | [015](015-testing-strategy.md) | Tests are chosen by determinism, not by stack layer | Accepted |
+| [016](016-editorial-spine.md) | The topic spine is editorial, thin, and independent of the corpus | Accepted |
+| [017](017-quotation-as-verified-invariant.md) | Quotation is a verified invariant, not a policy note | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a
