@@ -49,7 +49,7 @@ notes: >
 ```
 
 **Size:** 40–60 questions. Big enough to move a percentage point meaningfully,
-small enough that one person can author them honestly. v0 is 30.
+small enough that one person can author them honestly. v0 is 10.
 
 **Composition matters as much as size.** The set must include, deliberately:
 
