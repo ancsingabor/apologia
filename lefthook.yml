@@ -9,3 +9,7 @@ pre-push:
   jobs:
     - name: typecheck
       run: npx tsc --noEmit
+    # Cheap enough to belong here; the E2E suite is not (it needs a Supabase
+    # stack and a build) and stays a CI-and-on-demand gate.
+    - name: unit tests
+      run: npm test

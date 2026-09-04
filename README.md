@@ -88,6 +88,7 @@ fetches and indexes it locally.
 | `npm run build` | production build |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | type-check (also runs on `git push`) |
+| `npm test` | Vitest — the deterministic suite (also runs on `git push`) |
 | `npm run test:e2e` | Playwright against an ephemeral local Supabase stack |
 | `npm run ingest` | *(Milestone 1)* build the index from `corpus/sources.yaml` |
 | `npm run eval` | *(Milestone 1)* score the gold set, write a report |

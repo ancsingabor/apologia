@@ -36,6 +36,12 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      # Ordered before the Supabase stack on purpose: the deterministic suite is
+      # sub-second and needs no services, so a parser or verifier regression
+      # fails the job in seconds rather than after a stack boot and a build.
+      - name: Unit tests
+        run: npm test
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 

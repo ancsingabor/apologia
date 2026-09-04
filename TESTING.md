@@ -1,16 +1,39 @@
 # Testing
 
-Two kinds of correctness, checked two different ways. See
-`docs/architecture.md § Two kinds of correctness`.
+**A test's layer is chosen by whether its output is deterministic, not by where
+the code sits in the stack.** The argument, including the E2E-only alternative
+that was considered and rejected, is [ADR-015](docs/adr/015-testing-strategy.md).
 
-## Deterministic — unit tests
+| Output | Gate |
+|---|---|
+| Deterministic, no I/O | Vitest — `npm test` |
+| Deterministic, crosses Postgres | Integration test against the local stack |
+| A user-visible flow | Playwright — `npm run test:e2e` |
+| Probabilistic | The eval harness — never an assertion |
 
-Parsers, chunkers, locator resolution, citation verification, auth, rate
-limiting. A failure here is a **bug**, not a quality regression.
+Components, route handlers and Server Actions get **no** unit tests. If one
+seems necessary, deterministic logic has ended up in the wrong file.
 
-Vitest is added in Milestone 1 alongside the first parser. Citation verification
-in particular is pure logic over a fixed input and must be exhaustively tested —
-it is the single most important correctness property in the product.
+## Deterministic — Vitest
+
+```bash
+npm test                # once
+npm run test:watch      # while editing a parser
+```
+
+Parsers, chunkers, locator resolution, citation verification, the fail-closed
+branch of the rate limiter. A failure here is a **bug**, not a quality
+regression. Files are `*.test.ts` beside the code they test; `e2e/` is excluded
+from collection so the two runners never fight over a file.
+
+Citation verification is pure logic over a fixed input and must be exhaustively
+tested — it is the single most important correctness property in the product,
+and the gate run against a canned model response containing a fabricated
+locator needs no API key, no network and no database.
+
+Currently covered: `lib/rate-limit.test.ts`, which pins ADR-009's inversion — an
+errored limiter **denies**. A reverted fail-closed branch is invisible to every
+other kind of test, because it makes the endpoint work, uncapped.
 
 ## Probabilistic — the eval harness
 
@@ -47,6 +70,10 @@ policy.
 
 ## The broad gate
 
-`npm run lint`, `npx tsc --noEmit`, `npm run build` — all reproduced in CI on
-every PR (`.github/workflows/ci.yml`). The Supabase CLI is pinned there; keep
-the pin in lockstep with the validated local version.
+`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` — all reproduced
+in CI on every PR (`.github/workflows/ci.yml`), with the unit suite ordered
+before the Supabase stack so a deterministic regression fails in seconds rather
+than after a stack boot and a build. `npm test` and the typecheck also run on
+pre-push (`lefthook.yml`); the E2E suite does not, since it needs a stack and a
+build. The Supabase CLI is pinned in CI; keep the pin in lockstep with the
+validated local version.

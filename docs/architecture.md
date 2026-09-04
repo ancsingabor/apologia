@@ -163,6 +163,14 @@ plainly because it decides how each part is tested:
 | **How it's checked** | ordinary unit tests (Vitest) — a failure is a *bug* | the eval harness on a gold set — a change is a *number that moved* |
 | **Standard** | must be exactly right | must be measurably better than the last baseline |
 
+The line runs through the model call itself: the prose it returns is never
+asserted, while the schema parsing, the timeout and retry, and the verification
+gate around it are ordinary deterministic code. Which layer a given test belongs
+in — Vitest, an integration test against a real Postgres, or Playwright — is
+decided by that same axis and not by stack position; see
+[ADR-015](adr/015-testing-strategy.md). Components, route handlers and Server
+Actions deliberately get no unit tests.
+
 Confusing the two is the most common failure in RAG codebases: teams write no
 tests because "it's AI, it's non-deterministic", when in fact most of the system
 is perfectly deterministic and perfectly testable. Citation verification in
