@@ -129,16 +129,36 @@ See [ADR-014](adr/014-translation-and-quotation.md) and
 
 ## Data model *(planned, Milestone 1)*
 
-| Table | Holds |
-|---|---|
-| `sources` | work level: authority tier, author, license, language, canonical URL |
-| `documents` | a version of a source, with a content hash |
-| `units` | **the citable unit**: locator, text, **language**, ordinal, parent |
-| `chunks` | embedding, unit refs, strategy id, language |
-| `questions` | normalised text, hash, language, asked_at |
-| `answers` | `draft` \| `published`, body, model, prompt version, corpus hash |
-| `answer_citations` | answer → unit, plus the verification result |
-| `retrieval_traces` | what was retrieved, scores, timings |
+| Table | Holds | Migration |
+|---|---|---|
+| `sources` | work level: authority tier, author, license, canonical URL | `0005` |
+| `documents` | a version of a source in one language, with a content hash | `0005` |
+| `units` | **the citable unit**: locator, text, **language**, ordinal, parent, role | `0005` |
+| `chunks` | text, strategy id, language | `0005` |
+| `chunk_units` | chunk ↔ unit, n:m — a chunk may span units, a unit may split | `0005` |
+| `chunk_embeddings` | one row per (chunk, model), so two candidates can be compared | `0005` |
+| `topics` | the editorial spine: slug, part, titles, blurbs (ADR-016) | `0006` *(planned)* |
+| `questions` | normalised text, hash, language, asked_at | `0006` *(planned)* |
+| `answers` | `draft` \| `published`, body, model, prompt version, corpus hash, `topic_id` | `0006` *(planned)* |
+| `answer_citations` | answer → unit, plus the verification result | `0006` *(planned)* |
+| `retrieval_traces` | what was retrieved, scores, timings | `0006` *(planned)* |
+
+Two things in `0005` are worth reading the migration for. **`chunk_embeddings` is
+deliberately undimensioned and unindexed**: pgvector needs a fixed dimension to
+build an index, and the dimension is a property of a model ADR-008 has not chosen
+yet — settling it in a schema would decide by accident the question the milestone
+exists to measure. At CCC scale (~2,865 paragraphs × 2 languages) an exact scan
+is milliseconds and beats an approximate index anyway. And **`chunk_units` is
+n:m on purpose**, because a short paragraph may share a chunk with its neighbour
+while a long Summa article splits across several; a plain foreign key breaks in
+one direction or the other, and that break is what pushes projects back to
+fixed-window chunking.
+
+The corpus tables carry **no grants at all** — not an omission, the product
+decision. `units.text` holds restricted magisterial text, and the licensing
+posture in ADR-003/ADR-014 rests on it never reaching a browser. `answers` is
+the only table that gets `grant select to anon`, paired with an RLS policy of
+`status = 'published'`.
 
 `retrieval_traces` is not an afterthought: it is both the observability surface
 and the substrate the evaluation harness scores against.
