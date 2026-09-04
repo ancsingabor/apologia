@@ -27,6 +27,7 @@ value; the decision itself is usually the least interesting line.
 | [015](015-testing-strategy.md) | Tests are chosen by determinism, not by stack layer | Accepted |
 | [016](016-editorial-spine.md) | The topic spine is editorial, thin, and independent of the corpus | Accepted |
 | [017](017-quotation-as-verified-invariant.md) | Quotation is a verified invariant, not a policy note | Accepted |
+| [018](018-segmented-answers.md) | The model marks its own claims; the gate does not detect them | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a
