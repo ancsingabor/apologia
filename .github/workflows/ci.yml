@@ -20,9 +20,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -46,7 +46,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           # Pinned to a version validated locally, not `latest` — a moving CLI is
           # a moving test environment. The old pin at 2.90.0 was working around
@@ -54,6 +54,12 @@ jobs:
           # bug but missing GRANTs in the schema itself, now stated explicitly in
           # `supabase/migrations/0004_schema_grants.sql`. Bumping is routine:
           # upgrade locally, run `npm run test:e2e`, move this number.
+          #
+          # setup-cli v3 resolves this from npm rather than GitHub releases, so
+          # the number must exist as a published `supabase` package version. It
+          # would also detect a version from the root lockfile if this input were
+          # dropped — deliberately not done: the CLI is not an app dependency,
+          # and an explicit pin is the thing being argued for above.
           version: 2.114.0
 
       - name: Start local Supabase stack
@@ -84,7 +90,7 @@ jobs:
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
