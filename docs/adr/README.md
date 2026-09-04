@@ -24,6 +24,7 @@ value; the decision itself is usually the least interesting line.
 | 012 | Graph in Postgres + offline reasoner vs. triple store | Deferred — Phase 4 |
 | [013](013-per-request-locale.md) | Locale resolved per request from the URL | Accepted |
 | [014](014-translation-and-quotation.md) | Translate the explanation, never the quotation | Accepted |
+| [015](015-testing-strategy.md) | Tests are chosen by determinism, not by stack layer | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a

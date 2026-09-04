@@ -47,6 +47,12 @@ Probabilistic behaviour (ranking, prose, groundedness, refusal) gets the **eval
 harness**; a change is a number that moved. Do not test the first kind with an
 LLM, and do not assert the second kind without a measurement.
 
+The test layer follows from that axis, never from stack position (ADR-015):
+Vitest for pure deterministic code, an integration test when it crosses a real
+Postgres, Playwright for user-visible flows. Components, route handlers and
+Server Actions get **no** unit tests — if one seems necessary, deterministic
+logic is sitting in the wrong file and belongs in `lib/`.
+
 ## Where things are
 
 - Current milestone and next steps: `docs/architecture.md` header + `docs/adr/README.md`
