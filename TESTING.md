@@ -31,9 +31,17 @@ tested — it is the single most important correctness property in the product,
 and the gate run against a canned model response containing a fabricated
 locator needs no API key, no network and no database.
 
-Currently covered: `lib/rate-limit.test.ts`, which pins ADR-009's inversion — an
-errored limiter **denies**. A reverted fail-closed branch is invisible to every
-other kind of test, because it makes the endpoint work, uncapped.
+Currently covered:
+
+- **`lib/citation/verify.test.ts`** — the gate. Fabricated locators, quotations
+  that are not verbatim, translated quotations, byte-level near-misses (a curly
+  apostrophe, a trailing space), fragments reassembling a paragraph past the
+  per-unit limit, and the ADR-017 revert path. The fixtures are invented text,
+  never the real Catechism: a test that depended on the real wording would be a
+  test that ships corpus (ADR-003).
+- **`lib/rate-limit.test.ts`** — pins ADR-009's inversion: an errored limiter
+  **denies**. A reverted fail-closed branch is invisible to every other kind of
+  test, because it makes the endpoint work, uncapped.
 
 ## Probabilistic — the eval harness
 

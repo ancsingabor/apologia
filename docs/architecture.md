@@ -79,8 +79,9 @@ question
   → retrieve            pgvector cosine, top-k, metadata filters
   → compose context     source-tier labels, injection-hardened delimiters
   → generate            timeout + bounded retry + structured output
-                        { answer, citations: [unit_id, ...] }
-  → VERIFY CITATIONS    ── deterministic hard gate ──
+                        segments: claim(text, citations[]) | connective(text)
+                                | quotation(locator, exact span)     ADR-018
+  → VERIFY CITATIONS    ── deterministic hard gate ── lib/citation/verify.ts
                         every cited id exists ∧ was in the supplied context
                         every claim-bearing sentence carries ≥1 citation
                         every quoted span matches its unit's text EXACTLY
