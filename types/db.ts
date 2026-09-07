@@ -38,9 +38,27 @@ export type AuthorityTier = 1 | 2 | 3 | 4 | 5;
 
 export type CorpusLanguage = "hu" | "en" | "la";
 
-/** The role a unit plays inside its parent — load-bearing for the Summa, where
- *  an objection states the OPPOSITE of the article's conclusion. */
-export type UnitRole = "objection" | "sed_contra" | "respondeo" | "reply";
+/**
+ * The role a unit plays inside its parent — load-bearing for the Summa, where
+ * an objection states the OPPOSITE of the article's conclusion.
+ *
+ * `summary` is the CCC's milder relative of that problem: the italicised
+ * "Összefoglalás" / "In Brief" paragraphs closing each section. They are not
+ * wrong to cite, but they are short, dense restatements of the surrounding
+ * teaching — exactly the shape a similarity search rewards. Captured at
+ * ingestion and deliberately acted on NOWHERE: whether they crowd out the
+ * developed text is an empirical question for the eval harness, and capturing
+ * the metadata now is what keeps that experiment possible without re-ingesting
+ * the corpus (ADR-008, ADR-019).
+ *
+ * The column is `text`, not an enum, so adding a role needs no migration.
+ */
+export type UnitRole =
+  | "objection"
+  | "sed_contra"
+  | "respondeo"
+  | "reply"
+  | "summary";
 
 export interface DbSource {
   id: string;

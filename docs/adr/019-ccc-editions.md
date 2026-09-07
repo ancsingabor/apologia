@@ -1,6 +1,6 @@
 # ADR-019 — The CCC editions: revision alignment over file convenience
 
-Status: **Accepted** · Milestone 1
+Status: **Accepted** · Milestone 1 · **amended 2026-09-07, see § Amendment**
 Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
 the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
 
@@ -118,7 +118,7 @@ non-overlapping and cover §1–§2865; 2,859 anchors are well-formed. Six are n
 | Locator | Defect | Recoverable from |
 |---|---|---|
 | §74 | anchor is `name="74"` — missing the `K` prefix | printed number |
-| §146 | **paragraph absent entirely** — `K0145` is followed by `K0147` | nothing; a real gap |
+| §146 | ~~paragraph absent entirely~~ — **see § Amendment; this was wrong** | a declared relabel |
 | §211 | anchor duplicates `K0210`; the printed number is also wrong (`210.`) | ordinal monotonicity |
 | §2096 | no anchor; printed number carries no trailing period | printed number |
 | §2213 | no anchor; printed number present | printed number |
@@ -133,9 +133,10 @@ the inverse of the obvious design, and load-bearing:
    where both signals are individually plausible and both wrong.
 3. **Assert the final count**, against `expected_units` minus declared errata.
 
-§146 becomes a *declared* gap in `corpus/errata/ccc-hu.yaml` rather than a silent
-hole, and any *new* gap fails the ingest. An errata file listing locators and
-defect kinds ships under ADR-003 without difficulty — it contains no corpus text.
+Every fault becomes a *declared* entry in `corpus/errata/ccc-hu.yaml` rather than
+a silent hole, and any new one fails the ingest. An errata file listing locators
+and defect kinds ships under ADR-003 without difficulty — it contains no corpus
+text.
 
 ### Elsewhere
 
@@ -149,7 +150,7 @@ defect kinds ships under ADR-003 without difficulty — it contains no corpus te
   break on a re-typeset while proving nothing about the text.
 - The English side is **not yet inventoried.** Its revision is verified; its
   completeness and defect set are not, and the same three assertions must run
-  over it before it is trusted.
+  over it before it is trusted. It is **ISO-8859-1**, not UTF-8 — see § Amendment.
 - `documents.edition` is **still unresolved** and is left null rather than
   guessed. Szent István Társulat is the LEV licensee for Hungary, but the modern
   pages credit no publisher and the archive credits its translators only inside
@@ -178,3 +179,74 @@ makes that a detectable condition; nothing here makes it impossible.
 **A live text is a moving hash.** `content_hash` will change on re-typesetting
 that alters no words. That is noise the archive would not have produced, and it
 is the cost of the choice.
+
+
+## Amendment — 2026-09-07
+
+Writing the parser falsified two things this ADR asserted, and one of them
+mattered. Both are corrected here rather than edited away, because the way the
+error was found is the argument for the process that found it.
+
+### §146 is not missing. It is misnumbered, and so are §147 and §148.
+
+The defect table above was built by analysing anchors, before a parser existed.
+It concluded that §146 was absent and the corpus was 2,864 of 2,865 paragraphs.
+
+Actually parsing the pages shows the paragraph is **present and mislabelled**.
+The source prints §146, §147 and §148 as *147*, *148* and *149*, and the
+duplicate 149 — which the anchor analysis had recorded as a separate curiosity —
+is what puts the sequence back in step. Checked against `vatican.va`, which is
+authoritative for the numbering:
+
+| Authoritative | Printed here | Subject |
+|---|---|---|
+| §145 | 145 ✓ | Hebrews' eulogy of the faith of Israel's ancestors |
+| §146 | **147** ✗ | Abraham and the definition of faith in Hebrews 11:1 |
+| §147 | **148** ✗ | the Old Testament's witnesses to this faith |
+| §148 | **149** ✗ | the Virgin Mary embodies the obedience of faith |
+| §149 | 149 ✓ | Mary's faith never wavered |
+
+**Ingested as printed, `ccc:147` would have returned §146's text.** The locator
+resolves. The quotation verifies byte-exactly. The citation gate passes. Three
+units would have been silently misaddressed — a citation that is provably exact
+and points at the wrong paragraph, which is a worse failure than a missing one
+and is invisible to everything downstream of ingestion.
+
+§211 was diagnosed correctly but is the same *class*: a paragraph carrying a
+number that belongs to another. There the drift is one paragraph long and the
+sequence resumes at 212.
+
+So the corpus is **2,865 units — the whole Catechism, nothing missing** — and
+`corpus/errata/ccc-hu.yaml` gains a `relabels` section: four declared
+corrections, addressed by (page, printed label, occurrence), each with the
+authoritative text it was checked against. Declared, never inferred; a parser
+that detected drift and shifted labels back would be guessing at intent across a
+region whose end it cannot see.
+
+The consequence for the eval harness reverses too: a gold-set question naming
+`ccc:146` now resolves correctly, where this ADR said it should fail.
+
+### The reason this is in the ADR rather than a commit message
+
+This ADR added a step to "Adding a source": *inventory the fetched text before
+writing the parser.* That step is what produced the wrong answer — an anchor
+inventory is not an inventory. The step stands, with its method corrected:
+
+> **Inventory by parsing, not by pattern-matching one signal.** Counting anchors
+> tells you which anchors are malformed. It cannot tell you whether the text
+> under them is the text those addresses name, because that question is about
+> the sequence and the content, not the markup.
+
+Anchor analysis found six faults and mis-classified the most serious one.
+Running a parser found the same six plus three more classes it could not have
+seen — a paragraph beginning mid-element after `<br><br>`, a number wrapped in
+`<font>` inside its anchor, an anchor swallowing the paragraph's opening
+quotation mark — and reclassified §146.
+
+### vatican.va is ISO-8859-1
+
+The manifest recorded `encoding: utf-8` for the English document. It is HTML 3.2
+served as `charset=iso-8859-1`. Corrected in `corpus/sources.yaml`. Noted because
+it is the same class of thing as the Hungarian archive's ISO-8859-2 that this ADR
+used as an argument *against* that source — the difference is that vatican.va
+declares its charset, so it decodes deterministically rather than by guess.

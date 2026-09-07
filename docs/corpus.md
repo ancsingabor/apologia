@@ -126,9 +126,10 @@ The general shape, which will recur for every encyclical and conciliar document:
 ### Source defects are declared, not tolerated
 
 The current Hungarian CCC is a real web edition with real defects: of its 2,865
-paragraphs, six are broken — five with a malformed or missing anchor, and §146
-absent from the page entirely. They live in `corpus/errata/ccc-hu.yaml` with their
-defect kind and the signal the parser recovers from.
+paragraphs, eight are broken — four with a malformed or missing anchor, and four
+that carry the wrong number. They live in `corpus/errata/ccc-hu.yaml` with their
+defect kind and the signal the parser recovers from. Nothing is missing: the
+corpus is 2,865 of 2,865.
 
 The file exists less to record the defects than to keep them from eroding the
 checks. A parser that meets six known-bad anchors and responds by relaxing its
@@ -143,6 +144,27 @@ and the printed number *agree with each other* and are *both wrong* (both read
 paragraph as a duplicate §210. Only asserting that the sequence strictly
 increases catches it. Agreement between two signals is not the same as
 correctness, and one paragraph in the Catechism is there to prove it.
+
+### Inventory by parsing, not by pattern-matching one signal
+
+The first pass at the Hungarian CCC counted anchors and concluded that §146 was
+missing. It is not: the source prints §146, §147 and §148 as *147*, *148* and
+*149*, and a duplicate 149 puts the sequence back in step. Ingested as printed,
+`ccc:147` would have returned §146's text under a locator that resolves and a
+quotation that verifies byte-exactly.
+
+**A mislabelled paragraph is a worse defect than a missing one**, because a gap
+is visible to the sequence check while a wrong label is visible only to someone
+who compares the text against an authoritative edition. Counting anchors tells
+you which anchors are malformed. It cannot tell you whether the text under an
+address is the text that address names — that question is about the sequence and
+the content, not the markup.
+
+Hence the rule, and it is why "Adding a source" puts inventory before the parser
+and defines inventory as *running one*: pattern-matching a single signal found
+six faults and misdiagnosed the most serious. A parser found the same six, three
+more structural classes, and the misnumbering. See
+[ADR-019 § Amendment](adr/019-ccc-editions.md#amendment--2026-09-07).
 
 ## Pending licence resolution
 
@@ -195,9 +217,10 @@ Hungarian, and should not be settled by whichever file was easiest to download.
    they agree (§ Revision drift). For a single-language source this is a note;
    for a multilingual one it is a precondition.
 5. Choose or write a `chunking` strategy that respects the work's own structure.
-6. Inventory the fetched text before writing the parser: count the units, and
-   declare the defects you find in `corpus/errata/`. Discovering them from
-   failing assertions later is how assertions get loosened.
+6. Inventory the fetched text before writing the parser — **by parsing it**, not
+   by pattern-matching one signal (§ Inventory by parsing). Count the units and
+   declare what you find in `corpus/errata/`. Discovering defects from failing
+   assertions later is how assertions get loosened.
 7. Add fixtures and unit tests for the parser before ingesting at scale — the
    errata are the fixture list.
 8. Grant the tables it touches in `supabase/migrations/` — deny-by-default means
