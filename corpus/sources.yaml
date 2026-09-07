@@ -60,7 +60,8 @@ sources:
         parser: katolikus-hu-numbered-paragraph
         encoding: utf-8
         errata: corpus/errata/ccc-hu.yaml
-        inventoried: 2026-09-07                 # all 31 pages fetched and counted
+        inventoried: 2026-09-07                 # parsed, not merely anchor-counted
+        parsed_units: 2865                      # complete — see ADR-019 § Amendment
 
       - language: en
         revision: "1997+2018"
@@ -68,7 +69,7 @@ sources:
         index_url: https://www.vatican.va/archive/ENG0015/_INDEX.HTM
         fetch: discover-from-index
         parser: vatican-intratext
-        encoding: utf-8
+        encoding: iso-8859-1                     # HTML 3.2, declared charset
         errata: null
         inventoried: null
         # Revision VERIFIED against §2267. Completeness and defect set are NOT —

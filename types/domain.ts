@@ -2,7 +2,12 @@
 // fields. UI and Server Actions work with these; map `db → domain` at the
 // data-access layer so raw rows never leak into components.
 
-import type { AdminRole, AuthorityTier, CorpusLanguage } from "./db";
+import type {
+  AdminRole,
+  AuthorityTier,
+  CorpusLanguage,
+  UnitRole,
+} from "./db";
 
 export interface AdminUser {
   id: string;
@@ -93,3 +98,114 @@ export type VerificationResult =
   | { status: "pass"; answer: GeneratedAnswer }
   | { status: "repaired"; answer: GeneratedAnswer; dropped: Violation[] }
   | { status: "failed"; violations: Violation[] };
+
+// ── Corpus ingestion (ADR-004, ADR-019) ──────────────────────────────────────
+// The parser's output, before it becomes `DbUnit` rows. Nothing here touches a
+// database, a network, or the filesystem — which is what lets 2,865 paragraphs
+// of parsing logic be unit tested in milliseconds (ADR-015).
+
+/**
+ * A defect kind the parser can detect. This vocabulary is shared with
+ * `corpus/errata/*.yaml`: a declared erratum names the kind the parser emits,
+ * so matching is mechanical rather than by prose description.
+ */
+export type CorpusDefectKind =
+  /** No `name="K…"` anchor on the paragraph at all. */
+  | "anchor-absent"
+  /** Anchor present but unpadded and unprefixed — `name="74"`. */
+  | "anchor-missing-prefix"
+  /** Anchor present and wrong in some other way — `name="K26201"`. */
+  | "anchor-typo"
+  /** The printed label is wrong; the paragraph belongs at another locator. */
+  | "misnumbered"
+  /** A label repeats or goes backwards. The only signal that catches a
+   *  paragraph whose anchor AND printed number are both wrong and agree. */
+  | "number-not-increasing"
+  /** A number is missing from the sequence entirely. */
+  | "paragraph-absent"
+  /** The final tally does not match the manifest's `expected_units`. */
+  | "count-mismatch";
+
+export interface CorpusDefect {
+  kind: CorpusDefectKind;
+  /** Canonical locator the defect concerns — 'ccc:211'. */
+  locator: string;
+  /** Source page it was found on, for diagnosis. Null for whole-run defects. */
+  page: string | null;
+  detail: string;
+}
+
+/** A citable unit as parsed, before it is mapped to a `DbUnit`. */
+export interface ParsedUnit {
+  /** Canonical address, after any declared relabelling: 'ccc:146'. */
+  locator: string;
+  /** The paragraph number the locator resolves to. */
+  paragraph: number;
+  /** The anchor exactly as found, or null. Corroboration only — never the
+   *  source of the locator (ADR-019). */
+  anchor: string | null;
+  /** Set when a declared `misnumbered` erratum moved this unit: the wrong
+   *  label the source printed. Null for the overwhelming majority. */
+  relabelledFrom: number | null;
+  /** Normalised text. This is permanent: ADR-017 compares reader-facing
+   *  quotations against it byte-for-byte. */
+  text: string;
+  role: UnitRole | null;
+  page: string;
+  ordinal: number;
+}
+
+export interface ParseResult {
+  units: ParsedUnit[];
+  defects: CorpusDefect[];
+  /** Pages carrying no numbered paragraphs — the front matter (Laetamur
+   *  magnopere, Fidei depositum, the prologue), unnumbered in the book too. */
+  frontMatterPages: string[];
+  /** Counters for things deliberately not turned into units. Informational,
+   *  but a jump here between runs means the source changed shape. */
+  skipped: Record<string, number>;
+}
+
+// ── Errata (ADR-003, ADR-019) ────────────────────────────────────────────────
+// The parsed form of `corpus/errata/*.yaml`. Reading the YAML is the CLI's job;
+// everything below is pure data so the assertions stay testable.
+
+/**
+ * A paragraph the source labels wrongly. Addressed by (page, printed label,
+ * occurrence) rather than by position in the run, so the declaration stays
+ * valid when a page is re-typeset.
+ */
+export interface ErrataRelabel {
+  page: string;
+  foundLabel: number;
+  /** 1-based: which occurrence of `foundLabel` on that page. */
+  occurrence: number;
+  correctLocator: string;
+}
+
+/** A defect that is known, looked at, and permitted — never a wildcard. */
+export interface ErrataAllowance {
+  locator: string;
+  kind: CorpusDefectKind;
+}
+
+export interface CorpusErrata {
+  source: string;
+  language: CorpusLanguage;
+  expectedUnits: number;
+  relabels: ErrataRelabel[];
+  allowed: ErrataAllowance[];
+}
+
+export interface AssertionReport {
+  ok: boolean;
+  unitCount: number;
+  /** Defects with no matching declaration. Any entry here stops the ingest. */
+  undeclared: CorpusDefect[];
+  /**
+   * Declarations that never fired. Not fatal, but reported loudly: a stale
+   * allowance is permission the checks no longer need, and permission nobody
+   * revisits is how a strict check goes soft.
+   */
+  stale: ErrataAllowance[];
+}

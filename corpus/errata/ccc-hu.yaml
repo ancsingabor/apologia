@@ -1,100 +1,165 @@
 # ── Errata: Catechism of the Catholic Church, Hungarian ─────────────────────
 #
 # Source: katolikus.hu/dokumentumtar/kek-*  (ADR-019)
-# Inventoried: 2026-09-07 — all 31 pages fetched; 2,859 of 2,865 paragraph
-# anchors well-formed; the 6 below are not.
+# Parser: lib/corpus/parsers/katolikus-hu.ts
+# Inventoried: 2026-09-07 · re-inventoried by the parser 2026-09-07
+#
+# ⚠️ THIS FILE WAS WRONG ON ITS CENTRAL CLAIM AND HAS BEEN REPLACED.
+#
+# The first version was derived by analysing anchors alone, and concluded that
+# §146 was missing and the corpus was 2,864 of 2,865 paragraphs. Both are false.
+# Running an actual parser over the pages found that §146 is PRESENT and
+# mislabelled: the source prints 146, 147 and 148 as 147, 148 and 149, and a
+# duplicate 149 puts the sequence back in step. Verified against the English
+# text at vatican.va, which is authoritative for the numbering.
+#
+# Ingested as printed, `ccc:147` would have returned §146's text — a locator
+# that resolves, a quotation that verifies byte-exactly, and the wrong
+# paragraph. Three units, silently. That is the precise failure class the
+# project exists to prevent, and no check downstream of ingestion can see it.
+#
+# The correct total is 2,865: the whole Catechism, nothing missing.
 #
 # WHAT THIS FILE IS FOR
-#   The parser asserts three things per document (ADR-019): the anchor and the
-#   printed number agree, the sequence is strictly increasing, and the final
-#   count matches `expected_units` minus declared errata. Every entry here is a
-#   place one of those assertions fires on a defect we have already looked at.
-#   An undeclared failure is a NEW defect and must fail the ingest.
+#   The parser asserts three things (ADR-019): the printed number and the anchor
+#   agree, the sequence is complete and strictly increasing, and the final count
+#   matches. Every entry below is a place one of those fires on a fault that has
+#   been looked at. An UNDECLARED failure is a new defect and stops the ingest.
 #
-#   This file therefore does two jobs, and the second matters more: it stops the
-#   handful of known defects from training anyone to loosen the assertions.
+#   Its more important job is second-order: it keeps the six known faults from
+#   being used as an argument for loosening the assertions.
 #
 # WHAT THIS FILE IS NOT
-#   It holds locators and defect kinds. It holds NO corpus text — not even the
-#   text of the missing §146 — so it ships under ADR-003 unchanged. `repair`
-#   names which signal the parser recovers from, never a literal.
+#   Locators and defect kinds only. NO corpus text — not one word — so it ships
+#   under ADR-003. `repair` names the signal recovered from, never a literal.
 #
-# EVERY DEFECT HERE IS IN THE ANCHOR, NONE IN THE PRINTED NUMBER. That is why
-# the printed number is authoritative and the anchor is the cross-check.
+# EVERY ANCHOR IN THIS SOURCE THAT DISAGREES WITH ITS PRINTED NUMBER IS THE
+# ANCHOR'S FAULT. That asymmetry is why the printed number is authoritative and
+# the anchor is the cross-check, and not the other way round.
 
 source: ccc
 language: hu
 inventoried: 2026-09-07
-anchors_well_formed: 2859
 expected_units: 2865
-declared_missing: 1              # §146
-parsed_units_expected: 2864      # expected_units - declared_missing
+parsed_units: 2865          # complete; there are no missing paragraphs
+anchors_well_formed: 2857
 
-errata:
+# ── Misnumbered paragraphs ──────────────────────────────────────────────────
+# The source prints the wrong number. Addressed by (page, printed label,
+# occurrence) rather than by position in the run, so a declaration survives the
+# page being re-slugged or re-typeset.
+#
+# These are DECLARED, never inferred. A parser that detected drift and shifted
+# labels back would be guessing at intent across a region whose end it cannot
+# see; four entries checked against the authoritative text are a fact. The
+# `verified_against` field says how each was established.
+
+relabels:
+  # A +1 drift over three paragraphs, absorbed by the duplicate 149.
+  - page: kek-052-063
+    found_label: 147
+    occurrence: 1
+    correct_locator: ccc:146
+    verified_against: "vatican.va ENG0015 §146 — Abraham and the definition of faith in Hebrews 11:1"
+
+  - page: kek-052-063
+    found_label: 148
+    occurrence: 1
+    correct_locator: ccc:147
+    verified_against: "vatican.va ENG0015 §147 — the Old Testament's witnesses to this faith"
+
+  - page: kek-052-063
+    found_label: 149
+    occurrence: 1
+    correct_locator: ccc:148
+    verified_against: "vatican.va ENG0015 §148 — the Virgin Mary embodies the obedience of faith"
+    note: >
+      The SECOND paragraph labelled 149 on this page is correctly numbered and
+      is left alone. Which is which is decided by occurrence, not by content.
+
+  # A single mislabelled paragraph, no drift: the sequence resumes at 212.
+  - page: kek-067-120
+    found_label: 210
+    occurrence: 2
+    correct_locator: ccc:211
+    verified_against: "vatican.va ENG0015 §211 — the divine name 'I Am' expresses God's faithfulness"
+    note: >
+      THE IMPORTANT ONE. Anchor `K0210` and printed number `210.` agree with
+      each other and are both wrong, so the agreement check passes and this
+      paragraph is filed as a duplicate §210 — losing §211 and gaining a second
+      §210, with every other check green. Only the strictly-increasing
+      assertion catches it. Delete that assertion as redundant and this defect
+      returns silently.
+
+# ── Permitted anchor defects ────────────────────────────────────────────────
+# Known, looked at, and recoverable from the printed number. Never a wildcard:
+# the pair (locator, kind) must match exactly, so a DIFFERENT fault at the same
+# locator still fails.
+
+allowed:
   - locator: ccc:74
     kind: anchor-missing-prefix
     found: 'name="74"'
     expected: 'name="K0074"'
     repair: printed-number
-    note: >
-      Anchor lost its K prefix. Text and printed number are intact.
-
-  - locator: ccc:146
-    kind: paragraph-absent
-    found: 'K0145 followed directly by K0147'
-    page: kek-052-063
-    repair: none
-    note: >
-      The paragraph is not on the page at all — not an anchor defect but a
-      content gap in the source. The 1997 archive edition has it, and it is
-      deliberately NOT backfilled from there: mixing revisions inside one
-      document is exactly what ADR-019 rejected. §146 is a hole until the
-      current text supplies it. A question whose expected_units names ccc:146
-      will fail eval:lint, and that failure is correct.
-
-  - locator: ccc:211
-    kind: anchor-duplicated-and-number-wrong
-    found: 'second <a name="K0210">210.</a> on the page'
-    page: kek-067-120
-    repair: ordinal-monotonicity
-    note: >
-      THE IMPORTANT ONE. Both signals are individually plausible and both are
-      wrong — anchor and printed number agree with each other on 210, so the
-      agreement check passes and the paragraph is silently filed as a second
-      copy of §210. Only the strictly-increasing assertion catches it. This is
-      the entry that justifies that assertion existing; drop it and the corpus
-      quietly loses §211 and gains a duplicate §210.
+    page: kek-031-051
 
   - locator: ccc:2096
     kind: anchor-absent
-    found: 'plain text "2096 Az imádás…", no anchor, no trailing period'
-    page: kek-541-565
     repair: printed-number
+    page: kek-541-565
     note: >
-      Note the missing period. A printed-number pattern that requires `N\.`
-      will not match here — the number is followed by a space.
+      No anchor, and the printed number carries no trailing period either — a
+      pattern requiring `N.` will not match it. Accepted because the sequence
+      expects 2096 at that position; a bare number alone is not sufficient
+      evidence of a paragraph (see § Not errata).
 
   - locator: ccc:2213
     kind: anchor-absent
-    found: 'plain text "2213. Az emberi közösségek…", no anchor'
-    page: kek-566-644
     repair: printed-number
+    page: kek-566-644
 
   - locator: ccc:2621
     kind: anchor-typo
     found: 'name="K26201"'
     expected: 'name="K2621"'
-    page: kek-650-670
     repair: printed-number
+    page: kek-650-670
     note: >
-      A trailing 1 in the anchor. Printed number reads 2621 correctly. Also
-      produces a spurious locator (ccc:26201) if anchors are trusted blindly —
-      which is the failure the agreement check exists to catch.
+      A trailing 1. Trusting anchors blindly would also mint a spurious
+      locator, ccc:26201 — which is what the agreement check catches.
 
 # ── Not errata ──────────────────────────────────────────────────────────────
-# Four pages carry no paragraph anchors at all: kek-005-006, kek-007-008,
-# kek-009-011, kek-012-016. These are the front matter — Laetamur magnopere,
-# Fidei depositum, the prologue — which is unnumbered in the printed book too.
-# The parser skips them rather than reporting a gap. They are NOT citable units
-# under `ccc:<paragraph>`; if they are ever wanted, they need a locator scheme
-# of their own and would be synthetic (ADR-002).
+# Structural quirks the parser handles without a declaration, listed so nobody
+# re-discovers them as bugs. Each one broke an earlier draft.
+#
+#   * Front matter — kek-005-006, kek-007-008, kek-009-011, kek-012-016 carry no
+#     numbered paragraphs at all. Laetamur magnopere, Fidei depositum and the
+#     prologue are unnumbered in the printed book too. They are not citable
+#     units under `ccc:<paragraph>`; giving them one would mean a synthetic
+#     locator scheme (ADR-002).
+#
+#   * A dateline is not a paragraph. The front matter ends "2002. Szent Péter és
+#     Pál ünnepén". A leading number is therefore accepted only when the
+#     paragraph carries an anchor, or the number is the one the sequence expects.
+#
+#   * §78 begins mid-<p>, after a <br><br>, inside its predecessor's element. A
+#     unit boundary in this source is not an element boundary.
+#
+#   * §1077 and others: the anchor swallows the paragraph's opening quotation
+#     mark — <a name="K1077">1077. „</a> — so the marker is the NUMBER only and
+#     the „ has to survive into the text.
+#
+#   * §1182, §1353: the number is wrapped in <font size="-1"> inside the anchor.
+#
+#   * §222: the marker prints its period twice — <a …>222.</a>. — leaving the
+#     unit text to begin ". ".
+#
+#   * Footnote reference anchors appear with their attributes in either order,
+#     `<a name="JB7" href="#J7">` and `<a href="#J64" name="JB64">`. Matching
+#     only the first form leaves [64] markers in 1,586 units, invisibly, since
+#     the text still reads as prose.
+#
+#   * A bold heading may start with a digit ("2. Cikkely"). It creates no
+#     spurious unit — a marker needs corroboration — but if it is not removed
+#     its text is appended to the PRECEDING paragraph.
