@@ -1,8 +1,10 @@
 # The corpus
 
-> Status: **Milestone 0**. `corpus/sources.yaml` holds the entries whose licence
+> Status: **Milestone 1**. `corpus/sources.yaml` holds the entries whose licence
 > status is settled. Everything else is a candidate, listed at the bottom of this
-> file with what still has to be established.
+> file with what still has to be established. The CCC additionally carries its
+> fetch locations and its revision, settled in
+> [ADR-019](adr/019-ccc-editions.md).
 
 ## What a source is
 
@@ -19,6 +21,7 @@ that governs how it may be used and how much it is worth:
 | `chunking` | which parsing strategy the pipeline applies |
 | `languages` | which translations we ingest |
 | `cross_lingual_key` | the unit identifier shared across translations, where one exists |
+| `revision` (per document) | which revision of the work this text descends from — see § Revision drift |
 
 ## Why chunking is per-source
 
@@ -77,6 +80,70 @@ reproducing text at all**: ingest for retrieval, display a locator, a link to th
 official edition, and our own prose. See
 [ADR-014](adr/014-translation-and-quotation.md).
 
+## Revision drift
+
+A work has one identity across its translations. It does **not** have one text.
+Magisterial documents get amended, the amendment reaches each national edition on
+its own schedule, and both editions keep publishing under the same paragraph
+numbers.
+
+This was found the ordinary way — by comparing two Hungarian editions of the
+Catechism that turned out to be two different revisions of it:
+
+| Source | §2267 |
+|---|---|
+| `archiv.katolikus.hu` | *"…nem zárja ki a halálbüntetéshez folyamodást…"* |
+| `katolikus.hu` (current) | *"…a halálbüntetés megengedhetetlen…"* |
+
+The first is the 1997 *editio typica*; the second carries the 2018 *Rescriptum*.
+`vatican.va` English is also 2018-amended.
+
+**Why this is a corpus problem and not a data-entry problem.** Pairing the 1997
+Hungarian with the 2018 English would leave every locator resolving, every
+quotation byte-exact, and the citation gate passing — while `ccc:2267` taught
+opposite doctrine depending on the reader's language. The numbering is what the
+tradition gives us for free; unit *identity* also requires a shared revision, and
+that is a property of the fetch. Nothing downstream can detect its absence, which
+is why it is established before ingestion rather than measured after.
+
+So: **`revision` is required on every document entry, and the entries for one
+source must agree on it.** Disagreement blocks ingestion of the second language;
+it does not downgrade to a warning.
+
+The general shape, which will recur for every encyclical and conciliar document:
+
+- Prefer the **current** revision in every language, even at the cost of a worse
+  fetch target. ADR-019 took 31 template-generated pages over a static ZIP for
+  exactly this.
+- **Never patch one revision with paragraphs from another.** There is no published
+  diff of the *editio typica* against the *Rescriptum*, so a hand-patch
+  generalises from the paragraph you happened to check and turns a detectable
+  divergence into an undetectable one.
+- Expect a **window of disagreement** after any future amendment, when one
+  edition has updated and the other has not. `revision` makes that a condition
+  the pipeline can see; it does not prevent it.
+
+### Source defects are declared, not tolerated
+
+The current Hungarian CCC is a real web edition with real defects: of its 2,865
+paragraphs, six are broken — five with a malformed or missing anchor, and §146
+absent from the page entirely. They live in `corpus/errata/ccc-hu.yaml` with their
+defect kind and the signal the parser recovers from.
+
+The file exists less to record the defects than to keep them from eroding the
+checks. A parser that meets six known-bad anchors and responds by relaxing its
+assertions has thrown away the property the corpus is built on. Declared errata
+let the assertions stay strict, so an *undeclared* failure is a new defect and
+stops the ingest. The errata file holds locators and defect kinds only — no
+corpus text, not even the missing paragraph's — so it ships under ADR-003.
+
+One defect is worth naming here, because it shaped the parser. In §211 the anchor
+and the printed number *agree with each other* and are *both wrong* (both read
+210), so a parser that cross-checks the two signals accepts it and files the
+paragraph as a duplicate §210. Only asserting that the sequence strictly
+increases catches it. Agreement between two signals is not the same as
+correctness, and one paragraph in the Catechism is there to prove it.
+
 ## Pending licence resolution
 
 Wanted, not yet manifest entries. Each needs its status established first.
@@ -124,7 +191,14 @@ Hungarian, and should not be settled by whichever file was easiest to download.
 3. Define the `locator_scheme` — the addressing the tradition already uses, not
    one we invent. If the work has none, use a synthetic scheme and mark it as
    such: synthetic locators carry none of the stability guarantees.
-4. Choose or write a `chunking` strategy that respects the work's own structure.
-5. Add fixtures and unit tests for the parser before ingesting at scale.
-6. Grant the tables it touches in `supabase/migrations/` — deny-by-default means
+4. Establish the `revision` of every language you intend to ingest, and check
+   they agree (§ Revision drift). For a single-language source this is a note;
+   for a multilingual one it is a precondition.
+5. Choose or write a `chunking` strategy that respects the work's own structure.
+6. Inventory the fetched text before writing the parser: count the units, and
+   declare the defects you find in `corpus/errata/`. Discovering them from
+   failing assertions later is how assertions get loosened.
+7. Add fixtures and unit tests for the parser before ingesting at scale — the
+   errata are the fixture list.
+8. Grant the tables it touches in `supabase/migrations/` — deny-by-default means
    an ungranted table is unreachable.

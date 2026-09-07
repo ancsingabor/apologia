@@ -1,0 +1,180 @@
+# ADR-019 — The CCC editions: revision alignment over file convenience
+
+Status: **Accepted** · Milestone 1
+Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
+the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
+
+## Context
+
+`corpus/sources.yaml` has named `ccc` as the Milestone 1 source since Milestone 0,
+with `languages: [hu, en]` and `chunking: numbered-paragraph`. It named no fetch
+location, and the pipeline's first step is `fetch — content-addressed,
+hash-verified`. Nothing could be built until this was settled.
+
+Two Hungarian editions of the Catechism are online, both under the Hungarian
+bishops' conference:
+
+- **`archiv.katolikus.hu/kek/`** — 39 HTML files named by starting paragraph
+  (`kek00050.html`), plus a whole-corpus `k.zip`.
+- **`katolikus.hu/dokumentumtar/kek-<print-page-range>`** — 31 pages, reachable
+  from a table of contents at `katolikus.hu/cikk/a-katolikus-egyhaz-katekizmusa`.
+
+For English the practical option is **`vatican.va/archive/ENG0015/`** (IntraText).
+The USCCB edition is served through a FlippingBook JavaScript viewer with no
+addressable text, so it is not a fetch target at all.
+
+## Problem
+
+On every axis an ingestion pipeline usually cares about, the **archive wins**:
+
+| | archive | modern |
+|---|---|---|
+| File naming | by starting paragraph — self-describing | by *printed page range*, meaningless to the locator scheme |
+| Fetch shape | one `k.zip` — a single hashable artifact | 31 pages discovered from a ToC |
+| Markup | flat, stable since ~1999 | template-generated, can be re-themed under us |
+
+Choosing on those grounds is choosing the archive. That is the wrong answer, and
+the reason has nothing to do with file layout.
+
+## The finding
+
+The two Hungarian texts are the same translation but **different revisions of the
+Catechism**. §2267 is the diagnostic:
+
+| Source | §2267 |
+|---|---|
+| `archiv.katolikus.hu` | *"…nem zárja ki a halálbüntetéshez folyamodást…"* |
+| `katolikus.hu` (modern) | *"…a halálbüntetés megengedhetetlen…"* |
+
+The archive carries the 1997 *editio typica*. The modern site carries the text as
+amended by the *Rescriptum ex Audientia SS.mi* of 2 August 2018. **`vatican.va`
+English is also 2018-amended** — verified directly against §2267.
+
+## Alternatives considered
+
+1. **`archiv.katolikus.hu` + `vatican.va`.** Best file ergonomics; puts a 1997
+   Hungarian text and a 2018 English text under one locator space.
+2. **`archiv.katolikus.hu` for both, patching §2267 by hand.** Restores
+   agreement at the one paragraph we happened to look at, and asserts nothing
+   about the ones we did not.
+3. **Modern `katolikus.hu` + `vatican.va`.** Worse file ergonomics; both sides on
+   the same revision.
+
+## Decision
+
+**Three.** Hungarian from `katolikus.hu/dokumentumtar/kek-*`, English from
+`vatican.va/archive/ENG0015/`, recorded per language in `corpus/sources.yaml`
+under `documents:`.
+
+**Revision agreement across languages is a precondition of ingesting a source in
+more than one language, not a quality metric.** It is checked before a fetch is
+accepted, and a `revision` field is required on every document entry.
+
+## Reasoning
+
+**Option 1 would have made ADR-002's central claim silently false.** That claim is
+that a locator is a *cross-lingual identity*: `ccc:2267` is the same citable unit
+in Hungarian and in English, and that identity is the alignment key ADR-007's
+cross-lingual evaluation is built on. Under option 1 the numbering aligns
+perfectly and the *content* contradicts — the Hungarian unit says the death
+penalty is not excluded, the English unit says it is inadmissible.
+
+Nothing in the system would catch it. The locator resolves in both languages. The
+quotation is byte-exact against whichever unit was retrieved (ADR-017). The
+citation gate passes (ADR-005). Groundedness is perfect — the answer *is*
+grounded, in a superseded text. **The failure mode is an answer that is correct,
+cited, verified, and teaches the opposite doctrine depending on the reader's
+language.** For a Hungarian-first apologetics site, on the death penalty, this is
+close to the worst available outcome, and it would have arrived through the one
+part of the design we had been treating as free.
+
+**"Free alignment key" was doing too much work.** Milestone 0 recorded shared
+paragraph numbering as something the project got for nothing. What is actually
+free is the *numbering*. Unit identity additionally requires that both documents
+descend from the same revision, and that is a property of the fetch, not of the
+tradition. This ADR is where that distinction gets paid for.
+
+**Option 2 is the tempting one and is worse than option 1.** Patching the
+paragraph we found generalises from a sample of one to a claim about 2,865, and
+converts a detectable divergence into an undetectable one. There is no list of
+what the 2018 *Rescriptum* and the 1997 *editio typica* touched that we could
+diff against; the honest move is to take a text that is already current.
+
+**The encoding difference points the same way, for a smaller reason.** The archive
+is ISO-8859-2, served with no charset, and uses ASCII typography — `--` for the
+en-dash, `"…"` where Hungarian sets `„…”`. Under the byte-exact quotation
+comparison of ADR-017, that would require a normaliser that *guesses* at intended
+typography. The modern text is UTF-8 with correct Hungarian punctuation, so
+normalisation stays a matter of whitespace and Unicode form rather than
+reconstruction.
+
+## Consequences
+
+### The HU parser has a known defect set, and it is the fixture list
+
+All 31 pages were fetched and inventoried. Paragraph ranges are contiguous and
+non-overlapping and cover §1–§2865; 2,859 anchors are well-formed. Six are not:
+
+| Locator | Defect | Recoverable from |
+|---|---|---|
+| §74 | anchor is `name="74"` — missing the `K` prefix | printed number |
+| §146 | **paragraph absent entirely** — `K0145` is followed by `K0147` | nothing; a real gap |
+| §211 | anchor duplicates `K0210`; the printed number is also wrong (`210.`) | ordinal monotonicity |
+| §2096 | no anchor; printed number carries no trailing period | printed number |
+| §2213 | no anchor; printed number present | printed number |
+| §2621 | anchor typo `K26201` | printed number |
+
+**Every defect is in the anchor; none is in the printed number.** So the parser
+treats the printed `56.` as authoritative and `name="K0056"` as a cross-check —
+the inverse of the obvious design, and load-bearing:
+
+1. Parse both signals per paragraph and **assert they agree**.
+2. **Assert the sequence is strictly increasing.** This is what catches §211,
+   where both signals are individually plausible and both wrong.
+3. **Assert the final count**, against `expected_units` minus declared errata.
+
+§146 becomes a *declared* gap in `corpus/errata/ccc-hu.yaml` rather than a silent
+hole, and any *new* gap fails the ingest. An errata file listing locators and
+defect kinds ships under ADR-003 without difficulty — it contains no corpus text.
+
+### Elsewhere
+
+- `documents.revision` is added to the manifest contract. The DB already models
+  this correctly: `documents` is per (source, language) with `content_hash` and
+  `is_current`, so a future revision inserts a row rather than mutating one, and
+  citations keep resolving against the text they were verified against.
+- The HU page list is **discovered from the ToC at fetch time**, not pinned. The
+  integrity check that matters is `expected_units` + errata, which is invariant
+  under the site re-slugging its pages; a pinned list of print-page ranges would
+  break on a re-typeset while proving nothing about the text.
+- The English side is **not yet inventoried.** Its revision is verified; its
+  completeness and defect set are not, and the same three assertions must run
+  over it before it is trusted.
+- `documents.edition` is **still unresolved** and is left null rather than
+  guessed. Szent István Társulat is the LEV licensee for Hungary, but the modern
+  pages credit no publisher and the archive credits its translators only inside
+  HTML comments. Naming an edition we have not confirmed is the same error as
+  inferring an `authority_tier`.
+
+## Trade-offs
+
+**We took the more fragile fetch target on purpose.** 31 template-generated pages
+behind a ToC will break more often than a static ZIP that has not moved since
+1999. Accepted: a fetch that breaks loudly is recoverable, and a text that
+disagrees with its own translation is not.
+
+**Revision alignment is asserted from one paragraph, not proved.** §2267 is a
+diagnostic, not a proof that every 2018 amendment reached both texts. It is the
+strongest cheap evidence available — there is no published machine-readable diff
+of the *editio typica* against the *Rescriptum* — and it is why `revision` is a
+recorded field rather than an assumption: when a real diff becomes possible, this
+becomes checkable instead of argued.
+
+**Choosing the current revision means inheriting future ones.** When the CCC is
+next amended, the two sources will not update on the same day, and for some
+window `ccc:N` will diverge across languages again. The `revision` field is what
+makes that a detectable condition; nothing here makes it impossible.
+
+**A live text is a moving hash.** `content_hash` will change on re-typesetting
+that alters no words. That is noise the archive would not have produced, and it
+is the cost of the choice.
