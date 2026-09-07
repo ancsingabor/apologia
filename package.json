@@ -10,8 +10,11 @@
     "prepare": "lefthook install",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "bash scripts/integration.sh",
     "test:e2e": "bash scripts/e2e.sh",
-    "test:e2e:ui": "bash scripts/e2e.sh --ui"
+    "test:e2e:ui": "bash scripts/e2e.sh --ui",
+    "ingest": "tsx scripts/ingest/main.ts",
+    "eval:lint": "tsx scripts/eval-lint.ts"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",
@@ -19,6 +22,7 @@
     "@supabase/supabase-js": "^2.106.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "js-yaml": "^5.4.1",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "react": "19.2.4",
@@ -30,6 +34,7 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.20.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -37,6 +42,7 @@
     "eslint-config-next": "16.2.6",
     "lefthook": "^2.1.9",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^5.0.0"
   },

@@ -104,3 +104,49 @@ now, and it is small enough to revisit.
 **Coverage percentage is not a target and will not be reported.** The property
 tested — a fabricated citation cannot reach a reader — matters; the fraction of
 lines executed while testing it does not.
+
+## Amendment — 2026-09-07: the integration row is decided
+
+Status of this amendment: **Accepted**. The trade-off above said the integration
+runner "gets made when the first such test is written, not now". The ingestion
+CLI wrote that test — `integration/corpus-upsert.test.ts`, over the unit upsert
+this ADR named as the example — so the decision is due, and it is recorded here
+rather than in a new ADR because this file pre-registered the question.
+
+**Vitest, against the ephemeral local stack**, under a second config
+(`vitest.integration.config.mts`) and a second script
+(`npm run test:integration` → `scripts/integration.sh`, which mirrors
+`scripts/e2e.sh`'s stack wiring and localhost guard).
+
+### Reasoning
+
+**The fallback rule in the trade-off above already decides it.** *"If the
+assertion needs a browser to be meaningful, it is an E2E test."* Nothing being
+asserted here is user-visible: the properties are that exactly one document per
+language is current, that a re-ingest of unchanged content writes nothing, and
+that a crashed run leaves a sweepable signature. Playwright would contribute a
+browser and a Next build to a test about six SQL statements.
+
+**Two configs is the honest cost, and it buys the property `npm test` exists
+for.** The unit suite must stay sub-second and service-free — CI orders it
+before the stack boot precisely so a parser regression fails in seconds. Merging
+integration tests into `npm test` would make every unit run depend on Docker;
+keeping them in the same runner under a different config keeps one mental model
+and one assertion vocabulary while preserving that ordering.
+
+**`integration/` is a directory, not a filename convention.** `*.itest.ts` would
+have worked by a hair — `**/*.test.ts` does not match it — and that is exactly
+the problem: a glob that excludes by one character is a glob that silently
+re-includes when someone renames a file. `e2e/` is already excluded by
+directory, so this follows a convention the repo has rather than inventing one.
+
+### Consequences
+
+- CI runs `npm run test:integration` after the Supabase stack it already starts
+  for Playwright, so the stack boot is shared rather than paid twice.
+- The pgvector top-*k* tests ADR-008 will need have a home already, with the
+  stack wiring and the localhost guard written.
+- The guard differs from the ingest CLI's on purpose. This suite truncates
+  tables and refuses any non-local target outright, the way `e2e/fixtures/seed.ts`
+  does; the CLI may legitimately target the cloud project and therefore only
+  requires that a remote target be *chosen* (`--remote`), never forbidden.

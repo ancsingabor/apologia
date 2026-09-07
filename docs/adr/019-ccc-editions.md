@@ -1,6 +1,6 @@
 # ADR-019 — The CCC editions: revision alignment over file convenience
 
-Status: **Accepted** · Milestone 1 · **amended 2026-09-07, see § Amendment**
+Status: **Accepted** · Milestone 1 · **amended twice on 2026-09-07 — see the two § Amendment sections at the foot**
 Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
 the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
 
@@ -181,7 +181,7 @@ that alters no words. That is noise the archive would not have produced, and it
 is the cost of the choice.
 
 
-## Amendment — 2026-09-07
+## Amendment — 2026-09-07 (first): what writing the parser found
 
 Writing the parser falsified two things this ADR asserted, and one of them
 mattered. Both are corrected here rather than edited away, because the way the
@@ -250,3 +250,83 @@ served as `charset=iso-8859-1`. Corrected in `corpus/sources.yaml`. Noted becaus
 it is the same class of thing as the Hungarian archive's ISO-8859-2 that this ADR
 used as an argument *against* that source — the difference is that vatican.va
 declares its charset, so it decodes deterministically rather than by guess.
+
+## Amendment — 2026-09-07 (second): what running the pipeline found
+
+The first amendment recorded what writing the *parser* falsified. Running the
+whole pipeline — fetch through upsert — falsified two more things, and the
+pattern is now consistent enough to be worth naming: **every stage of this
+ingest has corrected a claim the stage before it could not have tested.**
+
+### The table of contents links 32 pages, not 31
+
+This ADR inventoried 31 document pages. Discovery finds 32: the ToC also links
+`kek-targymutato`, the subject index — back matter, 1.1 MB of entries of the
+form *"Ábel – az igaz 58; – meggyilkolása 401, 2559"*.
+
+It is **not filtered out**, and the restraint is the decision. A slug denylist
+would be pinning under another name, maintained against a site this ADR expects
+to re-slug. The page is allowed through and yields nothing, by three independent
+mechanisms: it carries no `name="K…"` anchors (its numbers are `href` links
+*into* the body), its numbers therefore never open a `<p>` or follow a
+`<br><br>`, and an index runs alphabetically so the sequence never expects them.
+The count still lands on exactly 2,865 with the whole page in scope.
+
+This is the clearest vindication so far of *"the integrity check that matters is
+`expected_units` plus the errata"*: discovery is allowed to be approximate
+because something downstream is exact.
+
+One consequence for vocabulary. `ParseResult.frontMatterPages` has been renamed
+`unnumberedPages`, because the subject index is back matter and the old name
+asserted something false about it — in a field that is written into the
+committed corpus manifest.
+
+### The footnote apparatus leaked into two units, and no assertion could see it
+
+The parser cut the body at the first footnote definition, then moved the cut
+back to the enclosing `<p>` "because the apparatus paragraph opens with its own
+visible label". That is true of two of the three ways this source sets the
+label, and false of the third:
+
+| Markup | Where the label sits |
+|---|---|
+| `<p>Jegyzetek: <br> <a name="J1">` | opens the apparatus `<p>` |
+| `<hr> <b>Jegyzetek: </b><br> <a name="J1">` | in no `<p>` at all |
+| `<hr>Jegyzetek: <p><a name="J1">` | **before** the apparatus `<p>` |
+
+In the third shape the enclosing `<p>` opens *after* the label, so the cut left
+`Jegyzetek:` in the body, appended to the last unit on the page. It corrupted
+**§1065 and §1666** — two units out of 2,865.
+
+Every assertion passed. The count was 2,865, the sequence was strictly
+increasing, both signals agreed at every paragraph, and the errata were fully
+declared. The units still read as prose. What caught it was a post-ingest query
+over the stored text for markup residue — `text ~ '\[[0-9]+\]'`, `text ~ '<[a-zA-Z/]'`,
+`text like '%Jegyzetek%'` — run against the database *after* the ingest reported
+success.
+
+So the method note from the first amendment gains a third step:
+
+> **Inventory by parsing; assert over the parse; then probe the stored text.**
+> The assertions check that the corpus has the right *shape* — the right number
+> of units, in the right order, at the right addresses. They cannot check that a
+> unit's text is only its text, because contamination that reads as prose is
+> invisible to every structural signal. That question is asked of the database,
+> once the rows exist.
+
+Those probes are now part of `integration/`, so the check runs rather than being
+remembered.
+
+### Why this keeps happening, and why it is the process working
+
+Three times now a claim in this ADR has been falsified by the next stage down:
+anchor analysis mis-classified §146; the parser's `<p>` heuristic mis-cut two
+pages; the page inventory missed the subject index. Each was found because the
+stage that followed was built to be strict rather than accommodating, and each
+would have shipped as a citation that resolves, verifies byte-exactly, and is
+wrong.
+
+That is the argument for `assert` being a step rather than a flag, restated
+with evidence: the value is not that the assertions are complete — they
+demonstrably are not — but that everything they *do* cover fails loudly, which
+keeps the residue small enough to find by looking.

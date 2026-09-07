@@ -26,6 +26,61 @@ function page(body: string, name = "kek-001-002") {
 const P = (n: number, text: string) =>
   `<p><a name="K${String(n).padStart(4, "0")}">${n}.</a> ${text}</p>`;
 
+describe("the footnote apparatus boundary", () => {
+  // All three markup shapes are copied from real pages. Getting this wrong is
+  // quiet: the apparatus is appended to the LAST unit on the page, which still
+  // reads as prose, and no assertion can see it — the count, the sequence and
+  // the anchors are all still right.
+  const NAV =
+    '<p align="center"><a href="/dokumentumtar/a-katolikus-egyhaz-katekizmusa">Vissza a főoldalra</a></p>';
+
+  it("cuts a label that opens the apparatus paragraph", () => {
+    const body = `${P(1, "A törzsszöveg.")}${NAV}<hr><p>Jegyzetek: <br>
+      <a href="#JB1" name="J1">[1]</a> Vö. Jn 13,1.</p>`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units).toHaveLength(1);
+    expect(units[0].text).toBe("A törzsszöveg.");
+  });
+
+  it("cuts a label sitting in no <p> at all", () => {
+    // kek-697-723, the last page — so this shape guards §2865.
+    const body = `${P(1, "A törzsszöveg.")}${NAV}<hr> <b>Jegyzetek: </b><br>
+      <a href="#JB1" name="J1">[1]</a> Vö. Lk 11,2-4.`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units[0].text).toBe("A törzsszöveg.");
+  });
+
+  it("cuts a label sitting BEFORE the apparatus paragraph", () => {
+    // kek-199-298 and kek-415-448. The enclosing <p> of the first definition
+    // opens AFTER the label, so moving the cut back to it leaves "Jegyzetek:"
+    // in the body. This corrupted §1065 and §1666 — two units out of 2,865.
+    const body = `${P(1, "A törzsszöveg.")}${NAV}<hr>Jegyzetek: <p><a href="#JB1" name="J1">[1]</a> Vö. Jn 13,1.</p>`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units[0].text).toBe("A törzsszöveg.");
+    expect(units[0].text).not.toMatch(/Jegyzetek/);
+  });
+
+  it("does not truncate a page whose prose happens to say Jegyzetek", () => {
+    // The label is accepted as the boundary only when nothing but markup and
+    // whitespace separates it from the first definition. Without that
+    // proximity test, a body mention would cut the page short — losing
+    // paragraphs, which at least fails loudly, but for the wrong reason.
+    const body = `${P(1, "A Jegyzetek című fejezetről szóló bekezdés.")}${P(2, "A második.")}${NAV}<hr><p>Jegyzetek: <br><a name="J1">[1]</a> Vö.</p>`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units.map((u) => u.locator)).toEqual(["ccc:1", "ccc:2"]);
+    expect(units[0].text).toBe("A Jegyzetek című fejezetről szóló bekezdés.");
+  });
+
+  it("keeps the whole body when a page carries no apparatus", () => {
+    const { units } = parseKatolikusHu([page(P(1, "Nincs jegyzet.") + NAV)]);
+    expect(units[0].text).toBe("Nincs jegyzet.");
+  });
+});
+
 describe("locating paragraphs", () => {
   it("reads the printed number and keeps the anchor as corroboration", () => {
     const { units } = parseKatolikusHu([page(P(1, "Az első bekezdés szövege."))]);
@@ -91,7 +146,7 @@ describe("what is NOT a paragraph", () => {
 
     expect(result.units).toHaveLength(0);
     expect(result.skipped["numeric-lead-uncorroborated"]).toBe(1);
-    expect(result.frontMatterPages).toEqual(["kek-001-002"]);
+    expect(result.unnumberedPages).toEqual(["kek-001-002"]);
   });
 
   it("accepts an un-anchored number the sequence expects", () => {

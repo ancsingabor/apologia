@@ -60,12 +60,56 @@ const DIV_TAG = /<(\/?)div\b[^>]*>/gi;
  * NOT usable — several pages carry an `<hr>` mid-body, and cutting there loses
  * 500 paragraphs.
  *
- * The cut is then moved back to the START of the enclosing `<p>`, because the
- * apparatus paragraph opens with its own visible label — `<p>Jegyzetek: <br>
- * <a href="#JB1" name="J1">…` — and cutting at the first anchor leaves that
- * label appended to §2865.
+ * ── Moving the cut back past the visible label ──────────────────────────────
+ *
+ * The anchor is not the start of the apparatus: a visible "Jegyzetek:" label
+ * precedes it, and cutting at the anchor leaves that label appended to the last
+ * unit on the page. The source sets the label three different ways:
+ *
+ *   <p>Jegyzetek: <br> <a name="J1">          label opens the apparatus <p>
+ *   <hr> <b>Jegyzetek: </b><br> <a name="J1"> label in no <p> at all
+ *   <hr>Jegyzetek: <p><a name="J1">           label BEFORE the apparatus <p>
+ *
+ * An earlier version moved the cut back to the enclosing `<p>` of the anchor,
+ * which handles the first two and fails on the third — there the enclosing `<p>`
+ * opens *after* the label, so "Jegyzetek:" survives into the body. It corrupted
+ * §1065 and §1666, which is the shape this failure always takes: two units out
+ * of 2,865, still reading as prose, invisible to every assertion. The count is
+ * right, the sequence is right, the anchors agree; the text is wrong.
+ *
+ * So the label is located directly, and accepted as the boundary only when
+ * nothing but markup and whitespace separates it from the anchor. That
+ * proximity test is what stops a "Jegyzetek" occurring in body prose from
+ * truncating a page.
  */
 const BODY_END = /<a\b[^>]*\bname="J\d+"[^>]*>/i;
+
+/** The apparatus' visible label, in any of the three settings above. */
+const APPARATUS_LABEL = /Jegyzetek/gi;
+
+/** Between the label and the first definition: markup and whitespace only. */
+const LABEL_ADJACENT = /^Jegyzetek\s*:?\s*(?:<[^>]*>|\s)*$/i;
+
+/**
+ * Where the apparatus begins — the visible label if one sits adjacent to the
+ * first footnote definition, otherwise the `<p>` enclosing that definition.
+ */
+function apparatusStart(raw: string, anchorIndex: number): number {
+  let label = -1;
+  APPARATUS_LABEL.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = APPARATUS_LABEL.exec(raw)) !== null) {
+    if (match.index >= anchorIndex) break;
+    label = match.index;
+  }
+
+  if (label >= 0 && LABEL_ADJACENT.test(raw.slice(label, anchorIndex))) {
+    return label;
+  }
+
+  const enclosing = raw.lastIndexOf("<p", anchorIndex);
+  return enclosing >= 0 ? enclosing : anchorIndex;
+}
 
 /** A `<p>` holding nothing but one link is navigation ("Vissza a főoldalra"). */
 const NAV_ONLY = /^\s*<a\b[^>]*>[\s\S]*?<\/a>\s*$/i;
@@ -225,7 +269,7 @@ function isInBrief(body: string): boolean {
 export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
   const units: ParsedUnit[] = [];
   const defects: CorpusDefect[] = [];
-  const frontMatterPages: string[] = [];
+  const unnumberedPages: string[] = [];
   const skipped: Record<string, number> = {};
 
   let ordinal = 0;
@@ -246,8 +290,7 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
     const end = BODY_END.exec(raw);
     let cut = raw.length;
     if (end) {
-      const enclosing = raw.lastIndexOf("<p", end.index);
-      cut = enclosing >= 0 ? enclosing : end.index;
+      cut = apparatusStart(raw, end.index);
     }
     const body = raw.slice(0, cut);
     const region = blankHeadings(body, skipped);
@@ -268,7 +311,7 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
     }
 
     if (accepted.length === 0) {
-      frontMatterPages.push(page);
+      unnumberedPages.push(page);
       continue;
     }
 
@@ -289,5 +332,5 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
     });
   }
 
-  return { units, defects, frontMatterPages, skipped };
+  return { units, defects, unnumberedPages, skipped };
 }

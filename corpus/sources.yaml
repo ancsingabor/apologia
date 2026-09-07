@@ -14,8 +14,13 @@
 #   * `locator_scheme` defines how a citable unit in this work is addressed.
 #
 # STATUS: Milestone 1. These are the entries whose licence status is settled.
-# `ccc` now carries its fetch locations and revision (ADR-019) and is being
-# ingested end to end. `summa` and `kjv` are licensed but not yet located.
+# `ccc` carries its fetch locations and revision (ADR-019); its HUNGARIAN
+# document is INGESTED end to end — 2,865 units. The English one is not: its
+# revision is verified, its completeness is not. `summa` and `kjv` are licensed
+# but not yet located.
+#
+# What a run produced is recorded in `corpus/manifest.lock.yaml` — generated,
+# committed, and carrying hashes and counts but no corpus text.
 
 version: 0
 

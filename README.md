@@ -89,9 +89,33 @@ fetches and indexes it locally.
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | type-check (also runs on `git push`) |
 | `npm test` | Vitest — the deterministic suite (also runs on `git push`) |
+| `npm run test:integration` | Vitest against an ephemeral local Supabase stack |
 | `npm run test:e2e` | Playwright against an ephemeral local Supabase stack |
-| `npm run ingest` | *(Milestone 1)* build the index from `corpus/sources.yaml` |
+| `npm run ingest` | ingest a source — see below |
+| `npm run eval:lint` | resolve every gold-set locator against ingested text |
 | `npm run eval` | *(Milestone 1)* score the gold set, write a report |
+
+### Ingesting the corpus
+
+```bash
+npm run ingest -- --source=ccc --language=hu --dry-run   # fetch, parse, assert only
+npm run ingest -- --source=ccc --language=hu             # …and write
+```
+
+| Flag | |
+|---|---|
+| `--dry-run` | fetch, parse and assert; touch no database |
+| `--refetch` | bypass `.corpus-cache/` and re-download every page |
+| `--remote` | permit writing to a non-local Supabase target |
+
+The run is **idempotent** (an unchanged corpus writes nothing), **cached**
+(pages are re-fetched only with `--refetch`), and **resumable** (an interrupted
+run leaves a document the next run sweeps). It writes `corpus/manifest.lock.yaml`
+— which is committed, and carries hashes and counts but no corpus text (ADR-003).
+
+⚠️ `--remote` exists because the CLI has no localhost hard-guard, deliberately:
+ingesting into the cloud project is a legitimate operator action. It just has to
+be *chosen* rather than inherited from whatever `.env.local` happens to hold.
 
 ## Secrets
 

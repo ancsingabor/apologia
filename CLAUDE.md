@@ -43,6 +43,27 @@ not. **Adding a table means adding its grant.**
 Zod messages come from `copy.validation`. Prefer `getCopy(locale)` — the
 module-level `copy` constant is retired as `app/[lang]/` routing lands (ADR-013).
 
+## The ingestion CLI
+
+`npm run ingest -- --source=ccc --language=hu` (ADR-004). Never imported by
+`next build`, never runs in a request.
+
+The split is the convention to keep: **pure stages in `lib/corpus/`, I/O in
+`scripts/ingest/`.** Manifest and errata parsing, discovery, chunking, hashing
+and the assertions are pure functions over data and are unit tested; the
+network, the filesystem and Postgres are in the CLI shell and are not.
+
+Two things that look like mistakes and are not:
+
+- `scripts/ingest/client.ts` builds its Supabase client with `createClient`
+  directly rather than using `lib/supabase/server.ts`, which imports
+  `next/headers` at module scope and cannot load under `tsx`.
+- The CLI has **no** localhost hard-guard, unlike `e2e/fixtures/seed.ts`.
+  Ingesting into production is legitimate; it just requires `--remote`.
+
+`embed` is deliberately not implemented — it is a separate pass per candidate
+model, because ADR-008 is decided by measurement.
+
 ## Type layers
 
 ```
