@@ -56,3 +56,8 @@ next-env.d.ts
 
 # eval reports (committed baselines are force-added)
 /eval/reports
+
+# fetched corpus text — ADR-003: the repo ships the manifest and the pipeline,
+# never the text. corpus/manifest.lock.yaml and corpus/errata/ ARE committed:
+# they carry locators, hashes and counts, and no corpus text.
+/.corpus-cache

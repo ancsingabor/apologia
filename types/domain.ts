@@ -6,6 +6,7 @@ import type {
   AdminRole,
   AuthorityTier,
   CorpusLanguage,
+  SourceKind,
   UnitRole,
 } from "./db";
 
@@ -158,9 +159,22 @@ export interface ParsedUnit {
 export interface ParseResult {
   units: ParsedUnit[];
   defects: CorpusDefect[];
-  /** Pages carrying no numbered paragraphs — the front matter (Laetamur
-   *  magnopere, Fidei depositum, the prologue), unnumbered in the book too. */
-  frontMatterPages: string[];
+  /**
+   * Pages carrying no numbered paragraphs.
+   *
+   * Mostly the front matter — Laetamur magnopere, Fidei depositum, the prologue
+   * — which is unnumbered in the printed book too, so those pages are not
+   * citable units under `ccc:<paragraph>` and giving them one would mean a
+   * synthetic locator scheme (ADR-002).
+   *
+   * ⚠️ NOT only front matter, which is why this field is not called that. The
+   * Hungarian table of contents also links the subject index
+   * (`kek-targymutato`), 1.1 MB of entries like "Ábel – az igaz 58" whose
+   * paragraph numbers are links into the body rather than markers of it. It
+   * yields nothing, by three independent mechanisms, and the count still lands
+   * exactly on 2,865 — see lib/corpus/discover.ts.
+   */
+  unnumberedPages: string[];
   /** Counters for things deliberately not turned into units. Informational,
    *  but a jump here between runs means the source changed shape. */
   skipped: Record<string, number>;
@@ -208,4 +222,75 @@ export interface AssertionReport {
    * revisits is how a strict check goes soft.
    */
   stale: ErrataAllowance[];
+}
+
+// ── The manifest (ADR-003, ADR-004) ──────────────────────────────────────────
+// The parsed form of `corpus/sources.yaml`. That file is the source of truth
+// and the `sources` table is its ingested projection — the pipeline upserts
+// from the YAML, never the other way round.
+
+/**
+ * One (language, revision) of a work: the manifest side of a `documents` row.
+ *
+ * `revision` is REQUIRED and every document of a multilingual source must agree
+ * on it. That is not a quality metric, it is a precondition of ingesting a
+ * source in more than one language at all (ADR-019): translations descending
+ * from different revisions have numbering that aligns and content that does
+ * not, which silently falsifies the cross-lingual identity ADR-002 claims for a
+ * locator. Enforced in `lib/corpus/manifest.ts`, not merely documented.
+ */
+export interface ManifestDocument {
+  language: CorpusLanguage;
+  revision: string;
+  /** Null is "not established", never a guess — same rule as `authority_tier`. */
+  edition: string | null;
+  indexUrl: string;
+  /** Page list is discovered at fetch time, never pinned (ADR-019). */
+  fetch: "discover-from-index";
+  /** Key into the parser registry. An unknown id is fatal, not a default. */
+  parser: string;
+  /** What the bytes are, per document: the HU pages are UTF-8, vatican.va is
+   *  ISO-8859-1. Guessing here corrupts text permanently under ADR-017. */
+  encoding: string;
+  /** Path to this document's errata file, or null when none is declared. */
+  errata: string | null;
+}
+
+export interface ManifestSource {
+  id: string;
+  title: string;
+  kind: SourceKind;
+  /** Null is a positive statement: off the ecclesial-authority scale (ADR-010). */
+  authorityTier: AuthorityTier | null;
+  author: string | null;
+  languages: CorpusLanguage[];
+  /** Resolved, always. There is no `unknown` (ADR-003). */
+  license: string;
+  licenseNote: string | null;
+  locatorScheme: string;
+  /** Key into the chunker registry; there is deliberately no default (ADR-002). */
+  chunking: string;
+  canonicalUrl: string | null;
+  /** Asserted at ingest. Null for a source not yet inventoried. */
+  expectedUnits: number | null;
+  documents: ManifestDocument[];
+}
+
+// ── Chunking (ADR-002) ───────────────────────────────────────────────────────
+
+/**
+ * What gets embedded. Aligned to unit boundaries, never across them blindly.
+ *
+ * Units are referenced by LOCATOR rather than by database id, because chunking
+ * happens before anything is inserted — which is what keeps the chunker a pure
+ * function over the parser's output and testable without a database.
+ */
+export interface ParsedChunk {
+  /** Versioned strategy id: 'numbered-paragraph@1'. A variant is a NEW id
+   *  sitting beside this one in `chunks.strategy`, never a mutation of it, so
+   *  two chunkings can be scored over one corpus. */
+  strategy: string;
+  text: string;
+  /** The units this chunk covers, in reading order. n:m by design. */
+  unitLocators: string[];
 }

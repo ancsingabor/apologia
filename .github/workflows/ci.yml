@@ -82,6 +82,13 @@ jobs:
             echo "CRON_SECRET=e2e-dummy"
           } >> "$GITHUB_ENV"
 
+      # Ordered before the build: these need the stack that is already up, and
+      # nothing else. A broken ingest upsert should not wait on a Next build.
+      # `npm run test:integration` re-runs `supabase start` / `migration up`
+      # idempotently, so it is safe here even though the stack is already going.
+      - name: Integration tests
+        run: npm run test:integration
+
       - name: Build
         run: npm run build
 

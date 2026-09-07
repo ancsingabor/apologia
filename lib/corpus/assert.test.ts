@@ -31,7 +31,7 @@ function errata(over: Partial<CorpusErrata> = {}): CorpusErrata {
 const parsed = (units: ParsedUnit[]): ParseResult => ({
   units,
   defects: [],
-  frontMatterPages: [],
+  unnumberedPages: [],
   skipped: {},
 });
 
@@ -223,7 +223,7 @@ describe("the gate on the whole run", () => {
             detail: "no article-content container",
           },
         ],
-        frontMatterPages: [],
+        unnumberedPages: [],
         skipped: {},
       },
       errata()

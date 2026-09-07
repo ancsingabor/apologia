@@ -7,7 +7,7 @@ that was considered and rejected, is [ADR-015](docs/adr/015-testing-strategy.md)
 | Output | Gate |
 |---|---|
 | Deterministic, no I/O | Vitest — `npm test` |
-| Deterministic, crosses Postgres | Integration test against the local stack |
+| Deterministic, crosses Postgres | Vitest against the local stack — `npm run test:integration` |
 | A user-visible flow | Playwright — `npm run test:e2e` |
 | Probabilistic | The eval harness — never an assertion |
 
@@ -43,6 +43,42 @@ Currently covered:
   **denies**. A reverted fail-closed branch is invisible to every other kind of
   test, because it makes the endpoint work, uncapped.
 
+## Deterministic, crossing Postgres — Vitest against the local stack
+
+```bash
+npm run test:integration
+```
+
+ADR-015 left this row's runner deliberately open, to be settled when the first
+such test was written. The ingest upsert wrote it; the answer is **Vitest, not
+Playwright** — nothing asserted here is user-visible, so a browser and a Next
+build would be pure cost. See ADR-015 § Amendment.
+
+`scripts/integration.sh` mirrors `scripts/e2e.sh`: it starts the local stack,
+applies pending migrations, overrides every Supabase env var to the local
+values, and refuses a non-local URL. The specs also hard-guard on `localhost`
+themselves, because they truncate tables.
+
+Specs live in `integration/` and are excluded from `npm test` **by directory**,
+not by filename. `*.itest.ts` would have escaped `**/*.test.ts` by a single
+character, which is the kind of exclusion that silently stops working when
+someone renames a file.
+
+Currently covered:
+
+- **`integration/corpus-upsert.test.ts`** — the properties the ingest buys with
+  ordering rather than with a transaction, since PostgREST has none: exactly one
+  current document per language (enforced by a partial unique index that a mock
+  could not have modelled), an unchanged corpus writing nothing, a superseded
+  document keeping its units so stored citations still resolve, and a crashed
+  run leaving an `is_current = false AND unit_count = 0` signature the next run
+  sweeps.
+
+To add as features land: pgvector top-*k* over a fixture corpus (ADR-008), and
+post-ingest probes over stored unit text for markup residue — the check that
+caught the footnote apparatus leaking into §1065 and §1666 when every structural
+assertion was green (ADR-019 § Amendment (second)).
+
 ## Probabilistic — the eval harness
 
 Retrieval ranking, generated prose, groundedness, refusal behaviour. A change is
@@ -50,6 +86,12 @@ Retrieval ranking, generated prose, groundedness, refusal behaviour. A change is
 
 `npm run eval` (Milestone 1). Metric definitions, the gold-set format and the
 release rule: `docs/evaluation.md`.
+
+`npm run eval:lint` is **not** part of this layer despite living in `eval/`. It
+asserts that every `expected_units` locator resolves to a real ingested unit,
+which is ordinary deterministic checking — and it is what keeps the
+probabilistic layer honest, because a gold set nobody verified produces
+confident, meaningless numbers.
 
 ## End-to-end — Playwright
 
@@ -65,7 +107,9 @@ domain fixtures — extend it as tables are added, clearing children first.
 
 **Port conflicts:** the local stack binds 54321/54322. Another Supabase project
 running locally will hold those ports and `supabase start` will roll back. Stop
-the other stack (`npx supabase stop` in its directory) first.
+the other stack first — `supabase stop --project-id <name>` works from anywhere
+and takes a backup, so its data survives. This affects
+`npm run test:integration` and `npm run ingest` equally.
 
 Currently covered: the admin auth guard (`e2e/dashboard.spec.ts`) — an
 authenticated admin reaches `/dashboard`, an anonymous visitor is redirected to
@@ -78,7 +122,8 @@ policy.
 
 ## The broad gate
 
-`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` — all reproduced
+`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run test:integration`,
+`npm run build` — all reproduced
 in CI on every PR (`.github/workflows/ci.yml`), with the unit suite ordered
 before the Supabase stack so a deterministic regression fails in seconds rather
 than after a stack boot and a build. `npm test` and the typecheck also run on

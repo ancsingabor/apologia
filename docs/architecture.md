@@ -1,9 +1,10 @@
 # Architecture
 
-> Status: **Milestone 0** — the decisions are made, most of the code is not yet
-> written. Sections marked *(planned)* describe the intended shape and are the
-> contract Milestone 1 implements against. This file is kept honest: if it
-> claims something exists, it exists.
+> Status: **Milestone 1, in progress.** The ingestion pipeline is built and the
+> Hungarian Catechism is ingested — 2,865 citable units, end to end. The query
+> path is not. Sections marked *(planned)* describe the intended shape and are
+> the contract the rest of Milestone 1 implements against. This file is kept
+> honest: if it claims something exists, it exists.
 
 ## What this is
 
@@ -44,15 +45,19 @@ Three consequences run through the whole design:
    apologetics essay's prose are three different problems (ADR-002).
 2. **Citation verification is deterministic**, and it is a hard gate, not a
    score (ADR-005).
-3. **Cross-lingual retrieval gets a free alignment key** — CCC §1730 is §1730
-   in Hungarian and in English, so the same unit exists in both languages under
-   one identifier (ADR-007).
+3. **Cross-lingual retrieval gets an alignment key** — CCC §1730 is §1730 in
+   Hungarian and in English, so the same unit exists in both languages under one
+   identifier (ADR-007). This used to say *free*. What is free is the
+   **numbering**; unit *identity* additionally requires that both documents
+   descend from the same revision of the work, which is a property of the fetch
+   and has to be established. ADR-019 is where that was paid for, and §2267 is
+   why.
 
 ## Shape
 
 Two processes. The split matters: **ingestion is not a web concern.**
 
-### 1. Ingestion — an offline CLI *(planned, Milestone 1)*
+### 1. Ingestion — an offline CLI *(built)*
 
 ```
 source manifest (checked in)
@@ -66,9 +71,22 @@ source manifest (checked in)
   → emit         corpus manifest + hashes
 ```
 
-Runs as `npm run ingest` on a laptop or in CI. It is never imported by
-`next build` and never runs in a request. The repo ships the *manifest and the
-pipeline*, never the corpus text (ADR-003, ADR-004).
+Runs as `npm run ingest -- --source=ccc --language=hu` on a laptop or in CI. It
+is never imported by `next build` and never runs in a request. The repo ships
+the *manifest and the pipeline*, never the corpus text (ADR-003, ADR-004).
+
+The pure stages live in `lib/corpus/` and are unit tested; the network, the
+filesystem and Postgres live in `scripts/ingest/`. `embed` is deliberately
+absent — `chunk_embeddings` is keyed by (chunk, model) so that embedding is a
+separate pass run once per candidate, which is what "ADR-008 is decided by
+measurement" has to mean concretely. Wiring one provider into the ingest would
+settle that question by accident.
+
+**As of the first run: the Hungarian CCC is ingested.** 2,865 units, 2,865
+chunks, every declared erratum firing and nothing undeclared. `npm run eval:lint`
+resolves every gold-set locator whose source is ingested. What is *not* done:
+the English document (revision-verified but uninventoried — ADR-019), and every
+embedding.
 
 **`assert` is a step, not a flag.** Real web editions of canonical texts carry
 typesetting defects, and a parser that meets them and loosens its rules has
@@ -138,7 +156,7 @@ properly without a licence that will never come.
 See [ADR-014](adr/014-translation-and-quotation.md) and
 [docs/corpus.md](corpus.md).
 
-## Data model *(planned, Milestone 1)*
+## Data model *(`0005` built and populated; `0006` planned)*
 
 | Table | Holds | Migration |
 |---|---|---|
