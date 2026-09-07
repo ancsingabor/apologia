@@ -13,8 +13,9 @@
 #   * `chunking` names a strategy; there is deliberately no default (ADR-002).
 #   * `locator_scheme` defines how a citable unit in this work is addressed.
 #
-# STATUS: Milestone 0. These are the entries whose licence status is settled.
-# Milestone 1 ingests `ccc` alone, end to end, and measures it.
+# STATUS: Milestone 1. These are the entries whose licence status is settled.
+# `ccc` now carries its fetch locations and revision (ADR-019) and is being
+# ingested end to end. `summa` and `kjv` are licensed but not yet located.
 
 version: 0
 
@@ -36,12 +37,58 @@ sources:
     locator_scheme: "ccc:<paragraph>"          # ccc:1730
     chunking: numbered-paragraph
     cross_lingual_key: paragraph
+    canonical_url: https://www.vatican.va/archive/ENG0015/_INDEX.HTM
+    expected_units: 2865                       # numbered paragraphs; asserted at ingest
+
+    # ── documents ───────────────────────────────────────────────────────────
+    # One entry per (language, revision) — the manifest side of the `documents`
+    # table in 0005_corpus. `revision` is REQUIRED and the entries here must
+    # agree on it: a multilingual source whose translations descend from
+    # different revisions has numbering that aligns and content that does not,
+    # which silently falsifies the cross-lingual identity ADR-002 claims for a
+    # locator. See ADR-019 for the §2267 case that settled this.
+    documents:
+      - language: hu
+        revision: "1997+2018"
+        edition: null
+        # ⚠️ NOT inferred. Szent István Társulat is the LEV licensee for Hungary,
+        # but the pages credit no publisher and the archive credits translators
+        # only inside HTML comments. Naming an unconfirmed edition is the same
+        # error as inferring an authority_tier (ADR-010). Open — ADR-019.
+        index_url: https://katolikus.hu/cikk/a-katolikus-egyhaz-katekizmusa
+        fetch: discover-from-index               # 31 pages; NOT pinned — ADR-019
+        parser: katolikus-hu-numbered-paragraph
+        encoding: utf-8
+        errata: corpus/errata/ccc-hu.yaml
+        inventoried: 2026-09-07                 # all 31 pages fetched and counted
+
+      - language: en
+        revision: "1997+2018"
+        edition: null
+        index_url: https://www.vatican.va/archive/ENG0015/_INDEX.HTM
+        fetch: discover-from-index
+        parser: vatican-intratext
+        encoding: utf-8
+        errata: null
+        inventoried: null
+        # Revision VERIFIED against §2267. Completeness and defect set are NOT —
+        # the three ingest assertions in ADR-019 must run over it before it is
+        # trusted. Do not read `errata: null` as "clean"; it means "unchecked".
     notes: >
       The Milestone 1 source, ingested in BOTH languages. Paragraph numbering is
       identical across translations, so the same citable unit exists in Hungarian
-      and English under one identifier — the free alignment key the cross-lingual
+      and English under one identifier — the alignment key the cross-lingual
       evaluation is built on (ADR-002, ADR-007). Ingesting both costs nothing
       extra in licensing, since both editions carry the same LEV terms.
+
+      This note used to call that alignment key FREE. What is free is the
+      numbering; unit *identity* additionally requires that both documents
+      descend from the same revision, which is a property of the fetch and has to
+      be established. ADR-019 is where that was paid for.
+
+      Fetch locations settled in ADR-019. `archiv.katolikus.hu/kek/` is REJECTED
+      despite better file ergonomics: it is the 1997 editio typica, so its §2267
+      contradicts the 2018-amended English text under the same locator.
 
   - id: summa
     title: Summa Theologiae

@@ -1,0 +1,100 @@
+# ── Errata: Catechism of the Catholic Church, Hungarian ─────────────────────
+#
+# Source: katolikus.hu/dokumentumtar/kek-*  (ADR-019)
+# Inventoried: 2026-09-07 — all 31 pages fetched; 2,859 of 2,865 paragraph
+# anchors well-formed; the 6 below are not.
+#
+# WHAT THIS FILE IS FOR
+#   The parser asserts three things per document (ADR-019): the anchor and the
+#   printed number agree, the sequence is strictly increasing, and the final
+#   count matches `expected_units` minus declared errata. Every entry here is a
+#   place one of those assertions fires on a defect we have already looked at.
+#   An undeclared failure is a NEW defect and must fail the ingest.
+#
+#   This file therefore does two jobs, and the second matters more: it stops the
+#   handful of known defects from training anyone to loosen the assertions.
+#
+# WHAT THIS FILE IS NOT
+#   It holds locators and defect kinds. It holds NO corpus text — not even the
+#   text of the missing §146 — so it ships under ADR-003 unchanged. `repair`
+#   names which signal the parser recovers from, never a literal.
+#
+# EVERY DEFECT HERE IS IN THE ANCHOR, NONE IN THE PRINTED NUMBER. That is why
+# the printed number is authoritative and the anchor is the cross-check.
+
+source: ccc
+language: hu
+inventoried: 2026-09-07
+anchors_well_formed: 2859
+expected_units: 2865
+declared_missing: 1              # §146
+parsed_units_expected: 2864      # expected_units - declared_missing
+
+errata:
+  - locator: ccc:74
+    kind: anchor-missing-prefix
+    found: 'name="74"'
+    expected: 'name="K0074"'
+    repair: printed-number
+    note: >
+      Anchor lost its K prefix. Text and printed number are intact.
+
+  - locator: ccc:146
+    kind: paragraph-absent
+    found: 'K0145 followed directly by K0147'
+    page: kek-052-063
+    repair: none
+    note: >
+      The paragraph is not on the page at all — not an anchor defect but a
+      content gap in the source. The 1997 archive edition has it, and it is
+      deliberately NOT backfilled from there: mixing revisions inside one
+      document is exactly what ADR-019 rejected. §146 is a hole until the
+      current text supplies it. A question whose expected_units names ccc:146
+      will fail eval:lint, and that failure is correct.
+
+  - locator: ccc:211
+    kind: anchor-duplicated-and-number-wrong
+    found: 'second <a name="K0210">210.</a> on the page'
+    page: kek-067-120
+    repair: ordinal-monotonicity
+    note: >
+      THE IMPORTANT ONE. Both signals are individually plausible and both are
+      wrong — anchor and printed number agree with each other on 210, so the
+      agreement check passes and the paragraph is silently filed as a second
+      copy of §210. Only the strictly-increasing assertion catches it. This is
+      the entry that justifies that assertion existing; drop it and the corpus
+      quietly loses §211 and gains a duplicate §210.
+
+  - locator: ccc:2096
+    kind: anchor-absent
+    found: 'plain text "2096 Az imádás…", no anchor, no trailing period'
+    page: kek-541-565
+    repair: printed-number
+    note: >
+      Note the missing period. A printed-number pattern that requires `N\.`
+      will not match here — the number is followed by a space.
+
+  - locator: ccc:2213
+    kind: anchor-absent
+    found: 'plain text "2213. Az emberi közösségek…", no anchor'
+    page: kek-566-644
+    repair: printed-number
+
+  - locator: ccc:2621
+    kind: anchor-typo
+    found: 'name="K26201"'
+    expected: 'name="K2621"'
+    page: kek-650-670
+    repair: printed-number
+    note: >
+      A trailing 1 in the anchor. Printed number reads 2621 correctly. Also
+      produces a spurious locator (ccc:26201) if anchors are trusted blindly —
+      which is the failure the agreement check exists to catch.
+
+# ── Not errata ──────────────────────────────────────────────────────────────
+# Four pages carry no paragraph anchors at all: kek-005-006, kek-007-008,
+# kek-009-011, kek-012-016. These are the front matter — Laetamur magnopere,
+# Fidei depositum, the prologue — which is unnumbered in the printed book too.
+# The parser skips them rather than reporting a gap. They are NOT citable units
+# under `ccc:<paragraph>`; if they are ever wanted, they need a locator scheme
+# of their own and would be synthetic (ADR-002).

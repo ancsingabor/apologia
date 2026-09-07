@@ -56,8 +56,9 @@ Two processes. The split matters: **ingestion is not a web concern.**
 
 ```
 source manifest (checked in)
-  → fetch        content-addressed, hash-verified
+  → fetch        content-addressed, hash-verified; revisions must agree
   → parse        per source type
+  → assert       locator signals agree · sequence increases · count matches
   → normalise    into citable units with canonical locators
   → chunk        per-strategy, aligned to unit boundaries
   → embed
@@ -68,6 +69,15 @@ source manifest (checked in)
 Runs as `npm run ingest` on a laptop or in CI. It is never imported by
 `next build` and never runs in a request. The repo ships the *manifest and the
 pipeline*, never the corpus text (ADR-003, ADR-004).
+
+**`assert` is a step, not a flag.** Real web editions of canonical texts carry
+typesetting defects, and a parser that meets them and loosens its rules has
+discarded the property the corpus is built on. Each source declares its expected
+unit count and its known defects (`corpus/errata/`); an *undeclared* failure stops
+the ingest. `fetch` additionally refuses a multilingual source whose languages
+descend from different revisions of the work — a divergence nothing downstream can
+detect, because the locators still resolve and the citations still verify
+(ADR-019, docs/corpus.md § Revision drift).
 
 ### 2. Query path — a route handler *(planned, Milestone 1)*
 
