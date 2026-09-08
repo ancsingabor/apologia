@@ -1,9 +1,17 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
+import { load } from "js-yaml";
 import { chunkNumberedParagraph } from "@/lib/corpus/chunk";
+import { parseErrata } from "@/lib/corpus/errata";
+import { parseManifest } from "@/lib/corpus/manifest";
 import { compareLocators } from "@/lib/corpus/cross-lingual";
 import { documentContentHash } from "@/lib/corpus/hash";
-import { currentLocators, siblingLanguages } from "@/scripts/ingest/siblings";
+import {
+  currentLocators,
+  currentUnits,
+  siblingLanguages,
+} from "@/scripts/ingest/siblings";
 import { upsertDocument } from "@/scripts/ingest/upsert";
 import type {
   ManifestDocument,
@@ -376,5 +384,60 @@ describe("the cross-lingual locator check", () => {
     await ingest(db, units(3));
 
     expect(await currentLocators(db, SOURCE.id, "en")).toEqual([]);
+  });
+});
+
+describe("the cross-lingual role check", () => {
+  /**
+   * `role` is metadata, not identity, so this is a TEST rather than a gate in
+   * the pipeline — an ingest should not fail because a typesetter left a label
+   * off a page. It earns its place anyway: correcting the In Brief detection
+   * from italics to the section label is what exposed both of the last two real
+   * defects in this corpus, and neither was visible any other way.
+   *
+   *   * §267's stored text ended with `3.§ A Mindenható`, a section heading in
+   *     mixed case that no heading rule recognised. It read as prose, passed
+   *     every assertion and every text probe, and shipped. It was found because
+   *     the In Brief block that heading failed to close ran on into §268–§271
+   *     and this comparison flagged four units.
+   *   * katolikus.hu sets one Összefoglalás label outside any `<p>`, so
+   *     §2504–§2513 lost their role. Same story from the other side.
+   *
+   * So the divergence is pinned to a declared set rather than merely measured.
+   */
+  it("differs from the other language only where the errata say so", async () => {
+    const sources = parseManifest(
+      load(await readFile("corpus/sources.yaml", "utf8"))
+    );
+    const ccc = sources.find((source) => source.id === "ccc")!;
+    const languages = ccc.documents.map((document) => document.language);
+
+    const byLanguage = new Map<string, Map<string, string | null>>();
+    for (const language of languages) {
+      const units = await currentUnits(db, "ccc", language);
+      if (units.length === 0) {
+        console.warn(`  ⚠ skipped: no current ccc (${language}) document ingested locally`);
+        return;
+      }
+      byLanguage.set(language, new Map(units.map((u) => [u.locator, u.role])));
+    }
+
+    const [a, b] = languages;
+    const left = byLanguage.get(a)!;
+    const right = byLanguage.get(b)!;
+
+    // Declared omissions, from whichever document declares them.
+    const declared = new Set<string>();
+    for (const document of ccc.documents) {
+      if (!document.errata) continue;
+      const errata = parseErrata(load(await readFile(document.errata, "utf8")));
+      for (const locator of errata.summaryOmitted) declared.add(locator);
+    }
+
+    const divergent = [...left.keys()]
+      .filter((locator) => left.get(locator) !== right.get(locator))
+      .sort();
+
+    expect(new Set(divergent)).toEqual(declared);
   });
 });

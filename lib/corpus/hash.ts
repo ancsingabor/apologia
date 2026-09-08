@@ -31,13 +31,30 @@ import type { ParsedUnit } from "@/types/domain";
  * the hash. Text alone would not: it would report "unchanged" for a corpus in
  * which every citation had just started resolving somewhere else.
  *
+ * ── And `role`, for the same reason and no other ────────────────────────────
+ *
+ * `role` is the third thing a unit row stores. When the In Brief detection was
+ * corrected — from whole-paragraph italics, which is typography, to the section
+ * label, which is structure — 552 Hungarian units and 544 English ones changed
+ * role while their text stayed byte-identical. Under a hash over locator and
+ * text alone, the upsert compares hashes, finds them equal, reports "unchanged"
+ * and writes nothing: the correction is computed on every run and persisted on
+ * none, silently.
+ *
+ * That is the relabelling argument again with a different field, so it gets the
+ * same answer. The hash covers what a unit row actually holds.
+ *
+ * ⚠️ IT IS STILL NOT A HASH OF THE FETCHED HTML. The distinction ADR-019 paid
+ * for stands: a re-theming that alters no words and no roles produces an
+ * identical hash and the re-ingest is correctly a no-op.
+ *
  * Units are taken in the order given, which after `applyRelabels` is locator
  * order, so the hash does not depend on the source's page ordering.
  */
 export function documentContentHash(units: ParsedUnit[]): string {
   const hash = createHash("sha256");
   for (const unit of units) {
-    hash.update(`${unit.locator}\t${unit.text}\n`);
+    hash.update(`${unit.locator}\t${unit.role ?? ""}\t${unit.text}\n`);
   }
   return hash.digest("hex");
 }

@@ -103,7 +103,15 @@ async function currentDocumentId(
   return (data?.[0]?.id as string | undefined) ?? null;
 }
 
-/** PostgREST caps a response, so 2,865 units need paging. */
+/**
+ * PostgREST caps a response, so 2,865 units need paging.
+ *
+ * ⚠️ ORDERED, because Postgres makes no promise about row order without an
+ * `ORDER BY` and `.range()` alone pages over a sequence the server may change.
+ * Unordered, this test would probe an arbitrary subset of the corpus and report
+ * it clean — the worst outcome a check has available. See the note in
+ * `scripts/ingest/siblings.ts`, where the same bug surfaced first.
+ */
 const PAGE = 1000;
 
 /** Every stored unit of a document — the bytes a citation is verified against. */
@@ -114,6 +122,7 @@ async function storedUnits(documentId: string): Promise<StoredUnit[]> {
       .from("units")
       .select("locator, text")
       .eq("document_id", documentId)
+      .order("ordinal")
       .range(from, from + PAGE - 1);
 
     if (error) throw new Error(`reading units failed: ${error.message}`);

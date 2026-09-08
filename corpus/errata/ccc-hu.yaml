@@ -129,6 +129,39 @@ allowed:
       A trailing 1. Trusting anchors blindly would also mint a spurious
       locator, ccc:26201 — which is what the agreement check catches.
 
+# ── The In Brief label, and the heading that hid behind it ──────────────────
+# A unit's `role` comes from the Összefoglalás label that opens its block, not
+# from its italics (lib/corpus/in-brief.ts). This edition italicises §112–§114
+# and §116–§117 — the criteria for interpreting Scripture and the senses of
+# Scripture, ordinary paragraphs — so the old rule marked them as summaries and
+# disagreed with the English document about 122 units.
+#
+# Two structural facts, both found by making that correction, both listed here
+# because each broke something and neither is visible from this document alone:
+#
+#   * ONE LABEL IS SET OUTSIDE ANY <p>: `</p> <b>Összefoglalás</b> <p>` on
+#     kek-566-644. The paragraph scanner never saw it and §2504–§2513 lost their
+#     role. The Jegyzetek problem again — a label here is not reliably an
+#     element.
+#
+#   * `3.§ A Mindenható` ON kek-067-120 IS A HEADING NOTHING RECOGNISED. Its
+#     siblings are set `2.§ AZ ATYA`, `4. § A TEREMTŐ` — capitals, caught by the
+#     all-caps rule — and this one alone is in mixed case. It was not blanked,
+#     so its text was appended to §267, which SHIPPED that way: one unit out of
+#     2,865, reading as prose, invisible to the count, the sequence, both anchor
+#     signals and every text probe. It was found only because the In Brief block
+#     it failed to close ran on into §268–§271 and the cross-lingual role
+#     comparison flagged them.
+#
+#     A centred paragraph is now a heading in this source. 195 of them, every
+#     one a section title or the "Vissza a főoldalra" link, not one a citable
+#     paragraph — and the anchor test still comes first, so a centred numbered
+#     paragraph would remain a unit.
+#
+#     `heading-centred` counts 7. It is checked LAST, after every other rule, so
+#     the counter means "a heading nothing else recognised" and a jump in it is
+#     a signal rather than noise.
+
 # ── Text probes ─────────────────────────────────────────────────────────────
 # ADR-019's third method step, and the one this source paid for. The footnote
 # apparatus leaked into §1065 and §1666 with the count at 2,865, the sequence

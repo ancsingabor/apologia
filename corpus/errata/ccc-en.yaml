@@ -77,6 +77,48 @@ allowed:
       in different markup, and the reason neither parser can treat an element
       boundary as a unit boundary.
 
+# ── Missing IN BRIEF labels ─────────────────────────────────────────────────
+# A unit's `role` comes from the section label that opens its block, not from
+# its italics (lib/corpus/in-brief.ts). This edition omits the label on two
+# pages where the Hungarian edition prints Összefoglalás, so eight units are
+# summaries in Hungarian and ordinary paragraphs here.
+#
+# Verified by looking: __P2F and __P6W contain the string "IN BRIEF" zero times,
+# and do not italicise those paragraphs either. It is an omission in the source,
+# not something the parser can recover — and NOT something to paper over with a
+# heuristic, because "a run of italic paragraphs is probably a summary" is
+# exactly the guess that made the two documents disagree about 122 units.
+#
+# Declared so the divergence is a fixed, checked set: the cross-lingual role
+# test in integration/ fails if it is anything other than these eight. That
+# check is worth having — it is what found the §267 contamination and the bare
+# Összefoglalás label, neither of which any other signal could see.
+
+summary_omitted:
+  - locator: ccc:984
+    page: __P2F
+    note: >
+      The In Brief of Article 10, "I believe in the forgiveness of sins".
+      §984–§987 on a page carrying no label at all.
+  - locator: ccc:985
+    page: __P2F
+  - locator: ccc:986
+    page: __P2F
+  - locator: ccc:987
+    page: __P2F
+
+  - locator: ccc:1971
+    page: __P6W
+    note: >
+      The In Brief closing the chapter on the moral law. §1971–§1974, same
+      shape: no label on the page.
+  - locator: ccc:1972
+    page: __P6W
+  - locator: ccc:1973
+    page: __P6W
+  - locator: ccc:1974
+    page: __P6W
+
 # ── Text probes ─────────────────────────────────────────────────────────────
 # ADR-019's third method step: inventory by parsing, assert over the parse, then
 # PROBE THE STORED TEXT. The assertions check the corpus has the right shape;
@@ -155,25 +197,13 @@ text_probes:
 #     which no assertion here can see, because `role` is metadata and the text
 #     is unaffected.
 #
-#   * `role` DISAGREES ACROSS LANGUAGES AND IS NOT ASSERTED. English marks 538
-#     units `summary`, Hungarian 610; 488 agree, 122 are summaries only in
-#     Hungarian and 50 only in English. Both parsers infer the role from whole-
-#     paragraph italics, which is typography rather than structure: the
-#     Hungarian edition italicises §112-§114 and §116-§117 (the criteria for
-#     interpreting Scripture, the senses of Scripture) which are ordinary
-#     paragraphs, and does NOT italicise its Összefoglalás blocks on some pages
-#     where vatican.va does italicise the matching IN BRIEF. So each parser is
-#     wrong in the opposite direction, and neither is wrong about the text.
-#
-#     Left as it is, on purpose, and NOT asserted for parity. `role` is metadata
-#     that nothing downstream consumes yet, it is not part of `content_hash`
-#     (which covers locator and text only), and the fix is not a tolerance
-#     adjustment — it is reading the role from the IN BRIEF / Összefoglalás
-#     heading that opens each block, which both parsers currently blank before
-#     markers are scanned. That is a change to the HUNGARIAN parser as much as
-#     this one, and it belongs in its own pass. Recorded here because it was
-#     found by ingesting the second language and is invisible from either
-#     document alone.
+#   * `role` COMES FROM THE SECTION LABEL, NOT FROM ITALICS. It used to be
+#     inferred from whole-paragraph italics, and the two editions italicise
+#     differently, so they disagreed about 122 units while agreeing about every
+#     word of text. Now: IN BRIEF opens a block, the next heading closes it, and
+#     an empty heading closes nothing (vatican.va emits 683 of those). The eight
+#     remaining divergences are declared above under `summary_omitted` and
+#     asserted to be exactly those.
 #
 #   * `&ldquo;` appears in 16 units where the other 7,381 quotation marks are
 #     `&quot;`. It is decoded to U+201C, not folded onto `"`: decoding an entity

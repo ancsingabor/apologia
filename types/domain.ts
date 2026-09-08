@@ -262,6 +262,10 @@ export interface CorpusErrata {
   /** Words that appear only in this source's page furniture, never its prose.
    *  A hit means the body/apparatus cut has moved. */
   furniture: string[];
+  /** Locators another language marks `summary` and this document does not,
+   *  because its source omits the section label. A source defect, declared
+   *  rather than guessed around. */
+  summaryOmitted: string[];
 }
 
 export interface AssertionReport {

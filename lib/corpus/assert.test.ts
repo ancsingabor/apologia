@@ -26,6 +26,7 @@ function errata(over: Partial<CorpusErrata> = {}): CorpusErrata {
     allowed: [],
     textProbes: [],
     furniture: [],
+    summaryOmitted: [],
     ...over,
   };
 }
