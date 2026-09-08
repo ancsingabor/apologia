@@ -14,10 +14,10 @@
 #   * `locator_scheme` defines how a citable unit in this work is addressed.
 #
 # STATUS: Milestone 1. These are the entries whose licence status is settled.
-# `ccc` carries its fetch locations and revision (ADR-019); its HUNGARIAN
-# document is INGESTED end to end — 2,865 units. The English one is not: its
-# revision is verified, its completeness is not. `summa` and `kjv` are licensed
-# but not yet located.
+# `ccc` carries its fetch locations and revision (ADR-019) and is INGESTED IN
+# BOTH LANGUAGES — 2,865 units each, the same 2,865 locators, which is ADR-002's
+# cross-lingual identity claim discharged rather than asserted. `summa` and
+# `kjv` are licensed but not yet located.
 #
 # What a run produced is recorded in `corpus/manifest.lock.yaml` — generated,
 # committed, and carrying hashes and counts but no corpus text.
@@ -61,7 +61,7 @@ sources:
         # only inside HTML comments. Naming an unconfirmed edition is the same
         # error as inferring an authority_tier (ADR-010). Open — ADR-019.
         index_url: https://katolikus.hu/cikk/a-katolikus-egyhaz-katekizmusa
-        fetch: discover-from-index               # 31 pages; NOT pinned — ADR-019
+        fetch: katolikus-hu-toc                  # 31 pages; NOT pinned — ADR-019
         parser: katolikus-hu-numbered-paragraph
         encoding: utf-8
         errata: corpus/errata/ccc-hu.yaml
@@ -71,15 +71,22 @@ sources:
       - language: en
         revision: "1997+2018"
         edition: null
+        # ⚠️ NOT inferred, same rule as the Hungarian entry. The USCCB is the LEV
+        # licensee in the United States, but the IntraText pages credit only
+        # "Libreria Editrice Vaticana" and their printed-source note names the
+        # LATIN 1993 typica. Open — ADR-019.
         index_url: https://www.vatican.va/archive/ENG0015/_INDEX.HTM
-        fetch: discover-from-index
+        fetch: vatican-intratext-toc             # 374 pages; NOT pinned — ADR-019
         parser: vatican-intratext
         encoding: iso-8859-1                     # HTML 3.2, declared charset
-        errata: null
-        inventoried: null
-        # Revision VERIFIED against §2267. Completeness and defect set are NOT —
-        # the three ingest assertions in ADR-019 must run over it before it is
-        # trusted. Do not read `errata: null` as "clean"; it means "unchecked".
+        errata: corpus/errata/ccc-en.yaml
+        inventoried: 2026-09-08                 # parsed, not merely link-counted
+        parsed_units: 2865                      # complete — see ADR-020
+        # Revision verified against §2267 (ADR-019) and re-confirmed by the
+        # inventory parse. Completeness now established: §1–§2865, contiguous,
+        # no misnumbering. This source states each paragraph number ONCE, so the
+        # anchor-agreement assertion cannot run over it — ADR-020 says what pays
+        # for that.
     notes: >
       The Milestone 1 source, ingested in BOTH languages. Paragraph numbering is
       identical across translations, so the same citable unit exists in Hungarian

@@ -1,3 +1,5 @@
+import type { DiscoveredPage } from "./index";
+
 /**
  * Discovering the Hungarian Catechism's page list from its table of contents.
  *
@@ -55,13 +57,6 @@
  */
 const PAGE_HREF = /href="([^"#?]*\/dokumentumtar\/(kek-[a-z0-9-]+))[^"]*"/gi;
 
-export interface DiscoveredPage {
-  /** Slug as the errata and defect messages name it: 'kek-052-063'. */
-  slug: string;
-  /** Absolute URL to fetch. */
-  url: string;
-}
-
 /**
  * Extract the ordered, de-duplicated page list from the table of contents.
  *
@@ -85,27 +80,4 @@ export function discoverKatolikusHuPages(
   }
 
   return pages;
-}
-
-/**
- * A table of contents that yields nothing is a changed page, not an empty book.
- *
- * Worth its own failure because it is the one discovery outcome that would
- * otherwise be quiet: zero pages parses to zero units, and the count assertion
- * would report `parsed 0 units, manifest expects 2865` — true, but pointing at
- * the parser instead of at the fetch.
- */
-export function assertPagesDiscovered(
-  pages: DiscoveredPage[],
-  indexUrl: string
-): void {
-  if (pages.length === 0) {
-    throw new Error(
-      `No document pages found at ${indexUrl}.\n` +
-        `The table of contents' link shape has changed. The page list is ` +
-        `discovered rather than pinned on purpose (ADR-019), so this is the ` +
-        `expected place to notice a re-slugging — update the pattern in ` +
-        `lib/corpus/discover.ts rather than hardcoding a list.`
-    );
-  }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertPagesDiscovered, discoverKatolikusHuPages } from "./discover";
+import { assertPagesDiscovered, discoverKatolikusHuPages } from "./index";
 
 const INDEX = "https://katolikus.hu/cikk/a-katolikus-egyhaz-katekizmusa";
 

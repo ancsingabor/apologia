@@ -1,6 +1,7 @@
 # ADR-019 — The CCC editions: revision alignment over file convenience
 
 Status: **Accepted** · Milestone 1 · **amended twice on 2026-09-07 — see the two § Amendment sections at the foot**
+· the English side is settled in [ADR-020](020-asserting-a-single-signal-source.md)
 Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
 the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
 
@@ -151,6 +152,10 @@ text.
 - The English side is **not yet inventoried.** Its revision is verified; its
   completeness and defect set are not, and the same three assertions must run
   over it before it is trusted. It is **ISO-8859-1**, not UTF-8 — see § Amendment.
+  **Superseded 2026-09-08:** it has been inventoried by parsing — §1–§2865,
+  contiguous, no misnumbering. Only two of the three assertions can run over it,
+  because it states each paragraph number once; [ADR-020](020-asserting-a-single-signal-source.md)
+  is what pays for the third.
 - `documents.edition` is **still unresolved** and is left null rather than
   guessed. Szent István Társulat is the LEV licensee for Hungary, but the modern
   pages credit no publisher and the archive credits its translators only inside

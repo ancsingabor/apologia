@@ -58,6 +58,10 @@ export interface EmittedDocument {
   pages: { slug: string; raw_hash: string }[];
   unnumberedPages: string[];
   skipped: Record<string, number>;
+  /** Does this source state its paragraph numbers twice? See ADR-020. */
+  anchorSignal: boolean;
+  /** What the locator set was compared against, or why it was not. */
+  crossLingual: string;
   report: AssertionReport;
 }
 
@@ -82,10 +86,19 @@ function documentEntry(doc: EmittedDocument): Record<string, unknown> {
     chunk_count: doc.chunkCount,
     // The assertion outcome, recorded so that "it ingested" and "it ingested
     // cleanly" are different statements a reader can tell apart later.
+    //
+    // `anchor_agreement` is here because those two are not the only statements.
+    // A source that addresses its paragraphs once cannot be checked for
+    // agreement between two signals, and `ok: true` alone would report a
+    // two-assertion document and a three-assertion one identically (ADR-020).
+    // "We did not check this" and "we checked and it was fine" have to be
+    // distinguishable in the artefact, not only in the ADR that explains why.
     assertions: {
       ok: doc.report.ok,
       undeclared: doc.report.undeclared.length,
       allowances_stale: doc.report.stale.length,
+      anchor_agreement: doc.anchorSignal ? "checked" : "not applicable — one signal",
+      cross_lingual: doc.crossLingual,
     },
     unnumbered_pages: doc.unnumberedPages,
     skipped: doc.skipped,

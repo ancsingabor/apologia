@@ -30,21 +30,45 @@
 /**
  * Footnote references, which are markup rather than text.
  *
- * The CCC's apparatus is dense — `<a name="JB9" href="#J9">[9]</a>` several
- * times per paragraph. Keeping the `[9]` would mean a quotation has to contain
+ * The CCC's apparatus is dense — several references per paragraph in both
+ * editions. Keeping their visible numbers would mean a quotation has to contain
  * "[9]" to verify, which no generator will produce and no reader wants to see.
  *
- * Note the asymmetry this relies on: an inline REFERENCE carries
- * `name="JB<n>"`, while the footnote DEFINITION at the foot of the page carries
- * `name="J<n>"` and points back at the reference. That prefix is the only
- * reliable way to tell them apart in this source.
+ * ⚠️ THE PATTERN IS PER SOURCE, AND IS PASSED IN RATHER THAN DEFAULTED. Two
+ * editions of one work set their apparatus in unrelated markup, and a default
+ * would silently apply one source's shape to another — leaving the other's
+ * reference numbers embedded in permanent text, invisibly, because the unit
+ * still reads as prose. Making the argument required costs one token at each
+ * call site and makes that mistake unrepresentable.
  *
- * ⚠️ Attribute ORDER varies — both `<a name="JB7" href="#J7">` and
- * `<a href="#J64" name="JB64">` occur — so the name must be matched anywhere in
- * the tag. Anchoring it to the first attribute leaves the `[64]` markers in the
- * text, which is silent: the unit still looks like prose.
+ * Both patterns rest on the same asymmetry, spelled differently: an inline
+ * REFERENCE and the DEFINITION at the foot of the page are distinguishable only
+ * by a prefix on the anchor name.
+ *
+ * | | reference | definition |
+ * |---|---|---|
+ * | katolikus.hu | `name="JB9"` | `name="J9"` |
+ * | vatican.va | `name=-28T` | `name=$28T` |
  */
-const FOOTNOTE_REF = /<a\b[^>]*\bname="JB\d+"[^>]*>[\s\S]*?<\/a>/gi;
+
+/**
+ * katolikus.hu. Attribute ORDER varies — both `<a name="JB7" href="#J7">` and
+ * `<a href="#J64" name="JB64">` occur — so the name is matched anywhere in the
+ * tag. Anchoring it to the first attribute leaves the `[64]` markers in 1,586
+ * units, silently.
+ */
+export const FOOTNOTE_REF_KATOLIKUS =
+  /<a\b[^>]*\bname="JB\d+"[^>]*>[\s\S]*?<\/a>/gi;
+
+/**
+ * vatican.va (IntraText). The reference is a superscript wrapping the anchor,
+ * `<sup><a name=-28T href=#$28T>74</a></sup>`, and the WHOLE `<sup>` is removed
+ * so the visible number leaves with it. Attributes are unquoted here, and the
+ * `$` of a definition is a regex metacharacter — matching `name=-` rather than
+ * "not `$`" keeps the discriminator positive.
+ */
+export const FOOTNOTE_REF_INTRATEXT =
+  /<sup\b[^>]*>\s*<a\b[^>]*\bname\s*=\s*"?-[0-9A-Za-z]+"?[^>]*>[\s\S]*?<\/a>\s*<\/sup>/gi;
 
 /**
  * Block-level and break tags become a space; every other tag is removed with no
@@ -65,14 +89,25 @@ const BLOCK_TAG =
 const INLINE_TAG = /<[^>]+>/g;
 
 /**
- * Only the four named entities this source actually uses, plus numeric forms.
- * A general HTML entity table would be more code and more ways to be wrong;
- * an unrecognised entity is left alone and will show up as a visible oddity in
- * the text rather than being silently mangled into something plausible.
+ * Only the named entities these sources actually use, plus numeric forms. A
+ * general HTML entity table would be more code and more ways to be wrong; an
+ * unrecognised entity is left alone and will show up as a visible oddity in the
+ * text rather than being silently mangled into something plausible.
+ *
+ * ── Why `&ldquo;` is here, and why it does not become `"` ───────────────────
+ *
+ * vatican.va sets 7,381 quotation marks as `&quot;` and sixteen as `&ldquo;`.
+ * Mapping the odd sixteen onto `"` would make the corpus typographically
+ * uniform, and would be exactly the reconstruction this file forbids: it is a
+ * guess about what the typesetter meant. `&ldquo;` *denotes* U+201C, so
+ * decoding it to U+201C is decoding, not repair. The corpus keeps sixteen units
+ * with a curly quote beside the rest with straight ones, which is what the
+ * source says, and a byte-exact gate wants what the source says.
  */
 const NAMED: ReadonlyArray<readonly [RegExp, string]> = [
   [/&nbsp;/gi, " "],
   [/&quot;/gi, '"'],
+  [/&ldquo;/gi, "\u201C"],
   [/&lt;/gi, "<"],
   [/&gt;/gi, ">"],
 ];
@@ -101,8 +136,11 @@ function decodeEntities(input: string): string {
  * so there is nothing to reconstruct, and a normaliser that GUESSES at intended
  * typography is one that can silently rewrite the Catechism.
  */
-export function normaliseUnitText(fragment: string): string {
-  const withoutRefs = fragment.replace(FOOTNOTE_REF, "");
+export function normaliseUnitText(
+  fragment: string,
+  footnoteRefs: RegExp
+): string {
+  const withoutRefs = fragment.replace(footnoteRefs, "");
   const withoutBlocks = withoutRefs.replace(BLOCK_TAG, " ");
   const withoutTags = withoutBlocks.replace(INLINE_TAG, "");
   const decoded = decodeEntities(withoutTags);

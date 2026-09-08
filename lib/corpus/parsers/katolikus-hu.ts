@@ -3,7 +3,11 @@ import type {
   ParseResult,
   ParsedUnit,
 } from "@/types/domain";
-import { normaliseUnitText, trimMarkerResidue } from "../normalise";
+import {
+  FOOTNOTE_REF_KATOLIKUS,
+  normaliseUnitText,
+  trimMarkerResidue,
+} from "../normalise";
 
 /**
  * Parser for the Hungarian Catechism as published at
@@ -40,6 +44,11 @@ import { normaliseUnitText, trimMarkerResidue } from "../normalise";
  * from the book and someone proofread it; the anchor is invisible plumbing and
  * a broken one has no visible symptom.
  */
+
+/** This source's apparatus shape. Passed at every call: `normaliseUnitText`
+ *  takes no default, so applying another edition's pattern is unrepresentable. */
+const normalise = (fragment: string) =>
+  normaliseUnitText(fragment, FOOTNOTE_REF_KATOLIKUS);
 
 /** The article body. Everything outside it is navigation, sidebars, widgets. */
 const CONTENT_OPEN = /<div[^>]*class="[^"]*article-content[^"]*"[^>]*>/i;
@@ -178,7 +187,7 @@ function contentRegion(html: string): string | null {
  * them. Getting this backwards cost 49 paragraphs in an earlier draft.
  */
 function headingKind(fragment: string): string | null {
-  const text = normaliseUnitText(fragment);
+  const text = normalise(fragment);
   if (!text) return "empty";
   if (/<a\s+name="K?\d+"/i.test(fragment)) return null;
   if (NAV_ONLY.test(fragment.trim())) return "nav";
@@ -254,8 +263,7 @@ function isInBrief(body: string): boolean {
   const stripped = body.replace(LEADING_CLOSERS, "").trim();
   if (!ITALIC_OPEN.test(stripped)) return false;
   return (
-    normaliseUnitText(stripped) ===
-    normaliseUnitText(stripped.replace(ITALIC_TAGS, ""))
+    normalise(stripped) === normalise(stripped.replace(ITALIC_TAGS, ""))
   );
 }
 
@@ -324,7 +332,7 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
         paragraph: marker.printed,
         anchor: marker.anchor,
         relabelledFrom: null,
-        text: trimMarkerResidue(normaliseUnitText(raw)),
+        text: trimMarkerResidue(normalise(raw)),
         role: isInBrief(raw) ? "summary" : null,
         page,
         ordinal,
@@ -332,5 +340,7 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
     });
   }
 
-  return { units, defects, unnumberedPages, skipped };
+  // Every paragraph states its number twice here; `assert.ts` checks that the
+  // two agree. See ADR-020 for what happens to a source that states it once.
+  return { units, defects, unnumberedPages, skipped, anchorSignal: true };
 }

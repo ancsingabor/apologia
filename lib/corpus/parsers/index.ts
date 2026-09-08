@@ -1,5 +1,6 @@
 import type { ParseResult } from "@/types/domain";
 import { parseKatolikusHu } from "./katolikus-hu";
+import { parseVaticanIntratext } from "./vatican-intratext";
 
 /**
  * The parser registry: a manifest `parser:` id → the function that implements
@@ -27,11 +28,7 @@ type Parser = (pages: SourcePage[]) => ParseResult;
 
 const PARSERS: Record<string, Parser> = {
   "katolikus-hu-numbered-paragraph": parseKatolikusHu,
-  // 'vatican-intratext' is NOT registered. The English CCC is revision-verified
-  // but uninventoried (ADR-019, corpus/sources.yaml), and `docs/corpus.md`
-  // § Adding a source requires inventorying a text by PARSING it before its
-  // parser is written. That inventory is the next step, and it is unblocked by
-  // the fetch stage this file's callers now provide.
+  "vatican-intratext": parseVaticanIntratext,
 };
 
 export function parserFor(id: string): Parser {

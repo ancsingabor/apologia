@@ -39,7 +39,10 @@ const documentSchema = z.object({
   revision: z.string().min(1, "revision is required on every document entry"),
   edition: z.string().nullable().default(null),
   index_url: z.url(),
-  fetch: z.literal("discover-from-index"),
+  // Which table of contents shape the page list is read from — a key into
+  // the discoverer registry, which does the validating, as it does for
+  // `parser`. The list is discovered rather than pinned either way (ADR-019).
+  fetch: z.string().min(1),
   parser: z.string().min(1),
   encoding: z.string().min(1),
   errata: z.string().nullable().default(null),

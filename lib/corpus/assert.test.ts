@@ -33,18 +33,20 @@ const parsed = (units: ParsedUnit[]): ParseResult => ({
   defects: [],
   unnumberedPages: [],
   skipped: {},
+  anchorSignal: true,
 });
 
 describe("check 1 — the two signals agree", () => {
   it("passes a clean run", () => {
-    const found = detectDefects([unit(1), unit(2), unit(3)], errata());
+    const found = detectDefects([unit(1), unit(2), unit(3)], errata(), true);
     expect(found).toEqual([]);
   });
 
   it("flags an unprefixed anchor separately from a mistyped one", () => {
     const found = detectDefects(
       [unit(1, { anchor: "1" }), unit(2, { anchor: "K20021" }), unit(3)],
-      errata()
+      errata(),
+      true
     );
 
     expect(found.map((d) => [d.locator, d.kind])).toEqual([
@@ -56,16 +58,59 @@ describe("check 1 — the two signals agree", () => {
   it("flags an absent anchor", () => {
     const found = detectDefects(
       [unit(1), unit(2, { anchor: null }), unit(3)],
-      errata()
+      errata(),
+      true
     );
     expect(found).toHaveLength(1);
     expect(found[0].kind).toBe("anchor-absent");
   });
 });
 
+describe("check 1 over a source that carries one signal", () => {
+  // vatican.va states each paragraph number once — every `<a name=…>` in its
+  // body is a footnote — so the agreement check has no second operand. It is
+  // SKIPPED rather than passed vacuously: "we did not check this" and "we
+  // checked and it was fine" must not arrive in the report looking the same.
+  const anchorless = [
+    unit(1, { anchor: null }),
+    unit(2, { anchor: null }),
+    unit(3, { anchor: null }),
+  ];
+
+  it("does not report every unit as anchor-absent", () => {
+    expect(detectDefects(anchorless, errata(), false)).toEqual([]);
+  });
+
+  it("still runs the sequence and the count", () => {
+    // ADR-020 skips one check; it does not soften the other two.
+    const found = detectDefects(
+      [unit(1, { anchor: null }), unit(3, { anchor: null })],
+      errata({ expectedUnits: 3 }),
+      false
+    );
+
+    expect(found.map((d) => d.kind)).toEqual([
+      "paragraph-absent",
+      "count-mismatch",
+    ]);
+  });
+
+  it("takes the flag from the parse, not from the errata", () => {
+    // It is a fact about the SOURCE, reported by its parser in code. Nothing
+    // in the manifest or the errata file can set it.
+    const { report } = assertCorpus(
+      { ...parsed(anchorless), anchorSignal: false },
+      errata()
+    );
+
+    expect(report.ok).toBe(true);
+    expect(report.unitCount).toBe(3);
+  });
+});
+
 describe("check 2 — the sequence", () => {
   it("catches a gap", () => {
-    const found = detectDefects([unit(1), unit(3)], errata({ expectedUnits: 2 }));
+    const found = detectDefects([unit(1), unit(3)], errata({ expectedUnits: 2 }), true);
     expect(found.map((d) => [d.locator, d.kind])).toEqual([
       ["ccc:2", "paragraph-absent"],
     ]);
@@ -77,16 +122,18 @@ describe("check 2 — the sequence", () => {
     // paragraph is really §3. Check 1 sees nothing wrong with either unit.
     const units = [unit(1), unit(2), unit(2, { ordinal: 3 })];
 
-    expect(detectDefects(units, errata()).filter((d) => d.kind.startsWith("anchor"))).toEqual([]);
+    expect(
+      detectDefects(units, errata(), true).filter((d) => d.kind.startsWith("anchor"))
+    ).toEqual([]);
 
-    const found = detectDefects(units, errata());
+    const found = detectDefects(units, errata(), true);
     expect(found.map((d) => d.kind)).toEqual(["number-not-increasing"]);
   });
 });
 
 describe("check 3 — the count", () => {
   it("fires when a page silently failed to parse", () => {
-    const found = detectDefects([unit(1), unit(2)], errata({ expectedUnits: 3 }));
+    const found = detectDefects([unit(1), unit(2)], errata({ expectedUnits: 3 }), true);
     expect(found.map((d) => d.kind)).toContain("count-mismatch");
     expect(found.find((d) => d.kind === "count-mismatch")?.detail).toMatch(
       /parsed 2 units, manifest expects 3/
@@ -131,7 +178,7 @@ describe("declared relabels", () => {
       [unit(1, { page: "p" }), unit(3, { page: "p" }), unit(4, { page: "p" }), unit(4, { page: "p" })],
       drift
     );
-    const found = detectDefects(units, drift).filter(
+    const found = detectDefects(units, drift, true).filter(
       (d) => d.kind === "paragraph-absent" || d.kind === "number-not-increasing"
     );
     expect(found).toEqual([]);
@@ -144,7 +191,9 @@ describe("declared relabels", () => {
       [unit(1, { page: "p" }), unit(3, { page: "p" }), unit(4, { page: "p" }), unit(4, { page: "p" })],
       drift
     );
-    expect(detectDefects(units, drift).filter((d) => d.kind.startsWith("anchor"))).toEqual([]);
+    expect(
+      detectDefects(units, drift, true).filter((d) => d.kind.startsWith("anchor"))
+    ).toEqual([]);
   });
 
   it("addresses by occurrence, so only the intended duplicate moves", () => {
@@ -225,6 +274,7 @@ describe("the gate on the whole run", () => {
         ],
         unnumberedPages: [],
         skipped: {},
+        anchorSignal: true,
       },
       errata()
     );

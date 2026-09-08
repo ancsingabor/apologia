@@ -31,6 +31,8 @@ const DEFECT_KIND = z.enum([
   "misnumbered",
   "number-not-increasing",
   "paragraph-absent",
+  "marker-inline",
+  "footnote-unbalanced",
   "count-mismatch",
 ]);
 
