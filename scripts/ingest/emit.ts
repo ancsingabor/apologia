@@ -26,7 +26,7 @@ import type { AssertionReport } from "@/types/domain";
  * discard what a previous English run recorded.
  */
 
-const MANIFEST_PATH = "corpus/manifest.lock.yaml";
+export const MANIFEST_PATH = "corpus/manifest.lock.yaml";
 
 const HEADER = `# ── Apologia corpus manifest ────────────────────────────────────────────────
 #
@@ -93,9 +93,9 @@ function documentEntry(doc: EmittedDocument): Record<string, unknown> {
   };
 }
 
-async function readExisting(): Promise<ManifestFile | null> {
+async function readExisting(path: string): Promise<ManifestFile | null> {
   try {
-    const parsed = load(await readFile(MANIFEST_PATH, "utf8"));
+    const parsed = load(await readFile(path, "utf8"));
     return (parsed as ManifestFile) ?? null;
   } catch {
     return null;
@@ -109,9 +109,32 @@ async function readExisting(): Promise<ManifestFile | null> {
  * leave the English entry alone. Documents are keyed by (source, language) and
  * sorted, so the file's diff shows what changed rather than how the keys
  * happened to be ordered.
+ *
+ * ── Emitted on every run, written only when the content differs ─────────────
+ *
+ * This used to be called only after a run that actually ingested, which left a
+ * hole with no way out: upsert succeeds, `emitManifest` throws (disk full, bad
+ * permissions), and the next run reports "unchanged — nothing to do" and
+ * returns before reaching here. The manifest would never be written, and no
+ * flag recovered it — `--refetch` re-downloads but produces the same hash, so
+ * the run is still a no-op. Recovery meant deleting a document row by hand.
+ *
+ * Calling it unconditionally fixes that and creates a second problem: rewriting
+ * `generated_at` on every no-op run makes a committed file dirty every time
+ * anyone runs the ingest, which trains people to `git checkout` it.
+ *
+ * So the write is content-addressed like everything else here. The document
+ * entries are compared against what is on disk, and the file is rewritten only
+ * when they differ. A no-op run leaves the working tree untouched; a run whose
+ * emit failed leaves the file stale, so the next run writes it.
  */
-export async function emitManifest(doc: EmittedDocument): Promise<string> {
-  const existing = await readExisting();
+export async function emitManifest(
+  doc: EmittedDocument,
+  // Injectable so the write logic is testable without clobbering the real
+  // manifest. Untestable file logic is where the recovery hole above came from.
+  path: string = MANIFEST_PATH
+): Promise<{ path: string; written: boolean }> {
+  const existing = await readExisting(path);
   const others = (existing?.documents ?? []).filter(
     (entry) =>
       !(entry.source === doc.sourceId && entry.language === doc.language)
@@ -120,6 +143,16 @@ export async function emitManifest(doc: EmittedDocument): Promise<string> {
   const documents = [...others, documentEntry(doc)].sort((a, b) =>
     `${a.source}:${a.language}`.localeCompare(`${b.source}:${b.language}`)
   );
+
+  // `generated_at` is deliberately excluded from the comparison: it is metadata
+  // about the run, not about the corpus, and including it would make every
+  // no-op run a diff.
+  if (
+    existing !== null &&
+    JSON.stringify(existing.documents) === JSON.stringify(documents)
+  ) {
+    return { path, written: false };
+  }
 
   const manifest: ManifestFile = {
     generated_at: new Date().toISOString(),
@@ -134,7 +167,7 @@ export async function emitManifest(doc: EmittedDocument): Promise<string> {
   };
 
   const yaml = dump(manifest, { lineWidth: 100, noRefs: true, sortKeys: false });
-  await writeFile(MANIFEST_PATH, `${HEADER}\n${yaml}`, "utf8");
+  await writeFile(path, `${HEADER}\n${yaml}`, "utf8");
 
-  return MANIFEST_PATH;
+  return { path, written: true };
 }
