@@ -12,8 +12,8 @@
 # corpus revision; the per-page `raw_hash` values answer the separate question
 # of what exactly was downloaded.
 
-generated_at: '2026-09-08T11:29:01.802Z'
-corpus_hash: 84fb3c37d0540d80af34bd26492fad9686c4fcbd32775b1b779e49cdaa31652c
+generated_at: '2026-09-08T13:37:08.474Z'
+corpus_hash: cae2ecaa1ba637e3df4fcc94c314a5e92aa47ed38b604e11d221ddd4002e764a
 documents:
   - source: ccc
     language: en
@@ -23,7 +23,7 @@ documents:
     index_url: https://www.vatican.va/archive/ENG0015/_INDEX.HTM
     parser: vatican-intratext
     chunking: numbered-paragraph@1
-    content_hash: 650bd91dccb98cd5e54c8554202273394329befaa28c090249333ee5c2a39944
+    content_hash: 82a9737f9027dbab0108a05a8a7166f07110ab79e71d9226af9d90bd5a985e5f
     unit_count: 2865
     chunk_count: 2865
     assertions:
@@ -41,8 +41,9 @@ documents:
       - __P83
     skipped:
       heading-empty: 683
-      heading-bold: 402
-      heading-allcaps: 113
+      heading-bold: 343
+      heading-allcaps: 92
+      heading-in-brief: 80
       numeric-lead-uncorroborated: 7
     pages:
       - slug: __P1
@@ -801,7 +802,7 @@ documents:
     index_url: https://katolikus.hu/cikk/a-katolikus-egyhaz-katekizmusa
     parser: katolikus-hu-numbered-paragraph
     chunking: numbered-paragraph@1
-    content_hash: f4b7626da0dca604361292a16c5fe04b82ce4a10a651155b3eeb46c833c1accb
+    content_hash: 5b85fbee822b627adfc2c4f805ba502e5ccd774f3e9da303b34f798ba67c9657
     unit_count: 2865
     chunk_count: 2865
     assertions:
@@ -820,8 +821,10 @@ documents:
       heading-allcaps: 386
       heading-empty: 6
       heading-nav: 25
-      heading-bold: 525
+      heading-bold: 447
       numeric-lead-uncorroborated: 1
+      heading-centred: 7
+      heading-in-brief: 80
     pages:
       - slug: kek-005-006
         raw_hash: 2c60b8dc13b085d862c4182d93765fff4d4c758ead3c01716192542a03629bc8

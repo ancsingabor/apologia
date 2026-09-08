@@ -9,7 +9,20 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * two sets and is unit tested; the query is not.
  */
 
-/** PostgREST caps a response; 2,865 locators need paging. */
+/**
+ * PostgREST caps a response; 2,865 units need paging.
+ *
+ * ⚠️ EVERY PAGED READ MUST BE ORDERED. Postgres makes no promise about the
+ * order of rows without an `ORDER BY`, so `.range()` alone pages over a
+ * sequence the server is free to change — and it does change, the moment a
+ * document is re-inserted and the physical row order differs. The pages then
+ * overlap and skip, and the result is a locator set that is quietly short.
+ *
+ * That is exactly how this was found: a re-ingest turned a passing
+ * cross-lingual check into `2860 locators shared, 5 only in en`, naming five
+ * paragraphs nothing was wrong with. An unordered page is not a flaky test, it
+ * is a wrong answer that happens to be right most days.
+ */
 const PAGE = 1000;
 
 /** Languages of this source that already have a current document, in order. */
@@ -44,6 +57,20 @@ export async function currentLocators(
   sourceId: string,
   language: string
 ): Promise<string[]> {
+  return (await currentUnits(db, sourceId, language)).map((u) => u.locator);
+}
+
+/** One stored unit's identity and its role, for the cross-lingual checks. */
+export interface SiblingUnit {
+  locator: string;
+  role: string | null;
+}
+
+export async function currentUnits(
+  db: SupabaseClient,
+  sourceId: string,
+  language: string
+): Promise<SiblingUnit[]> {
   const { data: documents, error: documentError } = await db
     .from("documents")
     .select("id")
@@ -58,19 +85,25 @@ export async function currentLocators(
   const documentId = documents?.[0]?.id as string | undefined;
   if (!documentId) return [];
 
-  const locators: string[] = [];
+  const units: SiblingUnit[] = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await db
       .from("units")
-      .select("locator")
+      .select("locator, role")
       .eq("document_id", documentId)
+      .order("ordinal")
       .range(from, from + PAGE - 1);
 
     if (error) {
-      throw new Error(`reading ${language} locators failed: ${error.message}`);
+      throw new Error(`reading ${language} units failed: ${error.message}`);
     }
     const page = data ?? [];
-    locators.push(...page.map((row) => row.locator as string));
-    if (page.length < PAGE) return locators;
+    units.push(
+      ...page.map((row) => ({
+        locator: row.locator as string,
+        role: (row.role as string | null) ?? null,
+      }))
+    );
+    if (page.length < PAGE) return units;
   }
 }

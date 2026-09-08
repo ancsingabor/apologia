@@ -234,28 +234,73 @@ describe("headings", () => {
 });
 
 describe("the IN BRIEF role", () => {
-  it("marks a paragraph whose italics wrap the whole body", () => {
+  // ⚠️ THE ROLE COMES FROM THE LABEL, NOT FROM THE ITALICS.
+  //
+  // It used to come from whole-paragraph italics, and that made the two
+  // language editions disagree about which units are summaries while agreeing
+  // about every word of text — 610 in Hungarian against 538 here, sharing 488.
+  // Both were reading typography. See lib/corpus/in-brief.ts.
+  const LABEL = "<p class=MsoNormal><b style='mso-bidi-font-weight:normal'>IN BRIEF</b></p>";
+  const HEADING = "<p class=MsoNormal><b>III. The Love of Husband and Wife</b></p>";
+
+  it("marks every paragraph under the label", () => {
     const { units } = parseVaticanIntratext([
-      page(BRIEF(1, "The summary.") + P(2, "Ordinary prose.")),
+      page(P(1, "Ordinary prose.") + LABEL + P(2, "A summary.") + P(3, "Another.")),
+    ]);
+
+    expect(units.map((u) => [u.locator, u.role])).toEqual([
+      ["ccc:1", null],
+      ["ccc:2", "summary"],
+      ["ccc:3", "summary"],
+    ]);
+  });
+
+  it("stops at the next heading", () => {
+    const { units } = parseVaticanIntratext([
+      page(LABEL + P(1, "A summary.") + HEADING + P(2, "Ordinary prose again.")),
     ]);
 
     expect(units.map((u) => u.role)).toEqual(["summary", null]);
   });
 
-  it("does not mark a paragraph with an italic phrase inside it", () => {
-    const body = P(1, "The paragraph cites <i>Lumen Gentium</i> in passing.");
-    const { units } = parseVaticanIntratext([page(body)]);
+  it("is NOT stopped by an empty heading", () => {
+    // vatican.va emits `<p class=MsoNormal><b style='…'></b></p>` 683 times,
+    // including inside In Brief blocks. Treating one as a boundary truncates
+    // the block and the units after it silently lose their role.
+    const empty = "<p class=MsoNormal><b style='mso-bidi-font-weight:normal'></b></p>";
+    const { units } = parseVaticanIntratext([
+      page(LABEL + P(1, "A summary.") + empty + P(2, "Still a summary.")),
+    ]);
 
-    expect(units[0].role).toBeNull();
-    expect(units[0].text).toBe("The paragraph cites Lumen Gentium in passing.");
+    expect(units.map((u) => u.role)).toEqual(["summary", "summary"]);
   });
 
-  it("inherits the italics for a paragraph that opens mid-element", () => {
-    // §2077's shape. The <i> opened at the top of §2076's <p> and closes below
-    // §2077, so a marker that owns no tags of its own must inherit them — or
-    // the unit silently loses a role no assertion can check.
-    const body = BRIEF(1, "The first summary.<br>\n2 The second summary.");
-    const { units } = parseVaticanIntratext([page(body)]);
+  it("marks an unbolded label, which is 23 of the 80", () => {
+    const bare = "<p class=MsoNormal>IN BRIEF</p>";
+    const { units } = parseVaticanIntratext([page(bare + P(1, "A summary."))]);
+
+    expect(units[0].role).toBe("summary");
+  });
+
+  it("does not mark an italic paragraph outside a block", () => {
+    // The old rule marked exactly this. §112-§114 and §116-§117 are set in
+    // italics in the Hungarian edition and are ordinary paragraphs.
+    const { units } = parseVaticanIntratext([page(BRIEF(1, "Italic, but not a summary."))]);
+
+    expect(units[0].role).toBeNull();
+  });
+
+  it("marks an unitalicised paragraph inside a block", () => {
+    const { units } = parseVaticanIntratext([page(LABEL + P(1, "Upright, but a summary."))]);
+
+    expect(units[0].role).toBe("summary");
+  });
+
+  it("carries the role across a paragraph that opens mid-element", () => {
+    // §2077's shape, inside an In Brief block.
+    const { units } = parseVaticanIntratext([
+      page(LABEL + P(1, "First summary.<br>\n2 Second summary.")),
+    ]);
 
     expect(units.map((u) => [u.locator, u.role])).toEqual([
       ["ccc:1", "summary"],

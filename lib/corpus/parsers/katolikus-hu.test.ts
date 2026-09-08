@@ -245,42 +245,91 @@ describe("unit text", () => {
 });
 
 describe("the summary role (In Brief)", () => {
-  it("marks a wholly italic paragraph", () => {
-    const body = `<p><strong>Összefoglalás</strong></p>
-      <p><a name="K0001">1.</a> <em>Az összefoglaló bekezdés szövege.</em></p>`;
+  // ⚠️ THE ROLE COMES FROM THE LABEL, NOT FROM THE ITALICS.
+  //
+  // It used to come from whole-paragraph italics, and this edition italicises
+  // §112–§114 and §116–§117 — the criteria for interpreting Scripture and the
+  // senses of Scripture, ordinary paragraphs both — while leaving some
+  // Összefoglalás blocks upright. 610 units carried the role against the
+  // English document's 538, agreeing on 488. See lib/corpus/in-brief.ts.
+  const LABEL = "<p><strong>Összefoglalás</strong></p>";
+
+  it("marks every paragraph under the label", () => {
+    const body = `${P(1, "Rendes szöveg.")}${LABEL}${P(2, "Összefoglaló.")}${P(3, "Még egy.")}`;
     const { units } = parseKatolikusHu([page(body)]);
 
-    expect(units[0].role).toBe("summary");
+    expect(units.map((u) => [u.locator, u.role])).toEqual([
+      ["ccc:1", null],
+      ["ccc:2", "summary"],
+      ["ccc:3", "summary"],
+    ]);
   });
 
-  it("does not mark a paragraph with merely italic fragments in it", () => {
-    const body = `<p><a name="K0001">1.</a> A vers (<em>Ter 10,5</em>) idézése folytatódik.</p>`;
+  it("stops at the next heading", () => {
+    const body = `${LABEL}${P(1, "Összefoglaló.")}<p><strong>2. Cikkely</strong></p>${P(2, "Rendes szöveg.")}`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units.map((u) => u.role)).toEqual(["summary", null]);
+  });
+
+  it("marks a label set OUTSIDE any <p>", () => {
+    // kek-566-644 sets exactly one this way — `</p> <b>Összefoglalás</b> <p>` —
+    // so P_BLOCK never sees it and §2504–§2513 lost their role. The Jegyzetek
+    // problem again: a label in this source is not reliably an element.
+    const body = `${P(1, "Rendes szöveg.")}<b>Összefoglalás</b>${P(2, "Összefoglaló.")}`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units.map((u) => u.role)).toEqual([null, "summary"]);
+  });
+
+  it("does not mark an italic paragraph outside a block", () => {
+    // Exactly what the old rule marked, and why it disagreed with English.
+    const body = P(1, "<em>Dőlt betűs, de nem összefoglaló.</em>");
     const { units } = parseKatolikusHu([page(body)]);
 
     expect(units[0].role).toBeNull();
   });
+
+  it("marks an upright paragraph inside a block", () => {
+    const body = `${LABEL}${P(1, "Álló betűs, de összefoglaló.")}`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units[0].role).toBe("summary");
+  });
 });
 
-describe("across pages", () => {
-  it("numbers ordinals continuously and records provenance", () => {
-    const { units } = parseKatolikusHu([
-      page(P(1, "Első."), "kek-001-002"),
-      page(P(2, "Második."), "kek-003-004"),
-    ]);
+describe("a centred heading", () => {
+  // ⚠️ THIS IS WHY §267 CARRIED A HEADING IN ITS TEXT FOR A WHOLE RELEASE.
+  //
+  // `3.§ A Mindenható` is set in mixed case where every sibling — `2.§ AZ
+  // ATYA`, `4. § A TEREMTŐ` — is in capitals, so neither the bold nor the
+  // all-caps rule saw it, and its text was appended to the preceding
+  // paragraph. One unit out of 2,865, reading as prose, invisible to every
+  // assertion and every text probe. It was found only because the In Brief
+  // block it failed to close ran on into §268–§271 and the cross-lingual role
+  // comparison noticed.
+  it("does not leak into the preceding paragraph", () => {
+    const body = `${P(1, "Első.")}<p align="center">3.§<br><strong>A Mindenható</strong></p>${P(2, "Második.")}`;
+    const { units, skipped } = parseKatolikusHu([page(body)]);
 
-    expect(units.map((u) => [u.page, u.ordinal])).toEqual([
-      ["kek-001-002", 1],
-      ["kek-003-004", 2],
-    ]);
+    expect(units.map((u) => u.text)).toEqual(["Első.", "Második."]);
+    expect(skipped["heading-bold"]).toBeUndefined();
+    expect(skipped["heading-centred"]).toBe(1);
   });
 
-  it("reports a page whose container is gone rather than skipping it quietly", () => {
-    const { defects } = parseKatolikusHu([
-      { page: "kek-999", html: "<html><body><p>1. Nincs tartalom.</p></body></html>" },
-    ]);
+  it("closes an In Brief block", () => {
+    const body = `<p><strong>Összefoglalás</strong></p>${P(1, "Összefoglaló.")}<p align="center">3.§<br><strong>A Mindenható</strong></p>${P(2, "Rendes szöveg.")}`;
+    const { units } = parseKatolikusHu([page(body)]);
 
-    expect(defects).toHaveLength(1);
-    expect(defects[0].kind).toBe("count-mismatch");
-    expect(defects[0].detail).toMatch(/page shape changed/);
+    expect(units.map((u) => u.role)).toEqual(["summary", null]);
+  });
+
+  it("never swallows a numbered paragraph", () => {
+    // Safe by construction: the anchor test comes first, so a centred
+    // paragraph carrying a marker is still a unit.
+    const body = `<p align="center"><a name="K0001">1.</a> Középre zárt bekezdés.</p>`;
+    const { units } = parseKatolikusHu([page(body)]);
+
+    expect(units.map((u) => u.text)).toEqual(["Középre zárt bekezdés."]);
   });
 });

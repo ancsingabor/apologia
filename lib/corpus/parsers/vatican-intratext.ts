@@ -1,4 +1,5 @@
 import type { CorpusDefect, ParseResult, ParsedUnit } from "@/types/domain";
+import { inBriefRanges, isInBrief, type HeadingMark } from "../in-brief";
 import {
   FOOTNOTE_REF_INTRATEXT,
   normaliseUnitText,
@@ -49,9 +50,11 @@ import {
  *   * BLOCK QUOTES are `<p class=MsoNormal style='margin-left:35.4pt'>` and
  *     belong to the paragraph that introduces them. Spanning marker-to-marker
  *     absorbs them; treating an element as a unit would orphan them.
- *   * IN BRIEF paragraphs are wrapped in `<i>` that OPENS BEFORE THE NUMBER.
- *     The marker therefore has to hand the tag back (see `Marker.opens`), or
- *     the italic-wrap test can never fire and every summary loses its role.
+ *   * IN BRIEF summaries are NOT identified by their italics. They are wrapped
+ *     in `<i>` here and not in the Hungarian edition, which is why reading the
+ *     role off typography made the two documents disagree about 122 units
+ *     while agreeing about every word of text. The role comes from the section
+ *     label — see `../in-brief.ts`.
  */
 
 /** This source's apparatus shape. Passed at every call: `normaliseUnitText`
@@ -89,13 +92,9 @@ const P_BLOCK =
 /**
  * A paragraph marker opening its own block.
  *
- * The match ends BEFORE the number — the number is a lookahead — so that
- * `Marker.opens` can hold the inline tags the `<p>` opened with and hand them
- * back to the unit. `<i style='mso-bidi-font-style:normal'>2857` is how every
- * IN BRIEF paragraph is set, and the `</i>` that closes it sits at the end of
- * the paragraph: swallow the opening tag into the marker and the unit's body is
- * italic-closed but never italic-opened, so `isInBrief` returns false for all
- * 537 of them.
+ * Inline tags between the `<p>` and the number are consumed with the marker:
+ * `<i style='mso-bidi-font-style:normal'>2857` is how an IN BRIEF paragraph is
+ * set, and the `<i>` is markup around the number rather than part of the text.
  *
  * The `[\s<]` lookahead after the number is what keeps "2." out. §113 and §114
  * open with `2.` and `3.` — enumerated items inside the paragraph on the
@@ -129,8 +128,20 @@ const MARKER_INLINE =
 const FOOTNOTE_REF_ID = /<a\b[^>]*\bname\s*=\s*"?-([0-9A-Za-z]+)"?[^>]*>/gi;
 const FOOTNOTE_DEF_ID = /<a\b[^>]*\bname\s*=\s*"?\$([0-9A-Za-z]+)"?[^>]*>/gi;
 
-const ITALIC_OPEN = /^<(?:em|i)\b/i;
-const ITALIC_TAGS = /<\/?(?:em|i)\b[^>]*>/gi;
+/**
+ * The In Brief label, which opens a run of summary paragraphs.
+ *
+ * ⚠️ The role used to be inferred from whole-paragraph italics, which is
+ * typography rather than structure. This edition sets 58 of its 80 labels bold
+ * and 23 unbolded in capitals, and italicises the summaries under both — but
+ * the Hungarian edition does not, so the two documents disagreed about which
+ * units are summaries while agreeing about every word of text. See
+ * `../in-brief.ts`.
+ *
+ * Both spellings already reach `headingKind` — bold, or all-caps — so this test
+ * runs before either of those and takes the label out of their hands.
+ */
+const IN_BRIEF_LABEL = /^IN BRIEF$/i;
 
 interface SourcePage {
   /** Slug as fetched: '__P79'. Provenance for every defect message. */
@@ -142,10 +153,6 @@ interface Marker {
   start: number;
   end: number;
   printed: number;
-  /** Inline tags in force where the paragraph starts, given back to the unit's
-   *  body. For a block marker these are its own `<p>`'s; for an inline one they
-   *  are inherited from the element it opens inside — see `enclosingOpens`. */
-  opens: string;
   inline: boolean;
 }
 
@@ -241,10 +248,13 @@ function headingKind(fragment: string): string | null {
   const text = normalise(fragment);
   if (!text) return "empty";
 
-  MARKER_BLOCK.lastIndex = 0;
   if (/^(?:\s*<(?:i|b|em|strong|font|span)\b[^>]*>)*\s*\d{1,4}[\s<]/i.test(fragment)) {
     return null;
   }
+
+  // Before the bold and all-caps tests, both of which would swallow it: 58 of
+  // the 80 labels are `<b>IN BRIEF</b>` and 23 are bare capitals.
+  if (IN_BRIEF_LABEL.test(text)) return "in-brief";
 
   if (/^\s*(?:<(?:strong|b)\b[^>]*>\s*)+/i.test(fragment)) return "bold";
 
@@ -261,36 +271,22 @@ function headingKind(fragment: string): string | null {
  * Blank headings in place, preserving every byte offset so marker positions
  * found afterwards still line up with the region string.
  */
-function blankHeadings(body: string, skipped: Record<string, number>): string {
-  return body.replace(P_BLOCK, (whole, inner: string) => {
+function blankHeadings(
+  body: string,
+  skipped: Record<string, number>,
+  marks: HeadingMark[]
+): string {
+  return body.replace(P_BLOCK, (whole, inner: string, offset: number) => {
     const kind = headingKind(inner);
     if (kind === null) return whole;
     skipped[`heading-${kind}`] = (skipped[`heading-${kind}`] ?? 0) + 1;
+    marks.push({
+      at: offset,
+      kind:
+        kind === "in-brief" ? "label" : kind === "empty" ? "empty" : "heading",
+    });
     return " ".repeat(whole.length);
   });
-}
-
-/**
- * The inline tags in force at `at`, taken from the `<p>` it sits inside.
- *
- * A paragraph that opens mid-element is still governed by that element's
- * markup: §2077 is an IN BRIEF summary, and the `<i>` that says so opened at
- * the top of §2076's `<p>` and closes below §2077. Reading `opens` as "the tags
- * this marker happened to consume" gives an inline marker none, and the unit
- * silently loses its role — invisible to every assertion, because `role` is
- * metadata and the text is unaffected.
- *
- * So the context is inherited rather than invented. This looks only at the
- * tags the enclosing `<p>` opened with, which is exactly what a block marker in
- * the same element would have captured.
- */
-function enclosingOpens(region: string, at: number): string {
-  const open = region.lastIndexOf("<p", at);
-  if (open < 0) return "";
-  const opens = /^<p\b[^>]*>((?:\s*<(?:i|b|em|strong|font|span)\b[^>]*>)*)/i.exec(
-    region.slice(open, at)
-  );
-  return opens ? opens[1] : "";
 }
 
 function collectMarkers(region: string): Marker[] {
@@ -306,7 +302,6 @@ function collectMarkers(region: string): Marker[] {
       start: m.index,
       end: numberAt + m[2].length,
       printed: Number(m[2]),
-      opens: m[1],
       inline: false,
     });
   }
@@ -321,25 +316,11 @@ function collectMarkers(region: string): Marker[] {
       start: m.index,
       end: m.index + m[1].length,
       printed: Number(m[1]),
-      opens: enclosingOpens(region, m.index),
       inline: true,
     });
   }
 
   return markers.sort((a, b) => a.start - b.start);
-}
-
-/**
- * Is the whole body italic? That is how the CCC's IN BRIEF summaries are set.
- * Inline `<i>` on a scripture reference must not count, so this requires the
- * body to OPEN italic and to lose nothing when the italic tags are removed.
- *
- * `opens` is the tags the marker consumed, put back — see `MARKER_BLOCK`.
- */
-function isInBrief(opens: string, body: string): boolean {
-  const whole = (opens + body).trim();
-  if (!ITALIC_OPEN.test(whole)) return false;
-  return normalise(whole) === normalise(whole.replace(ITALIC_TAGS, ""));
 }
 
 /**
@@ -372,7 +353,9 @@ export function parseVaticanIntratext(pages: SourcePage[]): ParseResult {
 
     defects.push(...checkFootnoteBalance(page, region));
 
-    const scanned = blankHeadings(region.body, skipped);
+    const marks: HeadingMark[] = [];
+    const scanned = blankHeadings(region.body, skipped, marks);
+    const summaries = inBriefRanges(marks, scanned.length);
 
     const accepted: Marker[] = [];
     for (const marker of collectMarkers(scanned)) {
@@ -410,7 +393,7 @@ export function parseVaticanIntratext(pages: SourcePage[]): ParseResult {
         anchor: null,
         relabelledFrom: null,
         text: trimMarkerResidue(normalise(raw)),
-        role: isInBrief(marker.opens, raw) ? "summary" : null,
+        role: isInBrief(summaries, marker.start) ? "summary" : null,
         page,
         ordinal,
       });

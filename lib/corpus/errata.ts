@@ -74,6 +74,12 @@ const errataSchema = z.looseObject({
   relabels: z.array(relabelSchema).default([]),
   allowed: z.array(allowanceSchema).default([]),
   text_probes: textProbeSchema.default({ expected: [], furniture: [] }),
+  // Units another language marks as summaries and this document does not,
+  // because its source omits the section label. A fixed, checked set — see the
+  // cross-lingual role test in integration/.
+  summary_omitted: z
+    .array(z.looseObject({ locator: z.string().min(1) }))
+    .default([]),
 });
 
 /**
@@ -103,6 +109,7 @@ export function parseErrata(raw: unknown): CorpusErrata {
       probe: hit.probe,
     })),
     furniture: errata.text_probes.furniture,
+    summaryOmitted: errata.summary_omitted.map((entry) => entry.locator),
   };
 }
 
@@ -129,5 +136,6 @@ export function emptyErrata(
     allowed: [],
     textProbes: [],
     furniture: [],
+    summaryOmitted: [],
   };
 }

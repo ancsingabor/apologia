@@ -162,28 +162,74 @@ the Second Council of Lyons as "[1274]".
 
 ### What ingesting a second language made visible
 
-The locator sets are identical. The `role` metadata is not: 538 units are
+The locator sets were identical. The `role` metadata was not: 538 units were
 `summary` in English and 610 in Hungarian, agreeing on 488.
 
-Neither parser is wrong about any text. Both infer the role from
-whole-paragraph italics, and the two editions italicise differently — the
-Hungarian one italicises §112–§114 and §116–§117, which are ordinary
-paragraphs, and leaves some of its *Összefoglalás* blocks upright where
-vatican.va sets the matching IN BRIEF in italics. **The role is being read off
-typography, in a project whose whole argument is that structure and typography
-are different things.**
+Neither parser was wrong about any text. Both inferred the role from
+whole-paragraph italics, and the two editions italicise differently. **The role
+was being read off typography, in a project whose whole argument is that
+structure and typography are different things.**
 
-It is deliberately not fixed here and deliberately not asserted for parity.
-`role` is not part of `content_hash` — which covers locator and text — so
-nothing downstream depends on it yet, and the correct fix is to read the role
-from the IN BRIEF / *Összefoglalás* heading that opens each block, which both
-parsers currently blank as a heading before markers are scanned. That is a
-change to the Hungarian parser as much as to the English one, and it deserves
-the measurement its own pass would give it.
+**Corrected 2026-09-08.** The role now comes from the section label —
+*Összefoglalás*, IN BRIEF — which opens each block and runs until the next
+heading (`lib/corpus/in-brief.ts`). The irony worth recording: both parsers were
+already finding those labels and blanking them as headings, one line before
+consulting the italics. The right signal was being detected and discarded.
 
-Recorded because it is the fourth time the pattern in ADR-019 has held: this is
-a defect **neither document could reveal on its own**, and it surfaced within
-minutes of there being two.
+Fixing it found two defects that nothing else could see, one per language:
+
+- **§267's stored text ended with `3.§ A Mindenható`** — a section heading,
+  appended to the paragraph. katolikus.hu typesets that one heading in mixed
+  case where every sibling is in capitals (`2.§ AZ ATYA`, `4. § A TEREMTŐ`), so
+  neither the bold nor the all-caps rule recognised it. One unit out of 2,865,
+  reading as prose, passing every assertion and every text probe. **It shipped.**
+  It surfaced because the In Brief block that heading failed to close ran on
+  into §268–§271, and the role comparison flagged four units. A centred
+  paragraph is now a heading in that source — 195 of them, every one a title or
+  a nav link, not one a citable paragraph.
+- **katolikus.hu sets one Összefoglalás label outside any `<p>`**, so
+  `P_BLOCK` never saw it and §2504–§2513 lost their role. The `Jegyzetek`
+  problem in another guise, and the reason that one is worth remembering: a
+  label in this source is not reliably an element.
+
+What remains is a real asymmetry, declared rather than papered over: vatican.va
+omits the IN BRIEF label entirely on two pages, so §984–§987 and §1971–§1974 are
+summaries in Hungarian and ordinary paragraphs in English. Both pages contain
+the string "IN BRIEF" zero times and do not italicise those paragraphs either.
+The eight are declared in `corpus/errata/ccc-en.yaml` under `summary_omitted`,
+and an integration test asserts the divergence is **exactly** that set — 552
+Hungarian summaries against 544 English ones, differing in eight places, all
+named.
+
+A heuristic could have closed that gap by guessing that a run of italic
+paragraphs is probably a summary. That guess is what produced the 122-unit
+disagreement this section exists to record.
+
+### `role` belongs in the content hash
+
+`documentContentHash` covered locator and text. Correcting the detection changed
+552 Hungarian roles and 544 English ones while leaving the text byte-identical,
+so the upsert would have compared hashes, found them equal, reported
+"unchanged", and written nothing — the correction computed on every run and
+persisted on none.
+
+That is the argument `hash.ts` already makes for including the locator, applied
+to a different field: a hash that says "unchanged" about a corpus whose rows
+differ is not doing its job. The hash now covers what a unit row holds. It is
+still not a hash of the fetched HTML, so ADR-019's point stands.
+
+### Ordered paging, or a quietly short answer
+
+The cross-lingual gate failed on the re-ingest with `2860 locators shared, 5
+only in en`, naming five paragraphs nothing was wrong with. The cause was
+`.range()` with no `ORDER BY`: Postgres promises nothing about row order, so
+re-inserting a document changed the physical order and the pages began to
+overlap and skip.
+
+Worth recording because of where else that pattern had been copied — the text
+probes read the corpus the same way. Unordered, they would have probed an
+arbitrary subset of the units and reported it clean. **An unordered page is not
+a flaky test; it is a wrong answer that happens to be right most days.**
 
 ## Trade-offs
 

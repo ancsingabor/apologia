@@ -3,6 +3,7 @@ import type {
   ParseResult,
   ParsedUnit,
 } from "@/types/domain";
+import { inBriefRanges, isInBrief, type HeadingMark } from "../in-brief";
 import {
   FOOTNOTE_REF_KATOLIKUS,
   normaliseUnitText,
@@ -123,7 +124,7 @@ function apparatusStart(raw: string, anchorIndex: number): number {
 /** A `<p>` holding nothing but one link is navigation ("Vissza a főoldalra"). */
 const NAV_ONLY = /^\s*<a\b[^>]*>[\s\S]*?<\/a>\s*$/i;
 
-const P_BLOCK = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+const P_BLOCK = /<p\b([^>]*)>([\s\S]*?)<\/p>/gi;
 
 /**
  * A paragraph marker carried by an anchor. The match ends immediately after the
@@ -141,9 +142,50 @@ const MARKER_ANCHORED =
 const MARKER_BARE =
   /(?:<p\b[^>]*>|<br\s*\/?>\s*<br\s*\/?>)\s*(\d{1,4})\s*\.{0,2}\s+/gi;
 
-const ITALIC_OPEN = /^<(?:em|i)\b/i;
-const ITALIC_TAGS = /<\/?(?:em|i)\b[^>]*>/gi;
-const LEADING_CLOSERS = /^(?:\s|<\/a>|<\/font>|<\/span>)+/i;
+/**
+ * The In Brief label, which opens a run of summary paragraphs.
+ *
+ * ⚠️ The role used to be inferred from whole-paragraph italics, which is
+ * typography rather than structure — and this edition italicises §112–§114 and
+ * §116–§117, ordinary paragraphs, while leaving some Összefoglalás blocks
+ * upright. It carried 610 summaries against the English document's 538, the two
+ * agreeing on 488. The label was already being found and blanked as a heading
+ * one line before the italics were consulted. See `../in-brief.ts`.
+ */
+const IN_BRIEF_LABEL = /^Összefoglalás$/i;
+
+/**
+ * The same label set OUTSIDE any `<p>`, which happens exactly once:
+ *
+ *   …</p> <b>Összefoglalás</b> <p> <a name="K2504">2504.</a>…
+ *
+ * `P_BLOCK` cannot see it, so `headingKind` never runs on it and §2504–§2513
+ * lost their role — the Jegyzetek problem in another guise, and the reason that
+ * one is worth remembering: **a label in this source is not reliably an
+ * element.** This is matched over the already-blanked region, where every label
+ * that *was* in a `<p>` has become spaces, so a surviving one is bare by
+ * construction and there is nothing to de-duplicate.
+ */
+const BARE_IN_BRIEF_LABEL = /Összefoglalás/g;
+
+/**
+ * A centred paragraph. In this source that is always a heading and never body
+ * text — 195 of them, every one a section title or the "Vissza a főoldalra"
+ * link, and not one a citable paragraph.
+ *
+ * ⚠️ WITHOUT THIS, `3.§ A Mindenható` IS NOT A HEADING. Its siblings are set
+ * `2.§ AZ ATYA`, `4. § A TEREMTŐ` — capitals, caught by the all-caps rule —
+ * and this one alone is in mixed case, so nothing recognised it and its text
+ * was appended to §267. One unit out of 2,865, still reading as prose,
+ * invisible to every assertion and to every text probe. Found only because the
+ * In Brief block it failed to close ran on into §268–§271 and the cross-lingual
+ * role comparison noticed.
+ *
+ * Safe by construction: `headingKind` returns null for anything carrying a
+ * paragraph anchor before it reaches this test, so a centred numbered
+ * paragraph — if one ever appears — is still a unit.
+ */
+const CENTRED = /align\s*=\s*"?center"?/i;
 
 interface SourcePage {
   /** Slug as fetched: 'kek-031-051'. Provenance for every defect message. */
@@ -186,11 +228,14 @@ function contentRegion(html: string): string | null {
  * open with `<strong>`, and classifying those as headings silently deletes
  * them. Getting this backwards cost 49 paragraphs in an earlier draft.
  */
-function headingKind(fragment: string): string | null {
+function headingKind(attrs: string, fragment: string): string | null {
   const text = normalise(fragment);
   if (!text) return "empty";
   if (/<a\s+name="K?\d+"/i.test(fragment)) return null;
   if (NAV_ONLY.test(fragment.trim())) return "nav";
+  // Before the bold test, which would otherwise swallow it: the label is set
+  // `<p><strong>Összefoglalás</strong></p>`, sometimes with an anchor inside.
+  if (IN_BRIEF_LABEL.test(text)) return "in-brief";
   // NOTE: there is deliberately no exemption for a bold block that merely
   // STARTS with a digit. "2. Cikkely" is a heading, and exempting it does not
   // create a spurious unit — a marker needs an anchor or sequence corroboration
@@ -204,6 +249,14 @@ function headingKind(fragment: string): string | null {
   const letters = text.replace(/[^\p{L}]/gu, "");
   if (letters.length > 0 && letters === letters.toUpperCase()) return "allcaps";
 
+  // LAST, deliberately. Every other rule gets first refusal, so this counter
+  // means "a heading nothing else recognised" — which in the whole document is
+  // `3.§ A Mindenható` plus four front-matter subtitles on pages that carry no
+  // numbered paragraphs at all. A jump in it is therefore a strong signal
+  // rather than noise; ahead of the bold test it would absorb 142 headings the
+  // other rules already catch and say nothing.
+  if (CENTRED.test(attrs)) return "centred";
+
   return null;
 }
 
@@ -213,14 +266,41 @@ function headingKind(fragment: string): string | null {
  */
 function blankHeadings(
   region: string,
-  skipped: Record<string, number>
+  skipped: Record<string, number>,
+  marks: HeadingMark[]
 ): string {
-  return region.replace(P_BLOCK, (whole, inner: string) => {
-    const kind = headingKind(inner);
-    if (kind === null) return whole;
-    skipped[`heading-${kind}`] = (skipped[`heading-${kind}`] ?? 0) + 1;
-    return " ".repeat(whole.length);
-  });
+  return region.replace(
+    P_BLOCK,
+    (whole, attrs: string, inner: string, offset: number) => {
+      const kind = headingKind(attrs, inner);
+      if (kind === null) return whole;
+      skipped[`heading-${kind}`] = (skipped[`heading-${kind}`] ?? 0) + 1;
+      marks.push({
+        at: offset,
+        kind:
+          kind === "in-brief" ? "label" : kind === "empty" ? "empty" : "heading",
+      });
+      return " ".repeat(whole.length);
+    }
+  );
+}
+
+/**
+ * Add the one In Brief label this source sets outside a `<p>`.
+ *
+ * Runs over the blanked region, so every label that lived in a `<p>` is already
+ * spaces and only a bare one can match. The marks are merged in offset order
+ * because `inBriefRanges` reads them as a sequence.
+ */
+function withBareLabels(region: string, marks: HeadingMark[]): HeadingMark[] {
+  BARE_IN_BRIEF_LABEL.lastIndex = 0;
+  const bare: HeadingMark[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = BARE_IN_BRIEF_LABEL.exec(region)) !== null) {
+    bare.push({ at: match.index, kind: "label" });
+  }
+  if (bare.length === 0) return marks;
+  return [...marks, ...bare].sort((a, b) => a.at - b.at);
 }
 
 function collectMarkers(region: string): Marker[] {
@@ -251,20 +331,6 @@ function collectMarkers(region: string): Marker[] {
   }
 
   return markers.sort((a, b) => a.start - b.start);
-}
-
-/**
- * Is the whole body italic? That is how the CCC's "Összefoglalás" / In Brief
- * summaries are set. Inline `<em>` on a scripture reference must not count, so
- * this requires the body to OPEN italic and to lose nothing when the italic
- * tags are removed — i.e. the italics wrap everything.
- */
-function isInBrief(body: string): boolean {
-  const stripped = body.replace(LEADING_CLOSERS, "").trim();
-  if (!ITALIC_OPEN.test(stripped)) return false;
-  return (
-    normalise(stripped) === normalise(stripped.replace(ITALIC_TAGS, ""))
-  );
 }
 
 /**
@@ -301,7 +367,12 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
       cut = apparatusStart(raw, end.index);
     }
     const body = raw.slice(0, cut);
-    const region = blankHeadings(body, skipped);
+    const marks: HeadingMark[] = [];
+    const region = blankHeadings(body, skipped, marks);
+    const summaries = inBriefRanges(
+      withBareLabels(region, marks),
+      region.length
+    );
 
     const accepted: Marker[] = [];
     for (const marker of collectMarkers(region)) {
@@ -333,7 +404,7 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
         anchor: marker.anchor,
         relabelledFrom: null,
         text: trimMarkerResidue(normalise(raw)),
-        role: isInBrief(raw) ? "summary" : null,
+        role: isInBrief(summaries, marker.start) ? "summary" : null,
         page,
         ordinal,
       });
