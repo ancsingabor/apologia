@@ -7,6 +7,7 @@ import { documentContentHash } from "@/lib/corpus/hash";
 import { parseManifest, selectDocument } from "@/lib/corpus/manifest";
 import { parserFor } from "@/lib/corpus/parsers";
 import type { CorpusErrata, ManifestDocument } from "@/types/domain";
+import { parseArgs } from "./args";
 import { connect } from "./client";
 import { emitManifest } from "./emit";
 import { fetchDocument } from "./fetch";
@@ -30,45 +31,6 @@ import { upsertDocument } from "./upsert";
  * what "ADR-008 is decided by measurement" has to mean concretely. Wiring one
  * provider in here would settle that question by accident.
  */
-
-const USAGE = `
-Usage: npm run ingest -- --source=<id> --language=<hu|en> [options]
-
-  --dry-run     fetch, parse and assert; touch no database
-  --refetch     bypass the .corpus-cache/ and re-download every page
-  --remote      permit writing to a non-local Supabase target
-`;
-
-interface Args {
-  source: string;
-  language: string;
-  dryRun: boolean;
-  refetch: boolean;
-  remote: boolean;
-}
-
-function parseArgs(argv: string[]): Args {
-  const flags = new Map<string, string>();
-  for (const arg of argv) {
-    const match = /^--([a-z-]+)(?:=(.*))?$/.exec(arg);
-    if (!match) throw new Error(`Unrecognised argument: ${arg}\n${USAGE}`);
-    flags.set(match[1], match[2] ?? "true");
-  }
-
-  const source = flags.get("source");
-  const language = flags.get("language");
-  if (!source || !language) {
-    throw new Error(`--source and --language are both required.\n${USAGE}`);
-  }
-
-  return {
-    source,
-    language,
-    dryRun: flags.get("dry-run") === "true",
-    refetch: flags.get("refetch") === "true",
-    remote: flags.get("remote") === "true",
-  };
-}
 
 const log = (message: string) => console.log(message);
 
@@ -96,7 +58,7 @@ async function loadErrata(
         `and an unasserted parse is how a corpus acquires silent holes (ADR-019).`
     );
   }
-  return emptyErrata(sourceId, document.language as "hu" | "en" | "la", expectedUnits);
+  return emptyErrata(sourceId, document.language, expectedUnits);
 }
 
 function reportAssertions(report: ReturnType<typeof assertCorpus>["report"]): void {
@@ -195,13 +157,13 @@ async function main(): Promise<void> {
     log,
   });
 
-  if (result.status === "unchanged") {
-    log(`\n✓ unchanged — nothing to do. The current document already carries this hash.\n`);
-    return;
-  }
-
   // ── emit ──────────────────────────────────────────────────────────────────
-  const path = await emitManifest({
+  // Runs even when the upsert was a no-op, so that a run whose emit failed can
+  // recover: otherwise the next run reports "unchanged" and returns before ever
+  // reaching here, and no flag rewrites the manifest. `emitManifest` compares
+  // content and writes only on a difference, so a genuine no-op still leaves
+  // the working tree clean.
+  const emitted = await emitManifest({
     sourceId: source.id,
     language: document.language,
     revision: document.revision,
@@ -219,7 +181,12 @@ async function main(): Promise<void> {
     report,
   });
 
-  log(`  emitted  ${path}`);
+  if (emitted.written) log(`  emitted  ${emitted.path}`);
+
+  if (result.status === "unchanged") {
+    log(`\n✓ unchanged — nothing to do. The current document already carries this hash.\n`);
+    return;
+  }
   log(`\n✓ ingested ${result.unitCount} units, ${result.chunkCount} chunks.\n`);
 }
 
