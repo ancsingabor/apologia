@@ -37,6 +37,8 @@ const doc = (over: Partial<EmittedDocument> = {}): EmittedDocument => ({
   pages: [{ slug: "kek-005-006", raw_hash: "b".repeat(64) }],
   unnumberedPages: ["kek-005-006"],
   skipped: { "heading-bold": 525 },
+  anchorSignal: true,
+  crossLingual: "2865 locators identical to en",
   report: { ok: true, unitCount: 2865, undeclared: [], stale: [] },
   ...over,
 });
@@ -156,5 +158,36 @@ describe("merging", () => {
     const second = /corpus_hash: (\w+)/.exec(await readFile(path, "utf8"))![1];
 
     expect(second).not.toBe(first);
+  });
+});
+
+describe("what the artefact says about the assertions", () => {
+  // ADR-020 § Trade-offs promises a reader can tell from this file WHICH checks
+  // ran, not merely that they passed. A two-assertion document and a
+  // three-assertion one must not read the same.
+  it("distinguishes a check that ran from one that could not", async () => {
+    await emitManifest(doc(), path);
+    const twoSignals = await readFile(path, "utf8");
+    expect(twoSignals).toMatch(/anchor_agreement: checked/);
+
+    await emitManifest(
+      doc({
+        language: "en",
+        anchorSignal: false,
+        crossLingual: "2865 locators identical to hu",
+      }),
+      path
+    );
+    const oneSignal = await readFile(path, "utf8");
+    expect(oneSignal).toMatch(/anchor_agreement: not applicable — one signal/);
+    expect(oneSignal).toMatch(/cross_lingual: 2865 locators identical to hu/);
+  });
+
+  it("says so when there was no other language to compare against", async () => {
+    await emitManifest(doc({ crossLingual: "no other language ingested" }), path);
+
+    expect(await readFile(path, "utf8")).toMatch(
+      /cross_lingual: no other language ingested/
+    );
   });
 });

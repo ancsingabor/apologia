@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import {
   assertPagesDiscovered,
-  discoverKatolikusHuPages,
+  discovererFor,
   type DiscoveredPage,
 } from "@/lib/corpus/discover";
 import { rawContentHash } from "@/lib/corpus/hash";
@@ -16,10 +16,12 @@ import type { ManifestDocument } from "@/types/domain";
  * repository ships the manifest and the pipeline, never the text.
  *
  * The cache is not an optimisation. It is what makes the loop this project runs
- * on — inventory by parsing, fix the parser, parse again — cost nothing and
- * hit katolikus.hu once. ADR-019 chose the more fragile fetch target on
- * purpose, and 31 template-generated pages behind a table of contents deserve
- * to be downloaded as few times as the work allows.
+ * on — inventory by parsing, fix the parser, parse again — cost nothing and hit
+ * somebody else's server once. ADR-019 chose the more fragile fetch targets on
+ * purpose, and they are not small: 31 pages behind the Hungarian table of
+ * contents, 374 behind the English one. At the polite delay below a cold
+ * English fetch is a minute and a half of vatican.va's time, and every re-parse
+ * after the first should cost it nothing.
  */
 
 const CACHE_ROOT = ".corpus-cache";
@@ -102,7 +104,7 @@ export async function fetchDocument(
 
   log(`  index    ${document.indexUrl}`);
   const indexHtml = await get(document.indexUrl, document.encoding);
-  const discovered = discoverKatolikusHuPages(indexHtml, document.indexUrl);
+  const discovered = discovererFor(document.fetch)(indexHtml, document.indexUrl);
   assertPagesDiscovered(discovered, document.indexUrl);
   log(`  pages    ${discovered.length} discovered from the table of contents`);
 
@@ -117,7 +119,7 @@ export async function fetchDocument(
     if (cached !== null) {
       html = cached;
     } else {
-      // Sequential and unhurried. 31 pages of somebody else's server.
+      // Sequential and unhurried. Somebody else's server, 374 pages of it.
       if (downloaded > 0) await sleep(POLITE_DELAY_MS);
       html = await get(url, document.encoding);
       await writeCache(path, html);

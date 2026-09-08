@@ -1,0 +1,181 @@
+# ── Errata: Catechism of the Catholic Church, English ───────────────────────
+#
+# Source: vatican.va/archive/ENG0015/  (IntraText — ADR-019)
+# Parser: lib/corpus/parsers/vatican-intratext.ts
+# Inventoried: 2026-09-08, by parsing all 374 pages
+#
+# THE SHORT VERSION: this text is clean. §1–§2865, contiguous, strictly
+# increasing, nothing misnumbered, nothing duplicated, no relabels. Two
+# paragraphs begin in the middle of another paragraph's element, and that is the
+# entire declared defect set.
+#
+# It is worth saying why that is not reassuring on its own. The Hungarian
+# edition looked clean too, from an anchor inventory — which found six faults,
+# misdiagnosed the most serious, and missed the misnumbering of §146–§148
+# entirely. What makes the claim above different is that it comes from running a
+# parser over every page and asserting the sequence, not from pattern-matching a
+# signal.
+#
+# ── THIS SOURCE CARRIES ONE SIGNAL, AND THAT IS THE IMPORTANT ENTRY ─────────
+#
+# Every `<a name=…>` in the body is a footnote. There is no `name="K0056"` here,
+# so the paragraph number is stated ONCE and `assert.ts`'s first check — the two
+# signals agree — has no second operand.
+#
+# That check is therefore skipped rather than passed vacuously, and ADR-020
+# requires the loss to be paid for rather than absorbed. It is paid twice:
+#
+#   * per page, by a footnote apparatus balance check in the parser: every
+#     reference in the body has a definition in the apparatus and vice versa.
+#     This watches the body/apparatus cut, which is the boundary that silently
+#     corrupted §1065 and §1666 in Hungarian with every other check green.
+#   * per document, by a cross-lingual test in `integration/`: the English
+#     locator set equals the Hungarian one. Two editions, two publishers, two
+#     parsers, 2,865 addresses — a stronger statement than the Hungarian
+#     document can make about itself.
+#
+# WHAT THIS FILE IS NOT
+#   Locators and defect kinds only. NO corpus text — not one word — so it ships
+#   under ADR-003. `repair` names the signal recovered from, never a literal.
+
+source: ccc
+language: en
+inventoried: 2026-09-08
+expected_units: 2865
+parsed_units: 2865          # complete; §1–§2865 with no gaps
+relabels: []                # none. The numbering in this edition is correct.
+
+# ── Paragraphs that do not begin their own element ──────────────────────────
+# Both open inside the preceding paragraph's `<p>`. Nothing structural marks
+# them, so each was located ONLY because the sequence expected that number
+# there. That is thin evidence, and it is why they are declared: a third one
+# appearing means either the source changed or the corroboration rule is
+# accepting something it should not, and either way the ingest should stop.
+#
+# Seven further bare numbers in the document match the same shape and are
+# rejected because the sequence does not expect them. That ratio — 2 accepted,
+# 7 rejected — is the corroboration rule doing visible work.
+
+allowed:
+  - locator: ccc:2077
+    kind: marker-inline
+    repair: sequence-corroboration
+    page: __P79
+    note: >
+      An IN BRIEF paragraph. The preceding summary's `<p>` ends mid-sentence
+      after this number, and §2077's own text continues across two further `<p>`
+      blocks that carry no number at all. Spanning marker-to-next-marker
+      reassembles it; treating an element as a unit would produce three
+      fragments, two of them unaddressable.
+
+  - locator: ccc:2436
+    kind: marker-inline
+    repair: sequence-corroboration
+    page: __P8D
+    note: >
+      Opens after a single `<br>` inside §2435's element. The Hungarian §78 case
+      in different markup, and the reason neither parser can treat an element
+      boundary as a unit boundary.
+
+# ── Text probes ─────────────────────────────────────────────────────────────
+# ADR-019's third method step: inventory by parsing, assert over the parse, then
+# PROBE THE STORED TEXT. The assertions check the corpus has the right shape;
+# they cannot check that a unit's text is only its text, because contamination
+# that reads as prose is invisible to every structural signal.
+#
+# `furniture` names words belonging to this site's page template. One inside a
+# unit means the body/apparatus cut has moved — the failure that reached
+# production in Hungarian. Matched on word boundaries: an earlier hand-run
+# flagged §1159 because "Previously" contains "Previous".
+#
+# `expected` names hits a human read and found to be content. Declared here
+# rather than allowlisted in the probe definitions, because they are facts about
+# THIS document and this file is where a document's facts live.
+
+text_probes:
+  furniture:
+    - IntraText
+    - Copyright
+    - Previous
+
+  expected:
+    - locator: ccc:113
+      probe: leading-marker-residue
+      note: >
+        Opens "2." — the second of the three criteria for interpreting
+        Scripture set out in §111, not a marker's number left behind.
+
+    - locator: ccc:114
+      probe: leading-marker-residue
+      note: The third of the same three criteria.
+
+    - locator: ccc:1059
+      probe: bracket-footnote
+      note: >
+        Contains "[1274]" — the date of the Second Council of Lyons, inside the
+        editorial citation of the quoted decree. Not a footnote marker.
+
+# ── Not errata ──────────────────────────────────────────────────────────────
+# What the inventory saw and the parser handles without a declaration. Listed so
+# nobody re-discovers them as bugs, and so a future reader can tell "we looked
+# and it is fine" from "we did not look".
+#
+#   * __P85 IS A DIFFERENT HTML DIALECT. Uppercase tags, quoted attributes,
+#     `<HR noShade SIZE=1>` where the other 373 pages have `<hr size=1 noshade>`
+#     — re-saved through a WYSIWYG editor at some point. A boundary pattern
+#     written against the common form finds no body on that page and loses
+#     §2337–§2359: 23 paragraphs, no error, a hole the count assertion would
+#     report as an off-by-23 pointing at nothing in particular. Every boundary
+#     in the parser is therefore matched by attribute PRESENCE, never by
+#     attribute order or case.
+#
+#   * Six pages carry no numbered paragraph and are skipped, exactly as the
+#     Hungarian front matter is: __P1 (the Prologue title page), __P13 (the
+#     Apostles' and Nicene Creeds), __P7B, __P7H, __P7M, __P83 (commandment
+#     epigraphs opening an Article). These are unnumbered in the printed book
+#     too; giving them a locator would mean a synthetic scheme (ADR-002).
+#
+#   * Pages with no footnotes have no apparatus rule at all, so the body ends at
+#     the Previous/Next navigation instead. Both boundaries are optional.
+#
+#   * §113 and §114 open with "2." and "3." — enumerated items belonging to the
+#     three criteria of §111. They are not markers: a marker's number must be
+#     followed by whitespace or a tag, and a period is neither.
+#
+#   * §1059 contains "[1274]" — the date of the Second Council of Lyons, not a
+#     footnote reference. A probe for `\[[0-9]+\]` residue in the stored text
+#     hits it and should.
+#
+#   * §826 quotes St Thérèse in capitals mid-paragraph. The all-caps heading
+#     test looks at a whole `<p>`, so it is unaffected.
+#
+#   * IN BRIEF paragraphs are wrapped in `<i>` that OPENS BEFORE THE NUMBER, so
+#     the marker has to hand the tag back to the unit. Swallow it and the
+#     italic-wrap test never fires and every summary silently loses its role —
+#     which no assertion here can see, because `role` is metadata and the text
+#     is unaffected.
+#
+#   * `role` DISAGREES ACROSS LANGUAGES AND IS NOT ASSERTED. English marks 538
+#     units `summary`, Hungarian 610; 488 agree, 122 are summaries only in
+#     Hungarian and 50 only in English. Both parsers infer the role from whole-
+#     paragraph italics, which is typography rather than structure: the
+#     Hungarian edition italicises §112-§114 and §116-§117 (the criteria for
+#     interpreting Scripture, the senses of Scripture) which are ordinary
+#     paragraphs, and does NOT italicise its Összefoglalás blocks on some pages
+#     where vatican.va does italicise the matching IN BRIEF. So each parser is
+#     wrong in the opposite direction, and neither is wrong about the text.
+#
+#     Left as it is, on purpose, and NOT asserted for parity. `role` is metadata
+#     that nothing downstream consumes yet, it is not part of `content_hash`
+#     (which covers locator and text only), and the fix is not a tolerance
+#     adjustment — it is reading the role from the IN BRIEF / Összefoglalás
+#     heading that opens each block, which both parsers currently blank before
+#     markers are scanned. That is a change to the HUNGARIAN parser as much as
+#     this one, and it belongs in its own pass. Recorded here because it was
+#     found by ingesting the second language and is invisible from either
+#     document alone.
+#
+#   * `&ldquo;` appears in 16 units where the other 7,381 quotation marks are
+#     `&quot;`. It is decoded to U+201C, not folded onto `"`: decoding an entity
+#     is not the same as normalising typography, and ADR-017 wants what the
+#     source says (lib/corpus/normalise.ts).

@@ -1,6 +1,7 @@
 # ADR-019 — The CCC editions: revision alignment over file convenience
 
 Status: **Accepted** · Milestone 1 · **amended twice on 2026-09-07 — see the two § Amendment sections at the foot**
+· the English side is settled in [ADR-020](020-asserting-a-single-signal-source.md)
 Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
 the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
 
@@ -151,6 +152,10 @@ text.
 - The English side is **not yet inventoried.** Its revision is verified; its
   completeness and defect set are not, and the same three assertions must run
   over it before it is trusted. It is **ISO-8859-1**, not UTF-8 — see § Amendment.
+  **Superseded 2026-09-08:** it has been inventoried by parsing — §1–§2865,
+  contiguous, no misnumbering. Only two of the three assertions can run over it,
+  because it states each paragraph number once; [ADR-020](020-asserting-a-single-signal-source.md)
+  is what pays for the third.
 - `documents.edition` is **still unresolved** and is left null rather than
   guessed. Szent István Társulat is the LEV licensee for Hungary, but the modern
   pages credit no publisher and the archive credits its translators only inside
@@ -316,6 +321,17 @@ So the method note from the first amendment gains a third step:
 
 Those probes are now part of `integration/`, so the check runs rather than being
 remembered.
+
+> **Corrected 2026-09-08: that sentence was false when it was written.** Nothing
+> in `integration/` probed unit text; the probes existed as a paragraph in this
+> ADR and as shell history. The English ingest paid the cost immediately — the
+> same queries were run by hand a second time — which is the failure mode this
+> amendment was written to close, reappearing inside the amendment that closed
+> it. They are automated now, in `integration/corpus-text-probes.test.ts` over
+> `lib/corpus/probes.ts`, and the hits that are legitimate content are declared
+> in `text_probes:` of each document's errata file rather than allowlisted in
+> the test. Verified by re-introducing this exact defect — `Jegyzetek:` appended
+> to §1065 — and watching the check fail.
 
 ### Why this keeps happening, and why it is the process working
 

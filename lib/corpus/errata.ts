@@ -31,6 +31,8 @@ const DEFECT_KIND = z.enum([
   "misnumbered",
   "number-not-increasing",
   "paragraph-absent",
+  "marker-inline",
+  "footnote-unbalanced",
   "count-mismatch",
 ]);
 
@@ -48,12 +50,30 @@ const allowanceSchema = z.looseObject({
   kind: DEFECT_KIND,
 });
 
+/**
+ * ADR-019's third method step, declared. `expected` names probe hits a human
+ * checked and found to be content; `furniture` names words that appear only in
+ * this source's page template, so one in a unit means the body cut has moved.
+ */
+const textProbeSchema = z.looseObject({
+  expected: z
+    .array(
+      z.looseObject({
+        locator: z.string().min(1),
+        probe: z.string().min(1),
+      })
+    )
+    .default([]),
+  furniture: z.array(z.string().min(1)).default([]),
+});
+
 const errataSchema = z.looseObject({
   source: z.string().min(1),
   language: z.enum(["hu", "en", "la"]),
   expected_units: z.number().int().positive(),
   relabels: z.array(relabelSchema).default([]),
   allowed: z.array(allowanceSchema).default([]),
+  text_probes: textProbeSchema.default({ expected: [], furniture: [] }),
 });
 
 /**
@@ -78,6 +98,11 @@ export function parseErrata(raw: unknown): CorpusErrata {
       locator: allowance.locator,
       kind: allowance.kind,
     })),
+    textProbes: errata.text_probes.expected.map((hit) => ({
+      locator: hit.locator,
+      probe: hit.probe,
+    })),
+    furniture: errata.text_probes.furniture,
   };
 }
 
@@ -96,5 +121,13 @@ export function emptyErrata(
   language: CorpusErrata["language"],
   expectedUnits: number
 ): CorpusErrata {
-  return { source, language, expectedUnits, relabels: [], allowed: [] };
+  return {
+    source,
+    language,
+    expectedUnits,
+    relabels: [],
+    allowed: [],
+    textProbes: [],
+    furniture: [],
+  };
 }

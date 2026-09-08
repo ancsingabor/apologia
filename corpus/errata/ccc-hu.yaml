@@ -129,6 +129,42 @@ allowed:
       A trailing 1. Trusting anchors blindly would also mint a spurious
       locator, ccc:26201 — which is what the agreement check catches.
 
+# ── Text probes ─────────────────────────────────────────────────────────────
+# ADR-019's third method step, and the one this source paid for. The footnote
+# apparatus leaked into §1065 and §1666 with the count at 2,865, the sequence
+# strictly increasing, both signals agreeing everywhere and the errata fully
+# declared — invisible to every assertion above, because the units still read
+# as prose. It was found by a query over the stored text run by hand.
+#
+# ADR-019 then claimed those probes had become part of `integration/`. They had
+# not, and the English ingest paid the cost by running them by hand again. They
+# are automated now; this section is what makes them strict rather than
+# advisory.
+#
+# `furniture` names words belonging to katolikus.hu's page template. "Jegyzetek"
+# is the apparatus label whose three markup shapes cost two corrupted units, so
+# it is the single most valuable line in this file.
+
+text_probes:
+  furniture:
+    - Jegyzetek
+
+  expected:
+    - locator: ccc:112
+      probe: leading-marker-residue
+      note: >
+        Opens "1." — the first of the three criteria for interpreting Scripture
+        set out in §111, not a marker's number left behind. §222's genuine
+        marker residue is stripped at ingest and does not appear here.
+
+    - locator: ccc:113
+      probe: leading-marker-residue
+      note: The second of the same three criteria.
+
+    - locator: ccc:114
+      probe: leading-marker-residue
+      note: The third of the same three criteria.
+
 # ── Not errata ──────────────────────────────────────────────────────────────
 # Structural quirks the parser handles without a declaration, listed so nobody
 # re-discovers them as bugs. Each one broke an earlier draft.

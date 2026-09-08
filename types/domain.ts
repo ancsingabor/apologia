@@ -124,6 +124,14 @@ export type CorpusDefectKind =
   | "number-not-increasing"
   /** A number is missing from the sequence entirely. */
   | "paragraph-absent"
+  /** The paragraph does not begin its own block element — it opens mid-`<p>`,
+   *  after a `<br>` or mid-sentence, and was located only because the sequence
+   *  expected it there. Nothing structural marks it, so it is declared. */
+  | "marker-inline"
+  /** A footnote reference in the body has no definition in the page's
+   *  apparatus, or a definition has no reference. The body/apparatus cut is the
+   *  historically fragile boundary, and this is what notices when it moves. */
+  | "footnote-unbalanced"
   /** The final tally does not match the manifest's `expected_units`. */
   | "count-mismatch";
 
@@ -178,6 +186,22 @@ export interface ParseResult {
   /** Counters for things deliberately not turned into units. Informational,
    *  but a jump here between runs means the source changed shape. */
   skipped: Record<string, number>;
+  /**
+   * Does this source address its paragraphs a SECOND time, in markup?
+   *
+   * The Hungarian Catechism states every paragraph number twice — printed as
+   * `56.` and again as `name="K0056"` — and `assert.ts`'s first check is that
+   * the two agree. vatican.va states it once: every `<a name=…>` in its body is
+   * a footnote. So the check has no second operand there, and running it anyway
+   * would report all 2,865 units as `anchor-absent`.
+   *
+   * ⚠️ This is a statement about the SOURCE, not a switch a parser may reach
+   * for when a check becomes inconvenient. Setting it false does not make a
+   * document less checked by permission — ADR-020 requires the missing check to
+   * be paid for, and `vatican-intratext` pays with a footnote-apparatus balance
+   * check per page and a cross-lingual locator-set equality test.
+   */
+  anchorSignal: boolean;
 }
 
 // ── Errata (ADR-003, ADR-019) ────────────────────────────────────────────────
@@ -203,12 +227,41 @@ export interface ErrataAllowance {
   kind: CorpusDefectKind;
 }
 
+/**
+ * A text-probe hit a human has looked at and found to be content.
+ *
+ * ADR-019's third method step probes the STORED text for contamination that
+ * reads as prose — markup residue, an undecoded entity, a leaked footnote
+ * marker. Some hits are legitimate: §1059 contains "[1274]", the date of the
+ * Second Council of Lyons. Those are declared here rather than allowlisted in
+ * the probe definitions, because they are facts about a document and this file
+ * is where a document's facts already live.
+ */
+export interface ErrataTextProbe {
+  locator: string;
+  /** Which probe fired — `bracket-footnote`, `leading-marker-residue`. */
+  probe: string;
+}
+
+/** One unit whose stored text matched a probe. */
+export interface ProbeHit {
+  locator: string;
+  probe: string;
+  /** Enough of the text to judge the hit by. */
+  excerpt: string;
+}
+
 export interface CorpusErrata {
   source: string;
   language: CorpusLanguage;
   expectedUnits: number;
   relabels: ErrataRelabel[];
   allowed: ErrataAllowance[];
+  /** Probe hits established as content — see `ErrataTextProbe`. */
+  textProbes: ErrataTextProbe[];
+  /** Words that appear only in this source's page furniture, never its prose.
+   *  A hit means the body/apparatus cut has moved. */
+  furniture: string[];
 }
 
 export interface AssertionReport {
@@ -245,8 +298,10 @@ export interface ManifestDocument {
   /** Null is "not established", never a guess — same rule as `authority_tier`. */
   edition: string | null;
   indexUrl: string;
-  /** Page list is discovered at fetch time, never pinned (ADR-019). */
-  fetch: "discover-from-index";
+  /** Key into the discoverer registry — which table of contents shape this
+   *  document's page list is read from. The list is discovered at fetch time
+   *  and never pinned (ADR-019); this names HOW, not WHICH pages. */
+  fetch: string;
   /** Key into the parser registry. An unknown id is fatal, not a default. */
   parser: string;
   /** What the bytes are, per document: the HU pages are UTF-8, vatican.va is

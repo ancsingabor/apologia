@@ -29,6 +29,21 @@ import type {
  * agreed with each other and were both wrong, so the agreement check passes and
  * the paragraph is filed as a duplicate §210. Agreement between two signals is
  * not correctness; it is only evidence against *independent* error.
+ *
+ * ── The first check needs a source that has two signals ─────────────────────
+ *
+ * vatican.va states each paragraph number once. Every `<a name=…>` in its body
+ * is a footnote, so there is no second operand and the check would report all
+ * 2,865 English units as `anchor-absent` — 2,865 errata allowances, which is a
+ * wildcard spelled at length.
+ *
+ * So the check is conditioned on `ParseResult.anchorSignal`, and ADR-020 makes
+ * that a debt rather than a discount: a parser that declares no anchor signal
+ * owes a compensating check. `vatican-intratext` pays with a per-page footnote
+ * apparatus balance — which guards the body/apparatus cut, the boundary that
+ * silently corrupted §1065 and §1666 in Hungarian with every assertion here
+ * green — and with a cross-lingual locator-set equality test in `integration/`,
+ * which is a stronger check than anything the Hungarian document has.
  */
 
 const PAD = 4;
@@ -85,15 +100,25 @@ export function applyRelabels(
     .map((unit, index) => ({ ...unit, ordinal: index + 1 }));
 }
 
-/** Every defect the three checks can see, over the relabelled units. */
+/**
+ * Every defect the three checks can see, over the relabelled units.
+ *
+ * `anchorSignal` says whether the source addresses its paragraphs a second time
+ * in markup. It is a fact about the edition, reported by its parser — never a
+ * knob to turn when a check becomes inconvenient (ADR-020).
+ */
 export function detectDefects(
   units: ParsedUnit[],
-  errata: CorpusErrata
+  errata: CorpusErrata,
+  anchorSignal: boolean
 ): CorpusDefect[] {
   const defects: CorpusDefect[] = [];
 
   // ── Check 1: the two signals agree ─────────────────────────────────────────
-  for (const unit of units) {
+  // Skipped entirely, rather than passed vacuously, when the source has one
+  // signal: "we did not check this" and "we checked and it was fine" must not
+  // arrive in the report looking the same.
+  for (const unit of anchorSignal ? units : []) {
     // A relabelled unit's anchor necessarily disagrees — the source printed the
     // wrong number, which is what the relabel records. Reporting it again as an
     // anchor defect would need a second declaration for one fault.
@@ -169,7 +194,10 @@ export function assertCorpus(
   errata: CorpusErrata
 ): { units: ParsedUnit[]; report: AssertionReport } {
   const units = applyRelabels(parsed.units, errata);
-  const found = [...parsed.defects, ...detectDefects(units, errata)];
+  const found = [
+    ...parsed.defects,
+    ...detectDefects(units, errata, parsed.anchorSignal),
+  ];
 
   const allowed = new Set(errata.allowed.map((a) => `${a.locator}|${a.kind}`));
   const fired = new Set(found.map((d) => `${d.locator}|${d.kind}`));

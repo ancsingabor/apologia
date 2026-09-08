@@ -29,6 +29,7 @@ value; the decision itself is usually the least interesting line.
 | [017](017-quotation-as-verified-invariant.md) | Quotation is a verified invariant, not a policy note | Accepted |
 | [018](018-segmented-answers.md) | The model marks its own claims; the gate does not detect them | Accepted |
 | [019](019-ccc-editions.md) | The CCC editions: revision alignment over file convenience | Accepted |
+| [020](020-asserting-a-single-signal-source.md) | Asserting a source that carries one signal | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a

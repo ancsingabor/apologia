@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { load } from "js-yaml";
 import { assertCorpus } from "@/lib/corpus/assert";
+import {
+  compareLocators,
+  crossLingualFailure,
+} from "@/lib/corpus/cross-lingual";
 import { chunkerFor } from "@/lib/corpus/chunk";
 import { emptyErrata, parseErrata } from "@/lib/corpus/errata";
 import { documentContentHash } from "@/lib/corpus/hash";
@@ -11,6 +15,7 @@ import { parseArgs } from "./args";
 import { connect } from "./client";
 import { emitManifest } from "./emit";
 import { fetchDocument } from "./fetch";
+import { currentLocators, siblingLanguages } from "./siblings";
 import { upsertDocument } from "./upsert";
 
 /**
@@ -18,7 +23,7 @@ import { upsertDocument } from "./upsert";
  *
  * The pipeline of ADR-004, in order:
  *
- *   fetch → parse → assert → chunk → upsert → emit
+ *   fetch → parse → assert → chunk → cross-lingual → upsert → emit
  *
  * It is a sequence of functions with a main(), not a distributed choreography,
  * and that is the point: the CLI form keeps the pipeline readable for a
@@ -147,6 +152,32 @@ async function main(): Promise<void> {
   const target = connect({ remote: args.remote });
   log(`\n  target   ${new URL(target.url).host}${target.local ? " (local)" : " ⚠ REMOTE"}`);
 
+  // ── cross-lingual ─────────────────────────────────────────────────────────
+  // Before anything is written, not after. ADR-002 claims a locator is a
+  // cross-lingual identity; this is where that stops being prose. It runs
+  // against the corpus rather than the manifest, so it also stands in for the
+  // agreement check `assert.ts` cannot run over a source that states each
+  // paragraph number once (ADR-020).
+  //
+  // Nothing to compare on the first language of a source, which is not a pass:
+  // the check is a property of a PAIR, and it says so.
+  const siblings = await siblingLanguages(target.db, source.id, document.language);
+  let crossLingual = "no other language ingested";
+  if (siblings.length === 0) {
+    log(`  cross    no other language ingested yet — nothing to compare`);
+  }
+  for (const sibling of siblings) {
+    const existing = await currentLocators(target.db, source.id, sibling);
+    const report = compareLocators(
+      units.map((unit) => unit.locator),
+      existing,
+      sibling
+    );
+    if (!report.ok) throw new Error(crossLingualFailure(report, document.language));
+    crossLingual = `${report.shared} locators identical to ${siblings.join("/")}`;
+    log(`  cross    ${report.shared} locators, identical to ${sibling}`);
+  }
+
   const result = await upsertDocument({
     db: target.db,
     source,
@@ -178,6 +209,8 @@ async function main(): Promise<void> {
     pages: pages.map((page) => ({ slug: page.page, raw_hash: page.rawHash })),
     unnumberedPages: parsed.unnumberedPages,
     skipped: parsed.skipped,
+    anchorSignal: parsed.anchorSignal,
+    crossLingual,
     report,
   });
 

@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { chunkNumberedParagraph } from "@/lib/corpus/chunk";
+import { compareLocators } from "@/lib/corpus/cross-lingual";
 import { documentContentHash } from "@/lib/corpus/hash";
+import { currentLocators, siblingLanguages } from "@/scripts/ingest/siblings";
 import { upsertDocument } from "@/scripts/ingest/upsert";
 import type {
   ManifestDocument,
@@ -82,35 +84,40 @@ const DOCUMENT: ManifestDocument = {
   revision: "1997+2018",
   edition: null,
   indexUrl: "https://example.test/index",
-  fetch: "discover-from-index",
+  fetch: "katolikus-hu-toc",
   parser: "katolikus-hu-numbered-paragraph",
   encoding: "utf-8",
   errata: null,
 };
 
-function units(count: number, textSuffix = ""): ParsedUnit[] {
-  return Array.from({ length: count }, (_, index) => {
-    const paragraph = index + 1;
-    return {
-      locator: `test:${paragraph}`,
-      paragraph,
-      anchor: `K${String(paragraph).padStart(4, "0")}`,
-      relabelledFrom: null,
-      text: `A ${paragraph}. bekezdés szövege.${textSuffix}`,
-      role: null,
-      page: "test-page",
-      ordinal: paragraph,
-    };
-  });
+function units(count: number, textSuffix = "", skip: number[] = []): ParsedUnit[] {
+  return Array.from({ length: count }, (_, index) => index + 1)
+    .filter((paragraph) => !skip.includes(paragraph))
+    .map((paragraph) => {
+      return {
+        locator: `test:${paragraph}`,
+        paragraph,
+        anchor: `K${String(paragraph).padStart(4, "0")}`,
+        relabelledFrom: null,
+        text: `A ${paragraph}. bekezdés szövege.${textSuffix}`,
+        role: null,
+        page: "test-page",
+        ordinal: paragraph,
+      };
+    });
 }
 
 const silent = () => {};
 
-async function ingest(db: SupabaseClient, parsed: ParsedUnit[]) {
+async function ingest(
+  db: SupabaseClient,
+  parsed: ParsedUnit[],
+  document: ManifestDocument = DOCUMENT
+) {
   return upsertDocument({
     db,
     source: SOURCE,
-    document: DOCUMENT,
+    document,
     units: parsed,
     chunks: chunkNumberedParagraph(parsed),
     contentHash: documentContentHash(parsed),
@@ -297,5 +304,77 @@ describe("resumability", () => {
     // The demoted one has unit_count 3, so it is not a crash signature.
     const all = await documents();
     expect(all).toHaveLength(2);
+  });
+});
+
+describe("the cross-lingual locator check", () => {
+  // ADR-020. The half that pays for the assertion `assert.ts` cannot run over a
+  // source stating each paragraph number once. The comparison itself is a pure
+  // function and is unit tested; what needs a real Postgres is the question it
+  // asks of the corpus — "which locators does the CURRENT document for the
+  // other language have", which is defined by `documents.is_current` and the
+  // partial unique index behind it.
+  const ENGLISH: ManifestDocument = {
+    ...DOCUMENT,
+    language: "en",
+    parser: "vatican-intratext",
+    fetch: "vatican-intratext-toc",
+    encoding: "iso-8859-1",
+  };
+
+  it("finds nothing to compare against for the first language of a source", async () => {
+    await ingest(db, units(3));
+
+    expect(await siblingLanguages(db, SOURCE.id, "hu")).toEqual([]);
+  });
+
+  it("sees the other language once it is current", async () => {
+    await ingest(db, units(3));
+    await ingest(db, units(3), ENGLISH);
+
+    expect(await siblingLanguages(db, SOURCE.id, "en")).toEqual(["hu"]);
+    expect(await siblingLanguages(db, SOURCE.id, "hu")).toEqual(["en"]);
+  });
+
+  it("reads the locators of the current document and finds them identical", async () => {
+    await ingest(db, units(3));
+    await ingest(db, units(3), ENGLISH);
+
+    const report = compareLocators(
+      (await currentLocators(db, SOURCE.id, "en")),
+      (await currentLocators(db, SOURCE.id, "hu")),
+      "hu"
+    );
+
+    expect(report.ok).toBe(true);
+    expect(report.shared).toBe(3);
+  });
+
+  it("catches a hole in one language that the other does not have", async () => {
+    // The shape a mis-cut page produces: the count is off by the size of the
+    // hole, and nothing about either document's own structure is wrong.
+    await ingest(db, units(3));
+
+    const report = compareLocators(
+      units(3, "", [2]).map((u) => u.locator),
+      await currentLocators(db, SOURCE.id, "hu"),
+      "hu"
+    );
+
+    expect(report.ok).toBe(false);
+    expect(report.onlyExisting).toEqual(["test:2"]);
+  });
+
+  it("reads through is_current, so a superseded document is not compared", async () => {
+    await ingest(db, units(3));
+    await ingest(db, units(5, " változat"));
+
+    expect(await currentLocators(db, SOURCE.id, "hu")).toHaveLength(5);
+  });
+
+  it("returns nothing for a language with no document at all", async () => {
+    await ingest(db, units(3));
+
+    expect(await currentLocators(db, SOURCE.id, "en")).toEqual([]);
   });
 });
