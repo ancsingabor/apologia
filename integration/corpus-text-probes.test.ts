@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { load } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parseErrata } from "@/lib/corpus/errata";
 import { parseManifest } from "@/lib/corpus/manifest";
 import {
@@ -174,3 +174,116 @@ describe.each(documents)(
     });
   }
 );
+
+/**
+ * ── The two spellings of a probe must agree ─────────────────────────────────
+ *
+ * Every probe is written twice: as the `RegExp` that runs, and as the POSIX
+ * pattern a failure hands you for psql. That is duplication, and duplication
+ * nothing executes is duplication that drifts — the `sql` half is never used
+ * for matching, so an edit to `pattern` alone would go unnoticed until someone
+ * pasted a query that quietly reproduced nothing.
+ *
+ * So the two check each other, which is this codebase's own move: `assert.ts`
+ * exists because two independent spellings of the same fact are worth more than
+ * one. Here it is worth more than usual, because the dialects genuinely differ
+ * and JavaScript is the weaker of the two for this corpus — `\b` is defined
+ * over [A-Za-z0-9_] and cannot see a word ending in `ó`.
+ *
+ * ⚠️ IT IS CHECKED OVER ADVERSARIAL TEXT, NOT OVER THE REAL CORPUS. Comparing
+ * across `ccc` is nearly free: the corpus is clean, so almost every probe
+ * returns zero on both sides and "they agree" costs nothing to satisfy. It
+ * would NOT have caught the `\b` bug, because no furniture word is actually
+ * contaminated. The fixture below contaminates one on purpose.
+ */
+const DIALECT_SOURCE = "test-probe-dialect";
+
+/** One unit per probe, each crafted to trip exactly that probe. */
+const ADVERSARIAL: [string, string][] = [
+  ["markup-residue", "A tag survived <em>normalisation</em>."],
+  ["entity-residue", "He said &ldquo;something&rdquo; aloud."],
+  ["bracket-footnote", "A leaked footnote marker[64] mid-sentence."],
+  ["empty-text", " "],
+  ["double-space", "A tag became  a space it should not have."],
+  ["leading-marker-residue", ". A marker left its period behind."],
+  // The `\b` case. JavaScript saw nothing here; Postgres saw it.
+  ["furniture-hu", "A bekezdés vége. Tárgymutató"],
+  ["furniture-en", "The paragraph ends. IntraText"],
+  ["furniture-nav", "The paragraph ends. Previous"],
+  // Must trip NOTHING: the guards against a probe crying wolf.
+  ["clean-hu", "A Tárgymutatóban minden megtalálható."],
+  ["clean-en", "Previously God could not be represented by an image."],
+];
+
+describe("the JavaScript and SQL spellings of a probe", () => {
+  let documentId: string;
+
+  beforeAll(async () => {
+    await db.from("sources").delete().eq("id", DIALECT_SOURCE);
+    await db.from("sources").insert({
+      id: DIALECT_SOURCE,
+      title: "Probe dialect fixture",
+      kind: "church_document",
+      locator_scheme: "test:<n>",
+      chunking: "numbered-paragraph",
+      license: "test-licence",
+    });
+    const { data, error } = await db
+      .from("documents")
+      .insert({
+        source_id: DIALECT_SOURCE,
+        language: "hu",
+        content_hash: "0".repeat(64),
+        unit_count: ADVERSARIAL.length,
+        is_current: true,
+      })
+      .select("id");
+    if (error) throw new Error(error.message);
+    documentId = data![0].id as string;
+
+    const { error: unitError } = await db.from("units").insert(
+      ADVERSARIAL.map(([name, text], index) => ({
+        document_id: documentId,
+        locator: `test:${name}`,
+        language: "hu",
+        text,
+        ordinal: index + 1,
+      }))
+    );
+    if (unitError) throw new Error(unitError.message);
+  });
+
+  afterAll(async () => {
+    await db.from("sources").delete().eq("id", DIALECT_SOURCE);
+  });
+
+  const probes = [
+    ...TEXT_PROBES,
+    ...["Tárgymutató", "IntraText", "Previous"].map(furnitureProbe),
+  ];
+
+  it.each(probes.map((probe) => [probe.name, probe] as const))(
+    "%s matches the same units either way",
+    async (_name, probe) => {
+      const units = await storedUnits(documentId);
+      const inJs = probeUnits(units, [probe])
+        .map((hit) => hit.locator)
+        .sort();
+
+      const { data, error } = await db
+        .from("units")
+        .select("locator")
+        .eq("document_id", documentId)
+        .filter("text", "match", probe.sql);
+      if (error) throw new Error(`${probe.name} as SQL: ${error.message}`);
+      const inSql = (data ?? []).map((row) => row.locator as string).sort();
+
+      expect(inJs, `probe.pattern and probe.sql disagree for ${probe.name}`).toEqual(
+        inSql
+      );
+      // And neither is vacuous: a probe that matches nothing on adversarial
+      // text agrees with the other trivially and checks nothing.
+      expect(inJs.length).toBeGreaterThan(0);
+    }
+  );
+});

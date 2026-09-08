@@ -46,10 +46,18 @@ import type { CorpusErrata, ProbeHit } from "@/types/domain";
  *     byte-exact: sha256 over all 5,730 units is identical computed in Postgres
  *     and computed here after the round trip.
  *   * The two regex dialects do not agree, and JavaScript is the weaker one for
- *     this corpus — see `furnitureProbe`, where `\b` silently matched nothing
- *     for any Hungarian word. Every probe therefore carries its POSIX spelling
- *     in `sql`, which a failure prints so investigation happens in the language
- *     the ADR records and a human will reach for.
+ *     this corpus — see `furnitureProbe`, where `\b` matched a Hungarian word
+ *     inside a longer one and missed it standing alone, exactly backwards.
+ *     Every probe therefore carries its POSIX spelling in `sql`, which a
+ *     failure prints so investigation happens in the language ADR-019 records
+ *     and a human will reach for.
+ *
+ * ⚠️ `sql` IS DUPLICATED LOGIC, AND NOTHING EXECUTES IT HERE. Duplication that
+ * nothing runs is duplication that drifts, so the two spellings check each
+ * other in `integration/corpus-text-probes.test.ts` — over adversarial text,
+ * not over the real corpus, because a clean corpus makes almost every probe
+ * return zero on both sides and "they agree" costs nothing to satisfy. That
+ * check is what would have caught the `\b` bug above.
  *
  * ── Why hits are declared in the errata rather than allowlisted here ────────
  *
