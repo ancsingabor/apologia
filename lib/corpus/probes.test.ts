@@ -4,6 +4,7 @@ import {
   TEXT_PROBES,
   furnitureProbe,
   probeFailure,
+  probeSql,
   probeUnits,
   staleDeclarations,
   undeclaredHits,
@@ -148,5 +149,66 @@ describe("the failure message", () => {
     expect(message).toMatch(/ccc:1\s+markup-residue/);
     expect(message).toMatch(/<p>Leaked markup\./);
     expect(message).toMatch(/text_probes\.expected/);
+  });
+});
+
+describe("word boundaries in a Hungarian-first corpus", () => {
+  // ⚠️ THE BUG THIS GUARDS SHIPPED IN THE FIRST VERSION OF THIS FILE.
+  //
+  // JavaScript's `\b` is defined over [A-Za-z0-9_], so `\bTárgymutató\b` can
+  // never match: the trailing boundary sits between `ó` and a space, neither of
+  // which is a word character to `\b`. The probe did not error — it reported
+  // clean, which is the worst outcome a check has available, aimed at the
+  // Hungarian half of the corpus. `Tárgymutató` is a real page in it.
+  it.each(["Jegyzetek", "IntraText", "Previous", "Előszó", "Tárgymutató"])(
+    "matches %s as a whole word",
+    (word) => {
+      const hits = probeUnits(
+        [unit("ccc:1", `A szöveg vége. ${word}`)],
+        [furnitureProbe(word)]
+      );
+
+      expect(hits).toHaveLength(1);
+    }
+  );
+
+  it.each([
+    ["Previous", "Previously God could not be represented."],
+    ["Tárgymutató", "Lásd a Tárgymutatóban a részleteket."],
+  ])("does not match %s inside a longer word", (word, text) => {
+    expect(probeUnits([unit("ccc:1", text)], [furnitureProbe(word)])).toEqual([]);
+  });
+
+  it("escapes a word so it cannot be read as a pattern", () => {
+    const hits = probeUnits(
+      [unit("ccc:1", "A literal a.c here."), unit("ccc:2", "And abc here.")],
+      [furnitureProbe("a.c")]
+    );
+
+    expect(hits.map((h) => h.locator)).toEqual(["ccc:1"]);
+  });
+});
+
+describe("the SQL a failure hands you", () => {
+  // The matching happens in TypeScript; investigating a hit happens in psql,
+  // which is how §1065 was found. Carrying the query beside the pattern removes
+  // the step where someone reconstructs it from a regex literal and gets it
+  // subtly wrong — and keeps the two from drifting unnoticed.
+  it("reproduces the probe against the right document", () => {
+    const probe = TEXT_PROBES.find((p) => p.name === "bracket-footnote")!;
+    const sql = probeSql(probe, "ccc", "en");
+
+    expect(sql).toContain("d.source_id = 'ccc'");
+    expect(sql).toContain("d.language = 'en'");
+    expect(sql).toContain("d.is_current");
+    expect(sql).toContain("u.text ~ '\\[[0-9]+\\]'");
+  });
+
+  it("uses Postgres' own word boundary for a furniture word", () => {
+    // `\y` is locale-aware, so Postgres needs no help with Hungarian where
+    // JavaScript did. The two spellings are deliberately not the same.
+    expect(probeSql(furnitureProbe("Tárgymutató"), "ccc", "hu")).toContain(
+      "~ '\\yTárgymutató\\y'"
+    );
   });
 });

@@ -27,12 +27,29 @@ import type { CorpusErrata, ProbeHit } from "@/types/domain";
  * against under ADR-017. Asking the parser is asking the component under
  * suspicion, so the rows come from Postgres.
  *
- * The matching itself is done here rather than as SQL `~`, which is a change
- * from the hand-run queries the ADR records. Two reasons, and neither is
- * convenience: PostgREST cannot express a bracket class in a filter value
- * without quoting rules that are their own footgun, and a pattern that lives in
- * TypeScript is one `probes.test.ts` can exercise with no database at all. The
- * bytes are still the stored bytes, which is the part that mattered.
+ * The matching itself is done HERE rather than as SQL `~`, which is a change
+ * from the hand-run queries the ADR records, and the reason is ADR-015's axis
+ * rather than convenience: a probe pattern is pure deterministic logic, so it
+ * belongs under Vitest, and it can only be there if it lives in TypeScript.
+ * Pushing the match into Postgres would leave `probes.test.ts` exercising a
+ * duplicate of each pattern rather than the pattern that runs — a test of a
+ * copy of the code.
+ *
+ * (An earlier version of this comment claimed PostgREST could not express a
+ * bracket class in a filter. That was wrong: `?text=match.\[[0-9]+\]` works —
+ * the operator is spelled `match`, not `~`. The choice stands on the reason
+ * above, not on that one.)
+ *
+ * What this costs is real and is paid for deliberately:
+ *
+ *   * ~1.1 MB per document crosses the wire instead of only the hits. Verified
+ *     byte-exact: sha256 over all 5,730 units is identical computed in Postgres
+ *     and computed here after the round trip.
+ *   * The two regex dialects do not agree, and JavaScript is the weaker one for
+ *     this corpus — see `furnitureProbe`, where `\b` silently matched nothing
+ *     for any Hungarian word. Every probe therefore carries its POSIX spelling
+ *     in `sql`, which a failure prints so investigation happens in the language
+ *     the ADR records and a human will reach for.
  *
  * ── Why hits are declared in the errata rather than allowlisted here ────────
  *
@@ -51,6 +68,11 @@ export interface TextProbe {
   /** Matched against `units.text` as read back from Postgres. Non-global, so
    *  `test()` carries no `lastIndex` between units. */
   pattern: RegExp;
+  /** The same probe as a Postgres POSIX regex. Not used for matching — it is
+   *  printed in a failure so the query can be pasted into psql, which is how
+   *  ADR-019 records these being run and how anyone will actually investigate
+   *  one. Kept beside `pattern` so the two cannot drift apart unnoticed. */
+  sql: string;
   /** What a hit would mean. Shown when one is undeclared. */
   why: string;
 }
@@ -76,40 +98,65 @@ export const TEXT_PROBES: readonly TextProbe[] = [
   {
     name: "markup-residue",
     pattern: /<[a-zA-Z\/]/,
+    sql: "<[a-zA-Z/]",
     why: "an HTML tag survived normalisation",
   },
   {
     name: "entity-residue",
     pattern: /&[a-zA-Z0-9#]+;/,
+    sql: "&[a-zA-Z0-9#]+;",
     why: "an HTML entity was not decoded — `&ldquo;` was found this way",
   },
   {
     name: "bracket-footnote",
     pattern: /\[[0-9]+\]/,
+    sql: "\\[[0-9]+\\]",
     why: "a footnote reference marker survived, or the text cites a year in brackets",
   },
   {
     name: "empty-text",
     pattern: /^\s*$/,
+    sql: "^[[:space:]]*$",
     why: "a unit with no text at all — a marker matched something that is not a paragraph",
   },
   {
     name: "double-space",
     pattern: / {2}/,
+    sql: "  ",
     why: "whitespace collapse did not run, or a tag was replaced by a space it should not have been",
   },
   {
     name: "leading-marker-residue",
     pattern: /^[0-9.]/,
+    sql: "^[0-9.]",
     why: "a paragraph marker left its number or period behind, or the text opens with an enumerated item",
   },
 ];
 
-/** A word that appears only in page furniture, never in the work's prose. */
+/**
+ * A word that appears only in page furniture, never in the work's prose.
+ *
+ * ⚠️ THE BOUNDARIES ARE `\p{L}` LOOKAROUNDS, NOT `\b`, AND THAT IS NOT STYLE.
+ * JavaScript's `\b` is defined over `[A-Za-z0-9_]`, so a word ending in a
+ * non-ASCII letter can never match: in `\bTárgymutató\b` the trailing `\b`
+ * sits between `ó` and a space, neither of which is a word character to `\b`,
+ * so there is no boundary and the probe silently matches nothing.
+ *
+ * That is the worst available failure for a check like this — it does not error,
+ * it reports clean — and it is aimed squarely at the Hungarian half of a
+ * Hungarian-first corpus. `Tárgymutató` is the name of a real page in it.
+ * Postgres' `\y` gets this right natively, which is why the equivalent SQL in
+ * `probeSql` is a plain `\y`; JavaScript has to be told.
+ */
 export function furnitureProbe(word: string): TextProbe {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return {
     name: `furniture:${word}`,
-    pattern: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`),
+    pattern: new RegExp(
+      `(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`,
+      "u"
+    ),
+    sql: `\\y${word}\\y`,
     why: `"${word}" belongs to the page template, so the body cut has moved`,
   };
 }
@@ -167,14 +214,31 @@ export function staleDeclarations(
   );
 }
 
+/**
+ * The psql query that reproduces one probe, for the failure message.
+ *
+ * The matching this file does is in TypeScript, but investigating a hit is done
+ * in a database shell — that is how §1065 was found and how the next one will
+ * be. Handing over the exact query removes the step where someone reconstructs
+ * it from a regex literal and gets it subtly wrong.
+ */
+export function probeSql(probe: TextProbe, sourceId: string, language: string): string {
+  return (
+    `select u.locator, u.text from units u join documents d on d.id = u.document_id\n` +
+    `where d.source_id = '${sourceId}' and d.language = '${language}' and d.is_current\n` +
+    `  and u.text ~ '${probe.sql.replace(/'/g, "''")}';`
+  );
+}
+
 /** The message that fails the test, naming what to do about each hit. */
-export function probeFailure(hits: readonly ProbeHit[]): string {
+export function probeFailure(hits: readonly ProbeHit[], sql?: string): string {
   const lines = hits.map(
     (hit) => `  ${hit.locator}  ${hit.probe}\n      ${hit.excerpt}`
   );
   return (
     `${hits.length} undeclared text-probe hit(s) in the stored corpus:\n` +
     `${lines.join("\n")}\n\n` +
+    (sql ? `Reproduce it:\n${sql}\n\n` : "") +
     `Contamination that reads as prose is invisible to every assertion in ` +
     `assert.ts — that is why this check exists (ADR-019 § Amendment 2). Either ` +
     `the parser is leaking markup into permanent text, or the hit is content ` +

@@ -8,6 +8,7 @@ import {
   TEXT_PROBES,
   furnitureProbe,
   probeFailure,
+  probeSql,
   probeUnits,
   staleDeclarations,
   undeclaredHits,
@@ -146,13 +147,17 @@ describe.each(documents)(
       const units = await storedUnits(documentId);
       expect(units.length).toBeGreaterThan(0);
 
-      const hits = probeUnits(units, [
-        ...TEXT_PROBES,
-        ...errata.furniture.map(furnitureProbe),
-      ]);
+      const probes = [...TEXT_PROBES, ...errata.furniture.map(furnitureProbe)];
+      const hits = probeUnits(units, probes);
 
       const undeclared = undeclaredHits(hits, errata);
-      expect(undeclared, probeFailure(undeclared)).toEqual([]);
+      // Hand over the query for the first hit, so investigating starts in psql
+      // rather than by reconstructing a regex from a stack trace.
+      const first = probes.find((probe) => probe.name === undeclared[0]?.probe);
+      expect(
+        undeclared,
+        probeFailure(undeclared, first && probeSql(first, sourceId, language))
+      ).toEqual([]);
     });
 
     it("declares no exception that has stopped firing", async () => {
