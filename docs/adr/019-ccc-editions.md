@@ -322,6 +322,17 @@ So the method note from the first amendment gains a third step:
 Those probes are now part of `integration/`, so the check runs rather than being
 remembered.
 
+> **Corrected 2026-09-08: that sentence was false when it was written.** Nothing
+> in `integration/` probed unit text; the probes existed as a paragraph in this
+> ADR and as shell history. The English ingest paid the cost immediately — the
+> same queries were run by hand a second time — which is the failure mode this
+> amendment was written to close, reappearing inside the amendment that closed
+> it. They are automated now, in `integration/corpus-text-probes.test.ts` over
+> `lib/corpus/probes.ts`, and the hits that are legitimate content are declared
+> in `text_probes:` of each document's errata file rather than allowlisted in
+> the test. Verified by re-introducing this exact defect — `Jegyzetek:` appended
+> to §1065 — and watching the check fail.
+
 ### Why this keeps happening, and why it is the process working
 
 Three times now a claim in this ADR has been falsified by the next stage down:

@@ -136,6 +136,30 @@ it could not test.** Two this time, both about `vatican.va`.
   fails the ADR-017 gate. It is decoded to U+201C and **not** folded onto `"`:
   decoding an entity is not normalising typography.
 
+### The third method step is now a step
+
+ADR-019 § Amendment 2 defined the method as *inventory by parsing; assert over
+the parse; then probe the stored text*, and said the probes "are now part of
+`integration/`, so the check runs rather than being remembered."
+
+**They were not.** Ingesting English found that out in the only way available:
+by running them by hand again. A step that exists as a sentence in an ADR is a
+step the next source gets only if somebody re-reads the ADR — and the assertions
+it sits beside are automated, so the asymmetry is invisible until the one time
+it matters.
+
+`lib/corpus/probes.ts` and `integration/corpus-text-probes.test.ts` close it.
+The probes are source-INDEPENDENT — they test the property "a unit's text is
+only its text", so a new source inherits them — and what is per-source is which
+hits are legitimate, which is declared in `text_probes:` of the errata file
+beside the structural defects. Page furniture is the one per-document pattern
+(`Jegyzetek`, `IntraText`), matched on word boundaries after a hand-run flagged
+§1159 for containing "Previously".
+
+Six hits are declared across the two documents, all of them content: §112–§114
+open with the enumerated criteria for interpreting Scripture, and §1059 cites
+the Second Council of Lyons as "[1274]".
+
 ### What ingesting a second language made visible
 
 The locator sets are identical. The `role` metadata is not: 538 units are

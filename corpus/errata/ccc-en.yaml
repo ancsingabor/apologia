@@ -77,6 +77,44 @@ allowed:
       in different markup, and the reason neither parser can treat an element
       boundary as a unit boundary.
 
+# ── Text probes ─────────────────────────────────────────────────────────────
+# ADR-019's third method step: inventory by parsing, assert over the parse, then
+# PROBE THE STORED TEXT. The assertions check the corpus has the right shape;
+# they cannot check that a unit's text is only its text, because contamination
+# that reads as prose is invisible to every structural signal.
+#
+# `furniture` names words belonging to this site's page template. One inside a
+# unit means the body/apparatus cut has moved — the failure that reached
+# production in Hungarian. Matched on word boundaries: an earlier hand-run
+# flagged §1159 because "Previously" contains "Previous".
+#
+# `expected` names hits a human read and found to be content. Declared here
+# rather than allowlisted in the probe definitions, because they are facts about
+# THIS document and this file is where a document's facts live.
+
+text_probes:
+  furniture:
+    - IntraText
+    - Copyright
+    - Previous
+
+  expected:
+    - locator: ccc:113
+      probe: leading-marker-residue
+      note: >
+        Opens "2." — the second of the three criteria for interpreting
+        Scripture set out in §111, not a marker's number left behind.
+
+    - locator: ccc:114
+      probe: leading-marker-residue
+      note: The third of the same three criteria.
+
+    - locator: ccc:1059
+      probe: bracket-footnote
+      note: >
+        Contains "[1274]" — the date of the Second Council of Lyons, inside the
+        editorial citation of the quoted decree. Not a footnote marker.
+
 # ── Not errata ──────────────────────────────────────────────────────────────
 # What the inventory saw and the parser handles without a declaration. Listed so
 # nobody re-discovers them as bugs, and so a future reader can tell "we looked

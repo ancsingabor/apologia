@@ -227,12 +227,41 @@ export interface ErrataAllowance {
   kind: CorpusDefectKind;
 }
 
+/**
+ * A text-probe hit a human has looked at and found to be content.
+ *
+ * ADR-019's third method step probes the STORED text for contamination that
+ * reads as prose — markup residue, an undecoded entity, a leaked footnote
+ * marker. Some hits are legitimate: §1059 contains "[1274]", the date of the
+ * Second Council of Lyons. Those are declared here rather than allowlisted in
+ * the probe definitions, because they are facts about a document and this file
+ * is where a document's facts already live.
+ */
+export interface ErrataTextProbe {
+  locator: string;
+  /** Which probe fired — `bracket-footnote`, `leading-marker-residue`. */
+  probe: string;
+}
+
+/** One unit whose stored text matched a probe. */
+export interface ProbeHit {
+  locator: string;
+  probe: string;
+  /** Enough of the text to judge the hit by. */
+  excerpt: string;
+}
+
 export interface CorpusErrata {
   source: string;
   language: CorpusLanguage;
   expectedUnits: number;
   relabels: ErrataRelabel[];
   allowed: ErrataAllowance[];
+  /** Probe hits established as content — see `ErrataTextProbe`. */
+  textProbes: ErrataTextProbe[];
+  /** Words that appear only in this source's page furniture, never its prose.
+   *  A hit means the body/apparatus cut has moved. */
+  furniture: string[];
 }
 
 export interface AssertionReport {
