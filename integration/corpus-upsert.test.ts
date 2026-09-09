@@ -96,6 +96,11 @@ const DOCUMENT: ManifestDocument = {
   parser: "katolikus-hu-numbered-paragraph",
   encoding: "utf-8",
   errata: null,
+  // Null is "the work's licence governs this transcription", which is the
+  // ordinary case and the Catechism's: work and edition are encumbered
+  // together there. The Summa is where they come apart (ADR-021).
+  license: null,
+  licenseNote: null,
 };
 
 function units(count: number, textSuffix = "", skip: number[] = []): ParsedUnit[] {
@@ -104,8 +109,10 @@ function units(count: number, textSuffix = "", skip: number[] = []): ParsedUnit[
     .map((paragraph) => {
       return {
         locator: `test:${paragraph}`,
-        paragraph,
+        sequence: [paragraph],
+        label: String(paragraph),
         anchor: `K${String(paragraph).padStart(4, "0")}`,
+        anchorExpected: `K${String(paragraph).padStart(4, "0")}`,
         relabelledFrom: null,
         text: `A ${paragraph}. bekezdés szövege.${textSuffix}`,
         role: null,

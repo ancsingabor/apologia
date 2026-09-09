@@ -88,8 +88,10 @@ describe("locating paragraphs", () => {
     expect(units).toHaveLength(1);
     expect(units[0]).toMatchObject({
       locator: "ccc:1",
-      paragraph: 1,
+      sequence: [1],
+      label: "1",
       anchor: "K0001",
+      anchorExpected: "K0001",
       text: "Az első bekezdés szövege.",
       role: null,
       ordinal: 1,

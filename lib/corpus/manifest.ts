@@ -16,7 +16,9 @@ import type { ManifestSource } from "@/types/domain";
  *
  * 1. **`license` must be resolved.** ADR-003 says there is no `unknown`; a
  *    source whose status has not been established does not belong in the file.
- *    An empty string, `unknown`, `tbd` or `null` is rejected.
+ *    An empty string, `unknown`, `tbd` or `null` is rejected. The rule applies
+ *    to the SOURCE's licence and to a DOCUMENT's, which are different claims —
+ *    see the note on `documentSchema.license` below (ADR-021).
  * 2. **Every document of a multilingual source must agree on `revision`.**
  *    This is ADR-019's precondition, and it is the one worth having as code.
  *    Translations descending from different revisions have numbering that
@@ -46,6 +48,42 @@ const documentSchema = z.object({
   parser: z.string().min(1),
   encoding: z.string().min(1),
   errata: z.string().nullable().default(null),
+  /**
+   * The licence of THIS TRANSCRIPTION, where it differs from the work's.
+   *
+   * Null is the ordinary case and means "the work's licence governs" — for the
+   * Catechism the work and every edition of it are encumbered together, which
+   * is why this field did not exist until a source came along where they came
+   * apart (ADR-021).
+   *
+   * The Summa is that source. Aquinas died in 1274 and the Leonine edition was
+   * printed in 1888, so the WORK is unambiguously public domain; the
+   * transcription this pipeline fetches is Busa's and Alarcón's, and the
+   * Fundación Tomás de Aquino reserves rights over it *quoad hanc editionem*.
+   * Both statements are true and they are about different things, and a schema
+   * that can only hold the first will record whichever one its author happened
+   * to mean.
+   *
+   * This generalises well beyond one source. `docs/corpus.md` already states
+   * the rule for the Church Fathers — "originals are public domain; specific
+   * translations may not be — resolve per translation, never per author" — as
+   * prose that nothing could enforce. This is where it becomes enforceable.
+   */
+  license: z
+    .string()
+    .nullable()
+    .default(null)
+    .refine(
+      (value) =>
+        value === null || !UNRESOLVED_LICENCE.has(value.trim().toLowerCase()),
+      {
+        message:
+          "a document's license, when stated, must be resolved — the same " +
+          "rule as the source's (ADR-003). Omit it to say the work's licence " +
+          "governs this transcription; do not write `unknown`.",
+      }
+    ),
+  license_note: z.string().nullable().default(null),
 });
 
 const sourceSchema = z.object({
@@ -149,6 +187,8 @@ function toDomain(source: z.infer<typeof sourceSchema>): ManifestSource {
       parser: doc.parser,
       encoding: doc.encoding,
       errata: doc.errata,
+      license: doc.license,
+      licenseNote: doc.license_note,
     })),
   };
 }

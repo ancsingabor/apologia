@@ -54,6 +54,10 @@ export type CorpusLanguage = "hu" | "en" | "la";
  * The column is `text`, not an enum, so adding a role needs no migration.
  */
 export type UnitRole =
+  /** A Summa prologue: to the work, to a part, or announcing a question's
+   *  articles. The last of those states how many follow, which is the only
+   *  structural signal in that source written by Aquinas (ADR-022). */
+  | "prooemium"
   | "objection"
   | "sed_contra"
   | "respondeo"

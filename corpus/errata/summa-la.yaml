@@ -1,0 +1,157 @@
+# ── Errata: Summa Theologiae, Latin ─────────────────────────────────────────
+#
+# Source: corpusthomisticum.org  (Textum Leoninum Romae 1888, Busa, Alarcón)
+# Parser: lib/corpus/parsers/corpus-thomisticum.ts
+# Inventoried: 2026-09-09, by parsing all 87 pages
+#
+# THE SHORT VERSION: this is the cleanest source in the corpus, and it is not
+# close. 23,326 units, 23,326 distinct locators, 23,326 distinct reference ids,
+# no duplicates on any signal. 512 questions — I 1-119, I-II 1-114, II-II 1-189,
+# III 1-90 — with no gaps in any part. 2,669 articles. Both totals match the
+# figures printed in the scholarly literature, which is the only corroboration
+# here that comes from outside the source.
+#
+# Every unit states its own address FOUR times: the `TITLE` attribute, the text
+# of `SPAN.ref`, the enclosing `DIV.D`/`DIV.E` headings, and the `A NAME` anchor
+# paired with the bracketed reference id. Across all 23,326 units those four
+# disagree ZERO times, and the reference ids increase strictly from the first
+# page to the last with no regression.
+#
+# ── WHY THAT IS NOT REASSURING ON ITS OWN ───────────────────────────────────
+#
+# ADR-020 records the Catechism's §211: an anchor and a printed number that
+# agreed with each other and were both wrong. Four signals emitted by one
+# generator from one database are still one witness. Perfect agreement here is
+# evidence that the RENDERING is sound; it is not evidence that a unit carries
+# the address it belongs to.
+#
+# There is no sibling edition to diff against — the Summa is ingested in Latin
+# only — so `compareLocators` cannot run and the check that found every defect
+# the structural assertions were blind to is simply unavailable. What pays for
+# it is the one signal in this source that a digitiser did not write:
+#
+#   THE PROOEMIUM'S OWN ENUMERATION. Each question opens by stating how many
+#   articles follow — "Et circa hoc quaeruntur quatuor" — in Aquinas's prose,
+#   in the thirteenth century. Compared against the parsed article count this
+#   is a witness independent of the transcription in the way a second edition
+#   would be. 510 question prooemia; 501 state a countable numeral; 500 of the
+#   501 agree exactly. The one that does not is declared below.
+#
+# ── WHAT THIS FILE IS NOT ───────────────────────────────────────────────────
+#   Locators and defect kinds only. NO corpus text — not one word — so it ships
+#   under ADR-003. The bracketed reference ids are the Fundación's apparatus
+#   (ADR-021) and appear nowhere here or in the stored text.
+#
+#   It is also NOT an inventory of how the Summa varies. An article with no
+#   sed contra is not a fault; 120 articles answer several objections in one
+#   reply, and that is Aquinas writing, not a typesetter erring. Those are
+#   recorded in the emitted manifest as counts. Putting them here would make
+#   the file an argument for loosening the assertions, which is the job it
+#   exists to prevent (ADR-020).
+
+source: summa
+language: la
+inventoried: 2026-09-09
+expected_units: 23326
+parsed_units: 23326         # complete; 512 questions, 2,669 articles, no gaps
+relabels: []                # none. Nothing in this edition is misnumbered.
+
+# ── Articles that state no respondeo ────────────────────────────────────────
+# Two of 2,669. Both carry their objections and replies and simply have no
+# `co.` unit; the teaching is folded into the replies. Declared because "every
+# article has exactly one respondeo" is otherwise a hard assertion, and a third
+# one appearing means either the source changed or the parser stopped finding
+# a boundary it used to find.
+#
+#   I q. 74 a. 3   7 objections, 7 replies, no sed contra, no respondeo
+#   I q. 91 a. 4   5 objections, 1 sed contra, 5 replies, no respondeo
+
+allowed:
+  - locator: summa:I.q74.a3
+    kind: respondeo-absent
+    found: objections and replies, no co. unit
+    verified_against: sth1065
+
+  - locator: summa:I.q91.a4
+    kind: respondeo-absent
+    found: objections, sed contra and replies, no co. unit
+    verified_against: sth1084
+
+  # ── The question that segments differently from its own announcement ──────
+  # II-II q. 48 opens "Et circa hoc quaeruntur quatuor" and then lists four
+  # topics — but this edition renders the whole question as ONE article with
+  # five objections, addressing its units at the question level with no `a. N`.
+  # Aquinas announces four; the Leonine segmentation gives one. Both are
+  # faithfully transcribed and they do not agree, which is precisely the
+  # divergence the prooemium check exists to surface. It is declared, not
+  # repaired: patching either side would invent a structure neither states.
+  - locator: summa:II-II.q48
+    kind: article-count-mismatch
+    found: prooemium states 4, edition renders 1 article
+    verified_against: sth3047
+
+  # ── Questions whose prooemium states no countable article number ──────────
+  # The check is SKIPPED for these, not passed vacuously (ADR-020). Nine
+  # questions use a prooemium formula with no numeral; two carry no prooemium
+  # unit at all. Both of those are single-article questions that address their
+  # units at the question level, which is the same shape as II-II q. 48 above.
+  - { locator: "summa:I.q1",     kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:I.q39",    kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:I.q50",    kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:I.q71",    kind: article-count-unstated, found: no prooemium unit }
+  - { locator: "summa:I.q72",    kind: article-count-unstated, found: no prooemium unit }
+  - { locator: "summa:II-II.q80",  kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:II-II.q128", kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:II-II.q140", kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:II-II.q143", kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:II-II.q170", kind: article-count-unstated, found: no quaeruntur formula }
+  - { locator: "summa:III.q44",    kind: article-count-unstated, found: no quaeruntur formula }
+
+  # ── The page apparatus that disagrees with the page ───────────────────────
+  # Every page carries a JavaScript-generated `<OPTION>` dropdown enumerating
+  # its units. It is a genuinely separate pass over the same database — it
+  # writes `ad` where the body writes `ad arg.`, 68 times, which is how we know
+  # it is not the body's string emitted twice — and on two pages it disagrees
+  # with the body about which units are there. THE BODY IS CORRECT IN BOTH
+  # CASES; the completeness check above accounts for every unit the dropdown
+  # claims is missing.
+  #
+  #   sth2098  dropdown enumerates I-II q. 95-105, body holds q. 98-105.
+  #            116 phantom entries. q. 95-97 are present in sth2095's body,
+  #            so nothing is missing — the dropdown names a page range that
+  #            no longer matches how the text is split across pages.
+  #   sth4001  dropdown omits III q. 1 pr., which is present in the body.
+  # Scoped to the PAGE, not to a unit — the defect is that this page's dropdown
+  # describes a different page's contents, which no single locator names. Same
+  # convention `footnote-unbalanced` already uses.
+  - locator: page:sth2098
+    kind: enumeration-mismatch
+    found: dropdown enumerates I-II q. 95-105, body holds q. 98-105
+    repair: the body; q. 95-97 are ingested from sth2095, so nothing is missing
+
+  - locator: page:sth4001
+    kind: enumeration-mismatch
+    found: III q. 1 pr. is in the body and absent from the dropdown
+    repair: the body
+
+  # ── Pages that ship no enumeration at all ─────────────────────────────────
+  # The four prologue pages hold ONE unit each — the prologue to the work and to
+  # each part — and the generator omits a dropdown of one entry. The check is
+  # SKIPPED for them rather than passed vacuously, and the skip is declared so
+  # that a fifth such page is a stop rather than a shrug (ADR-020).
+  - { locator: "page:sth0000", kind: enumeration-absent, found: holds only Summa theologiae, pr. }
+  - { locator: "page:sth2000", kind: enumeration-absent, found: holds only I-II pr. }
+  - { locator: "page:sth3000", kind: enumeration-absent, found: holds only II-II pr. }
+  - { locator: "page:sth4000", kind: enumeration-absent, found: holds only III pr. }
+
+# ── Text probes ─────────────────────────────────────────────────────────────
+# The six probes in lib/corpus/probes.ts are source-independent and this source
+# inherits them. `furniture` is the page template's own vocabulary, which must
+# never appear inside a unit's text.
+text_probes:
+  expected: []
+  furniture:
+    - CORPUS
+    - THOMISTICUM
+    - Agedum
+    - Bibliographia

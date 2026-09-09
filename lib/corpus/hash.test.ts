@@ -4,8 +4,10 @@ import { corpusHash, documentContentHash, rawContentHash } from "./hash";
 
 const unit = (paragraph: number, over: Partial<ParsedUnit> = {}): ParsedUnit => ({
   locator: `ccc:${paragraph}`,
-  paragraph,
+  sequence: [paragraph],
+  label: String(paragraph),
   anchor: `K${String(paragraph).padStart(4, "0")}`,
+  anchorExpected: `K${String(paragraph).padStart(4, "0")}`,
   relabelledFrom: null,
   text: `A ${paragraph}. bekezdés szövege.`,
   role: null,
@@ -32,7 +34,7 @@ describe("documentContentHash", () => {
     // Hashing text alone would report "unchanged" for a corpus in which every
     // citation had just started resolving somewhere else.
     const printed = unit(147, { text: "Ábrahám hitéről." });
-    const corrected = unit(146, { text: "Ábrahám hitéről.", relabelledFrom: 147 });
+    const corrected = unit(146, { text: "Ábrahám hitéről.", relabelledFrom: "147" });
 
     expect(documentContentHash([printed])).not.toBe(
       documentContentHash([corrected])

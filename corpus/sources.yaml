@@ -106,21 +106,70 @@ sources:
   - id: summa
     title: Summa Theologiae
     kind: theological_work
-    authority_tier: 3
+    authority_tier: 3                          # Aquinas. NOT the Supplementum.
     author: Thomas Aquinas
-    languages: [en]
+    languages: [la]
     license: public-domain
     license_note: >
-      Author died 1274. The English Fathers of the English Dominican Province
-      translation (1920) is also out of copyright.
-    locator_scheme: "summa:<part>.q<question>.a<article>"   # summa:I.q2.a3
+      THE WORK. Author died 1274; the Leonine edition was printed in 1888. There
+      is no live copyright in either. This says nothing about any particular
+      transcription of it — see the document entry below, and ADR-021 for why
+      that is a separate field rather than a longer sentence here.
+    locator_scheme: "summa:<part>.q<question>.a<article>.<role><n>"  # summa:I.q2.a3.arg1
     chunking: scholastic-article
+    cross_lingual_key: null                    # one language; nothing to align
+    canonical_url: https://www.corpusthomisticum.org/iopera.html
+    expected_units: 23326                      # asserted at ingest
+
+    # ── documents ───────────────────────────────────────────────────────────
+    documents:
+      - language: la
+        revision: leonina-1888
+        edition: Textus Leoninus (Romae 1888), rec. Busa/Alarcón
+        index_url: https://www.corpusthomisticum.org/iopera.html
+        fetch: corpus-thomisticum-index          # 87 pages; NOT pinned — ADR-019
+        parser: corpus-thomisticum-scholastic
+        encoding: iso-8859-1                     # HTML 4.0, declared charset
+        errata: corpus/errata/summa-la.yaml
+        inventoried: 2026-09-09                  # parsed, all 87 pages
+        parsed_units: 23326                      # complete — see ADR-022
+
+        # ⚠️ THE TRANSCRIPTION IS NOT THE WORK, AND THIS IS WHERE THEY DIFFER.
+        # `© Fundación Tomás de Aquino quoad hanc editionem. Iura omnia
+        # asservantur.` The Leonine text is public domain; what is reserved is
+        # this digitisation of it — Busa's tape transcription and Alarcón's
+        # recension. Posture, per ADR-021: ingest for retrieval, never persist
+        # the editorial apparatus, display locator + link (ADR-014).
+        license: transcription-rights-reserved
+        license_note: >
+          Fundación Tomás de Aquino, over the edition rather than the text.
+          The Index Thomisticus reference numbers — the `[28299]` prefixes —
+          are the clearest editorial contribution and are used at parse time as
+          a check signal and discarded. Stored text is Leonine Latin only.
     notes: >
       Structurally the most interesting source: each article is objections →
       sed contra → respondeo → replies. That structure is semantically load
       bearing — an objection says the OPPOSITE of the article's conclusion, so
       a chunker that loses the role of a passage will retrieve objections as
       though they were teaching. See docs/corpus.md § Why chunking is per-source.
+
+      512 questions — I 1–119, I-II 1–114, II-II 1–189, III 1–90 — and 2,669
+      articles, both matching the figures in the scholarly literature, which is
+      the only corroboration here from outside the source. 23,326 units.
+
+      Ingested in LATIN ONLY, so `compareLocators` cannot run and the check that
+      found every Catechism defect the structural assertions were blind to is
+      unavailable. ADR-022 records what pays for it: the article count each
+      question states in its own prooemium, which Aquinas wrote and no
+      transcriber supplied. It agrees for 500 of the 501 questions that state
+      a countable numeral.
+
+      The Supplementum (q. 1–99) is EXCLUDED. corpusthomisticum.org credits it
+      to Fr. Rainaldus Romanus — Reginald of Piperno compiled it after Thomas
+      died, out of the earlier Scriptum — and hosts it off the `sth` scheme, so
+      the discoverer excludes it by the source's own attribution rather than by
+      our convenience. `authority_tier: 3` is assigned to Aquinas (ADR-010) and
+      is not ours to lend to a compiler working from his notes.
 
   - id: kjv
     title: King James Version

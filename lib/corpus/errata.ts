@@ -34,6 +34,14 @@ const DEFECT_KIND = z.enum([
   "marker-inline",
   "footnote-unbalanced",
   "count-mismatch",
+  "enumeration-mismatch",
+  "respondeo-absent",
+  "article-count-mismatch",
+  "article-count-unstated",
+  "label-disagreement",
+  "enumeration-absent",
+  "reply-without-objection",
+  "objection-not-contiguous",
 ]);
 
 const relabelSchema = z.looseObject({
