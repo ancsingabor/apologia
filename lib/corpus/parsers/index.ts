@@ -1,4 +1,5 @@
 import type { ParseResult } from "@/types/domain";
+import { parseCorpusThomisticum } from "./corpus-thomisticum";
 import { parseKatolikusHu } from "./katolikus-hu";
 import { parseVaticanIntratext } from "./vatican-intratext";
 
@@ -29,6 +30,7 @@ type Parser = (pages: SourcePage[]) => ParseResult;
 const PARSERS: Record<string, Parser> = {
   "katolikus-hu-numbered-paragraph": parseKatolikusHu,
   "vatican-intratext": parseVaticanIntratext,
+  "corpus-thomisticum-scholastic": parseCorpusThomisticum,
 };
 
 export function parserFor(id: string): Parser {

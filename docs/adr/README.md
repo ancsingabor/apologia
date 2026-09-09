@@ -30,6 +30,8 @@ value; the decision itself is usually the least interesting line.
 | [018](018-segmented-answers.md) | The model marks its own claims; the gate does not detect them | Accepted |
 | [019](019-ccc-editions.md) | The CCC editions: revision alignment over file convenience | Accepted |
 | [020](020-asserting-a-single-signal-source.md) | Asserting a source that carries one signal | Accepted |
+| [021](021-licence-belongs-to-the-transcription.md) | A licence describes a transcription, not only a work | Accepted |
+| [022](022-asserting-a-source-with-no-sibling-edition.md) | Asserting a source with no sibling edition | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a

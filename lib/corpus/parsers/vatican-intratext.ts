@@ -389,8 +389,12 @@ export function parseVaticanIntratext(pages: SourcePage[]): ParseResult {
       ordinal += 1;
       units.push({
         locator: `ccc:${marker.printed}`,
-        paragraph: marker.printed,
+        sequence: [marker.printed],
+        label: String(marker.printed),
         anchor: null,
+        // No second signal to compare against, which is what `anchorSignal:
+        // false` below reports and what ADR-020 makes this parser pay for.
+        anchorExpected: null,
         relabelledFrom: null,
         text: trimMarkerResidue(normalise(raw)),
         role: isInBrief(summaries, marker.start) ? "summary" : null,
@@ -403,5 +407,12 @@ export function parseVaticanIntratext(pages: SourcePage[]): ParseResult {
   // One signal. `assert.ts` skips its agreement check and ADR-020 says what
   // pays for it: `checkFootnoteBalance` above, and the cross-lingual
   // locator-set equality test in `integration/`.
-  return { units, defects, unnumberedPages, skipped, anchorSignal: false };
+  return {
+    units,
+    defects,
+    unnumberedPages,
+    skipped,
+    anchorSignal: false,
+    denseSequence: true,
+  };
 }

@@ -46,10 +46,26 @@ import type {
  * which is a stronger check than anything the Hungarian document has.
  */
 
-const PAD = 4;
+/**
+ * Lexicographic order over `ParsedUnit.sequence`.
+ *
+ * `[146] < [147]` and `[1, 2, 1, 1, 3] < [1, 2, 1, 2, 1]`, by the same rule.
+ * A shorter tuple that is a prefix of a longer one sorts first, which is what
+ * puts a question's prooemium ahead of its articles: `summa:I.q2.pr` is
+ * `[1, 2]` and `summa:I.q2.a1.arg1` is `[1, 2, 1, 1, 1]`.
+ */
+export function compareSequence(a: number[], b: number[]): number {
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const left = a[i] ?? -Infinity;
+    const right = b[i] ?? -Infinity;
+    if (left !== right) return left < right ? -1 : 1;
+  }
+  return 0;
+}
 
-function expectedAnchor(paragraph: number): string {
-  return `K${String(paragraph).padStart(PAD, "0")}`;
+/** `[146]` → `[147]`. Only meaningful for a dense one-dimensional sequence. */
+function successor(sequence: number[]): number[] {
+  return [sequence[0] + 1];
 }
 
 /**
@@ -73,30 +89,33 @@ export function applyRelabels(
   const seen = new Map<string, number>();
 
   const relabelled = units.map((unit) => {
-    const key = `${unit.page}:${unit.paragraph}`;
+    const key = `${unit.page}:${unit.label}`;
     const occurrence = (seen.get(key) ?? 0) + 1;
     seen.set(key, occurrence);
 
     const rule = errata.relabels.find(
       (r) =>
         r.page === unit.page &&
-        r.foundLabel === unit.paragraph &&
+        String(r.foundLabel) === unit.label &&
         r.occurrence === occurrence
     );
     if (!rule) return unit;
 
-    const paragraph = Number(rule.correctLocator.split(":")[1]);
+    // A relabel is declared for a numbered source, where the corrected locator's
+    // own number IS the corrected position. A tree-shaped source has never
+    // needed one; if it ever does, the rule will have to carry the sequence.
+    const corrected = Number(rule.correctLocator.split(":")[1]);
     return {
       ...unit,
       locator: rule.correctLocator,
-      paragraph,
-      relabelledFrom: unit.paragraph,
+      sequence: [corrected],
+      relabelledFrom: unit.label,
     };
   });
 
   return relabelled
     .slice()
-    .sort((a, b) => a.paragraph - b.paragraph)
+    .sort((a, b) => compareSequence(a.sequence, b.sequence))
     .map((unit, index) => ({ ...unit, ordinal: index + 1 }));
 }
 
@@ -110,7 +129,8 @@ export function applyRelabels(
 export function detectDefects(
   units: ParsedUnit[],
   errata: CorpusErrata,
-  anchorSignal: boolean
+  anchorSignal: boolean,
+  denseSequence: boolean
 ): CorpusDefect[] {
   const defects: CorpusDefect[] = [];
 
@@ -124,20 +144,18 @@ export function detectDefects(
     // anchor defect would need a second declaration for one fault.
     if (unit.relabelledFrom !== null) continue;
 
-    const want = expectedAnchor(unit.paragraph);
+    const want = unit.anchorExpected;
     if (unit.anchor === null) {
       defects.push({
         kind: "anchor-absent",
         locator: unit.locator,
         page: unit.page,
-        detail: `no anchor; located from the printed number ${unit.paragraph}`,
+        detail: `no anchor; located from the printed label ${unit.label}`,
       });
     } else if (unit.anchor !== want) {
       defects.push({
         kind:
-          unit.anchor === String(unit.paragraph)
-            ? "anchor-missing-prefix"
-            : "anchor-typo",
+          unit.anchor === unit.label ? "anchor-missing-prefix" : "anchor-typo",
         locator: unit.locator,
         page: unit.page,
         detail: `anchor name="${unit.anchor}", expected "${want}"`,
@@ -146,26 +164,42 @@ export function detectDefects(
   }
 
   // ── Check 2: the sequence is complete and strictly increasing ──────────────
-  let previous = 0;
+  // STRICTLY INCREASING applies to every source; COMPLETE applies only where
+  // the source says what "complete" means. A tree has no next address, so gap
+  // enumeration is skipped rather than guessed — inventing a successor for it
+  // is ADR-020's rejected option 2, an assertion that cannot fail for the right
+  // reason.
+  // ⚠️ A dense sequence starts at 1, and the sentinel is what asserts it. Start
+  // it empty instead and a document whose first paragraphs failed to parse
+  // reports nothing at all — the gap loop has no left edge to run from. That
+  // regression was introduced by this generalisation and caught by nothing in
+  // the suite, which is why the case below is now pinned by a test.
+  let previous: number[] = denseSequence ? [0] : [];
   for (const unit of units) {
-    if (unit.paragraph <= previous) {
+    if (previous.length > 0 && compareSequence(unit.sequence, previous) <= 0) {
       defects.push({
         kind: "number-not-increasing",
         locator: unit.locator,
         page: unit.page,
-        detail: `paragraph ${unit.paragraph} repeats or regresses after ${previous}`,
+        detail: `${unit.label} repeats or regresses after ${previous.join(".")}`,
       });
-    } else {
-      for (let gap = previous + 1; gap < unit.paragraph; gap += 1) {
+    } else if (denseSequence) {
+      for (
+        let gap = previous.length > 0 ? successor(previous) : unit.sequence;
+        compareSequence(gap, unit.sequence) < 0;
+        gap = successor(gap)
+      ) {
         defects.push({
           kind: "paragraph-absent",
-          locator: `ccc:${gap}`,
+          locator: `${errata.source}:${gap[0]}`,
           page: unit.page,
-          detail: `sequence jumps ${previous} → ${unit.paragraph}`,
+          detail: `sequence jumps ${previous.join(".")} → ${unit.sequence.join(".")}`,
         });
       }
     }
-    previous = Math.max(previous, unit.paragraph);
+    if (previous.length === 0 || compareSequence(unit.sequence, previous) > 0) {
+      previous = unit.sequence;
+    }
   }
 
   // ── Check 3: the count ─────────────────────────────────────────────────────
@@ -196,7 +230,7 @@ export function assertCorpus(
   const units = applyRelabels(parsed.units, errata);
   const found = [
     ...parsed.defects,
-    ...detectDefects(units, errata, parsed.anchorSignal),
+    ...detectDefects(units, errata, parsed.anchorSignal, parsed.denseSequence),
   ];
 
   const allowed = new Set(errata.allowed.map((a) => `${a.locator}|${a.kind}`));

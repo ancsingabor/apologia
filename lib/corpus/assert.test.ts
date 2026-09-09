@@ -6,8 +6,10 @@ import { applyRelabels, assertCorpus, detectDefects } from "./assert";
 function unit(paragraph: number, over: Partial<ParsedUnit> = {}): ParsedUnit {
   return {
     locator: `ccc:${paragraph}`,
-    paragraph,
+    sequence: [paragraph],
+    label: String(paragraph),
     anchor: `K${String(paragraph).padStart(4, "0")}`,
+    anchorExpected: `K${String(paragraph).padStart(4, "0")}`,
     relabelledFrom: null,
     text: `A ${paragraph}. bekezdés szövege.`,
     role: null,
@@ -37,11 +39,12 @@ const parsed = (units: ParsedUnit[]): ParseResult => ({
   unnumberedPages: [],
   skipped: {},
   anchorSignal: true,
+  denseSequence: true,
 });
 
 describe("check 1 — the two signals agree", () => {
   it("passes a clean run", () => {
-    const found = detectDefects([unit(1), unit(2), unit(3)], errata(), true);
+    const found = detectDefects([unit(1), unit(2), unit(3)], errata(), true, true);
     expect(found).toEqual([]);
   });
 
@@ -49,6 +52,7 @@ describe("check 1 — the two signals agree", () => {
     const found = detectDefects(
       [unit(1, { anchor: "1" }), unit(2, { anchor: "K20021" }), unit(3)],
       errata(),
+      true,
       true
     );
 
@@ -62,6 +66,7 @@ describe("check 1 — the two signals agree", () => {
     const found = detectDefects(
       [unit(1), unit(2, { anchor: null }), unit(3)],
       errata(),
+      true,
       true
     );
     expect(found).toHaveLength(1);
@@ -81,7 +86,7 @@ describe("check 1 over a source that carries one signal", () => {
   ];
 
   it("does not report every unit as anchor-absent", () => {
-    expect(detectDefects(anchorless, errata(), false)).toEqual([]);
+    expect(detectDefects(anchorless, errata(), false, true)).toEqual([]);
   });
 
   it("still runs the sequence and the count", () => {
@@ -89,7 +94,8 @@ describe("check 1 over a source that carries one signal", () => {
     const found = detectDefects(
       [unit(1, { anchor: null }), unit(3, { anchor: null })],
       errata({ expectedUnits: 3 }),
-      false
+      false,
+      true
     );
 
     expect(found.map((d) => d.kind)).toEqual([
@@ -113,7 +119,7 @@ describe("check 1 over a source that carries one signal", () => {
 
 describe("check 2 — the sequence", () => {
   it("catches a gap", () => {
-    const found = detectDefects([unit(1), unit(3)], errata({ expectedUnits: 2 }), true);
+    const found = detectDefects([unit(1), unit(3)], errata({ expectedUnits: 2 }), true, true);
     expect(found.map((d) => [d.locator, d.kind])).toEqual([
       ["ccc:2", "paragraph-absent"],
     ]);
@@ -126,17 +132,107 @@ describe("check 2 — the sequence", () => {
     const units = [unit(1), unit(2), unit(2, { ordinal: 3 })];
 
     expect(
-      detectDefects(units, errata(), true).filter((d) => d.kind.startsWith("anchor"))
+      detectDefects(units, errata(), true, true).filter((d) => d.kind.startsWith("anchor"))
     ).toEqual([]);
 
-    const found = detectDefects(units, errata(), true);
+    const found = detectDefects(units, errata(), true, true);
     expect(found.map((d) => d.kind)).toEqual(["number-not-increasing"]);
+  });
+});
+
+describe("check 2 over a sequence that is not dense", () => {
+  // A tree has no next address: nothing about `summa:I.q2.a1.arg3` says what
+  // must follow, because how many objections an article has is a fact about the
+  // article. So the COMPLETE half of check 2 is skipped and the STRICTLY
+  // INCREASING half still runs (ADR-020: skip a check, do not soften another).
+  const tree = (sequence: number[], label: string): ParsedUnit =>
+    unit(1, { sequence, label, locator: `summa:${label}`, anchor: null, anchorExpected: null });
+
+  it("does not enumerate gaps it cannot know are gaps", () => {
+    // A PART BOUNDARY, which is where this actually bites: the last unit of
+    // Prima Pars is [1, 119, …] and the first of Prima Secundae is [2, 1, …].
+    // Treated as dense, the successor of [1, …] is [2] and the run emits a
+    // phantom `summa:2` between them.
+    //
+    // ⚠️ Two units inside ONE question do not test this. `successor` reads only
+    // the tuple's first element, so the loop is a no-op there whatever the flag
+    // says — a green test that cannot fail for the right reason (ADR-020).
+    const found = detectDefects(
+      [tree([1, 119, 1, 4, 1], "I.q119.a4.ad1"), tree([2, 1, 1, 1, 1], "I-II.q1.a1.arg1")],
+      errata({ source: "summa", expectedUnits: 2 }),
+      false,
+      false
+    );
+    expect(found).toEqual([]);
+  });
+
+  it("STILL catches a regression, which is the half that survives", () => {
+    const found = detectDefects(
+      [tree([1, 2, 1, 1, 3], "a1.arg3"), tree([1, 2, 1, 1, 2], "a1.arg2")],
+      errata({ source: "summa", expectedUnits: 2 }),
+      false,
+      false
+    );
+    expect(found.map((d) => d.kind)).toEqual(["number-not-increasing"]);
+  });
+
+  it("orders a prefix before what extends it", () => {
+    // `summa:I.q2.pr` is [1, 2] and `summa:I.q2.a1.arg1` is [1, 2, 1, 1, 1]:
+    // a question's prooemium precedes its articles, and must not read as a
+    // regression when it does.
+    const found = detectDefects(
+      [tree([1, 2], "q2.pr"), tree([1, 2, 1, 1, 1], "q2.a1.arg1")],
+      errata({ source: "summa", expectedUnits: 2 }),
+      false,
+      false
+    );
+    expect(found).toEqual([]);
+  });
+
+  it("is the SAME check for a dense source, which does enumerate the gap", () => {
+    // The pair that keeps the test above from being vacuous: identical shape,
+    // `denseSequence` flipped, and the defect appears.
+    const found = detectDefects(
+      [unit(1), unit(4)],
+      errata({ expectedUnits: 2 }),
+      false,
+      true
+    );
+    expect(found.map((d) => d.locator)).toEqual(["ccc:2", "ccc:3"]);
+  });
+});
+
+describe("check 2 — where a dense sequence begins", () => {
+  it("reports paragraphs missing from the FRONT of the document", () => {
+    // A page that silently failed to parse takes §1 and §2 with it. The left
+    // edge of the gap loop is what notices; generalising the sequence to a
+    // tuple removed it once, and nothing in this suite objected.
+    const found = detectDefects(
+      [unit(3), unit(4)],
+      errata({ expectedUnits: 2 }),
+      false,
+      true
+    );
+    expect(found.map((d) => [d.locator, d.kind])).toEqual([
+      ["ccc:1", "paragraph-absent"],
+      ["ccc:2", "paragraph-absent"],
+    ]);
+  });
+
+  it("names the absentee with the source's own prefix, not a hardcoded one", () => {
+    const found = detectDefects(
+      [unit(1, { locator: "summa:1" }), unit(3, { locator: "summa:3" })],
+      errata({ source: "summa", expectedUnits: 2 }),
+      false,
+      true
+    );
+    expect(found[0].locator).toBe("summa:2");
   });
 });
 
 describe("check 3 — the count", () => {
   it("fires when a page silently failed to parse", () => {
-    const found = detectDefects([unit(1), unit(2)], errata({ expectedUnits: 3 }), true);
+    const found = detectDefects([unit(1), unit(2)], errata({ expectedUnits: 3 }), true, true);
     expect(found.map((d) => d.kind)).toContain("count-mismatch");
     expect(found.find((d) => d.kind === "count-mismatch")?.detail).toMatch(
       /parsed 2 units, manifest expects 3/
@@ -172,7 +268,9 @@ describe("declared relabels", () => {
       "ccc:3",
       "ccc:4",
     ]);
-    expect(units.map((u) => u.relabelledFrom)).toEqual([null, 3, 4, null]);
+    // The label the SOURCE printed, kept as the source spelled it — a Summa
+    // unit's label is `I q. 2 a. 1 arg. 3`, so this field is not a number.
+    expect(units.map((u) => u.relabelledFrom)).toEqual([null, "3", "4", null]);
     expect(units.map((u) => u.ordinal)).toEqual([1, 2, 3, 4]);
   });
 
@@ -181,7 +279,7 @@ describe("declared relabels", () => {
       [unit(1, { page: "p" }), unit(3, { page: "p" }), unit(4, { page: "p" }), unit(4, { page: "p" })],
       drift
     );
-    const found = detectDefects(units, drift, true).filter(
+    const found = detectDefects(units, drift, true, true).filter(
       (d) => d.kind === "paragraph-absent" || d.kind === "number-not-increasing"
     );
     expect(found).toEqual([]);
@@ -195,7 +293,7 @@ describe("declared relabels", () => {
       drift
     );
     expect(
-      detectDefects(units, drift, true).filter((d) => d.kind.startsWith("anchor"))
+      detectDefects(units, drift, true, true).filter((d) => d.kind.startsWith("anchor"))
     ).toEqual([]);
   });
 
@@ -209,7 +307,7 @@ describe("declared relabels", () => {
       only2nd
     );
     expect(units.map((u) => u.locator)).toEqual(["ccc:1", "ccc:2"]);
-    expect(units.map((u) => u.relabelledFrom)).toEqual([null, 1]);
+    expect(units.map((u) => u.relabelledFrom)).toEqual([null, "1"]);
   });
 });
 
@@ -278,6 +376,7 @@ describe("the gate on the whole run", () => {
         unnumberedPages: [],
         skipped: {},
         anchorSignal: true,
+        denseSequence: true,
       },
       errata()
     );

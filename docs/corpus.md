@@ -1,6 +1,9 @@
 # The corpus
 
-> Status: **Milestone 1**. `corpus/sources.yaml` holds the entries whose licence
+> Status: **Milestone 1**. Ingested: the Catechism in Hungarian and English
+> (2,865 units each) and the **Summa Theologiae in Latin** (23,326 units, 512
+> questions, 2,669 articles — [ADR-022](adr/022-asserting-a-source-with-no-sibling-edition.md)).
+> `corpus/sources.yaml` holds the entries whose licence
 > status is settled. Everything else is a candidate, listed at the bottom of this
 > file with what still has to be established. The CCC additionally carries its
 > fetch locations and its revision, settled in
@@ -22,6 +25,7 @@ that governs how it may be used and how much it is worth:
 | `languages` | which translations we ingest |
 | `cross_lingual_key` | the unit identifier shared across translations, where one exists |
 | `revision` (per document) | which revision of the work this text descends from — see § Revision drift |
+| `license` (per document) | the licence of THIS TRANSCRIPTION, where it differs from the work's — see § Licensing the transcription ([ADR-021](adr/021-licence-belongs-to-the-transcription.md)) |
 
 ## Why chunking is per-source
 
@@ -41,6 +45,15 @@ it. The text is real, the locator resolves, and every verification check passes.
 
 That failure is invisible to groundedness metrics, and it is why the parser
 must carry the *role* of each unit alongside its text.
+
+The Summa is now ingested and the argument survived contact with it, with one
+correction: the role is carried on the unit **and repeated in the chunk**.
+`scholastic-article@1` groups an article's units into one chunk and labels each
+passage in the tradition's own vocabulary — `[Obiectio 2]`, `[Sed contra]`,
+`[Respondeo]` — because a chunk is what an embedding model sees, and a role
+recorded only in a neighbouring column is a role the retriever cannot use. The
+labels go in the chunk text and never in `units.text`, which is permanent and
+byte-compared by [ADR-017](adr/017-quotation-as-verified-invariant.md).
 
 The CCC needs a different strategy again (numbered paragraphs, some very short,
 with cross-references), and Scripture a third (pericope boundaries, not verse
@@ -79,6 +92,32 @@ What resolves it is not choosing a different language's text but **not
 reproducing text at all**: ingest for retrieval, display a locator, a link to the
 official edition, and our own prose. See
 [ADR-014](adr/014-translation-and-quotation.md).
+
+## Licensing the transcription
+
+A work has one copyright status. **Its transcriptions do not**, and the two are
+recorded separately ([ADR-021](adr/021-licence-belongs-to-the-transcription.md)).
+
+The Catechism hid this, because LEV holds the work and licenses every edition of
+it: one statement covers both. The Summa separates them cleanly. Aquinas died in
+1274 and the Leonine edition was printed in 1888, so the work is public domain
+beyond argument — while corpusthomisticum.org, whose text the pipeline actually
+fetches, reserves rights *quoad hanc editionem* over Busa's transcription and
+Alarcón's recension.
+
+So `license` sits on the source (the work) **and** optionally on the document
+(the transcription). A null document licence means the work's licence governs.
+
+This is the same move [ADR-019](adr/019-ccc-editions.md) made for `revision`, for
+the same reason: which text you got is a property of the fetch, not of the work.
+It is also what makes the Church Fathers rule below enforceable rather than
+advisory — *resolve per translation, never per author* had been prose since
+Milestone 0 with nothing able to check it.
+
+The posture that follows: ingest for retrieval, **never persist the editorial
+apparatus** (the Index Thomisticus `[28299]` reference numbers are used at parse
+time as a check signal and discarded), display locator and link
+([ADR-014](adr/014-translation-and-quotation.md)).
 
 ## Revision drift
 
@@ -208,7 +247,9 @@ Hungarian, and should not be settled by whichever file was easiest to download.
 
 ## Adding a source
 
-1. Resolve the licence. No entry without it.
+1. Resolve the licence — for the **work** and, where they differ, for the
+   **transcription** you intend to fetch (§ Licensing the transcription). No
+   entry without it, at either level.
 2. Assign `authority_tier` (or `source_kind: scientific`) by hand.
 3. Define the `locator_scheme` — the addressing the tradition already uses, not
    one we invent. If the work has none, use a synthetic scheme and mark it as

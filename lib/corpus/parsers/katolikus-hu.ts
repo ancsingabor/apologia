@@ -340,6 +340,19 @@ function collectMarkers(region: string): Marker[] {
  * the corroboration rule below and the monotonicity assertion are both
  * meaningless per page.
  */
+/**
+ * The anchor katolikus.hu writes for a given paragraph: `56.` is `name="K0056"`.
+ *
+ * This padding is a fact about ONE Hungarian publisher's markup, so it belongs
+ * with the parser that reads that markup. `assert.ts` compares `anchor` against
+ * whatever the parser says to expect, and does not know the convention.
+ */
+const ANCHOR_PAD = 4;
+
+function expectedAnchor(paragraph: number): string {
+  return `K${String(paragraph).padStart(ANCHOR_PAD, "0")}`;
+}
+
 export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
   const units: ParsedUnit[] = [];
   const defects: CorpusDefect[] = [];
@@ -400,8 +413,10 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
       ordinal += 1;
       units.push({
         locator: `ccc:${marker.printed}`,
-        paragraph: marker.printed,
+        sequence: [marker.printed],
+        label: String(marker.printed),
         anchor: marker.anchor,
+        anchorExpected: expectedAnchor(marker.printed),
         relabelledFrom: null,
         text: trimMarkerResidue(normalise(raw)),
         role: isInBrief(summaries, marker.start) ? "summary" : null,
@@ -413,5 +428,12 @@ export function parseKatolikusHu(pages: SourcePage[]): ParseResult {
 
   // Every paragraph states its number twice here; `assert.ts` checks that the
   // two agree. See ADR-020 for what happens to a source that states it once.
-  return { units, defects, unnumberedPages, skipped, anchorSignal: true };
+  return {
+    units,
+    defects,
+    unnumberedPages,
+    skipped,
+    anchorSignal: true,
+    denseSequence: true,
+  };
 }

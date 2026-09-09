@@ -130,6 +130,51 @@ describe("the revision rule (ADR-019)", () => {
   });
 });
 
+describe("a transcription's own licence", () => {
+  // ADR-021. A work has one copyright status; its transcriptions do not. The
+  // Catechism hid this because LEV holds the work and licenses every edition;
+  // the Summa separates them — public-domain work, reserved transcription.
+
+  it("defaults to null, meaning the work's licence governs", () => {
+    const [parsed] = parseManifest(manifest());
+    expect(parsed.documents[0].license).toBeNull();
+    expect(parsed.documents[0].licenseNote).toBeNull();
+  });
+
+  it("carries a document licence distinct from the work's", () => {
+    const [parsed] = parseManifest(
+      manifest({
+        license: "public-domain",
+        documents: [
+          doc({
+            license: "transcription-rights-reserved",
+            license_note: "Fundación Tomás de Aquino, quoad hanc editionem.",
+          }),
+        ],
+      })
+    );
+    expect(parsed.license).toBe("public-domain");
+    expect(parsed.documents[0].license).toBe("transcription-rights-reserved");
+    expect(parsed.documents[0].licenseNote).toMatch(/quoad hanc editionem/);
+  });
+
+  it("REFUSES an unresolved document licence, as it does for the source", () => {
+    // Otherwise the new field is a place to write `unknown` that the older rule
+    // forbids one line above — ADR-003 has no `unknown` at either level.
+    for (const value of ["unknown", "", "TBD", "?"]) {
+      expect(() =>
+        parseManifest(manifest({ documents: [doc({ license: value })] })), 
+      ).toThrow();
+    }
+  });
+
+  it("accepts a resolved one, so the refusal is not blanket", () => {
+    expect(() =>
+      parseManifest(manifest({ documents: [doc({ license: "public-domain" })] }))
+    ).not.toThrow();
+  });
+});
+
 describe("selectDocument", () => {
   it("finds the requested source and language", () => {
     const { source: found, document } = selectDocument(

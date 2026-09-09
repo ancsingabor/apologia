@@ -1,3 +1,4 @@
+import { discoverCorpusThomisticumPages } from "./corpus-thomisticum";
 import { discoverKatolikusHuPages } from "./katolikus-hu";
 import { discoverVaticanIntratextPages } from "./vatican-intratext";
 
@@ -33,6 +34,7 @@ type Discoverer = (indexHtml: string, indexUrl: string) => DiscoveredPage[];
 const DISCOVERERS: Record<string, Discoverer> = {
   "katolikus-hu-toc": discoverKatolikusHuPages,
   "vatican-intratext-toc": discoverVaticanIntratextPages,
+  "corpus-thomisticum-index": discoverCorpusThomisticumPages,
 };
 
 export function discovererFor(id: string): Discoverer {
@@ -70,4 +72,8 @@ export function assertPagesDiscovered(
   }
 }
 
-export { discoverKatolikusHuPages, discoverVaticanIntratextPages };
+export {
+  discoverCorpusThomisticumPages,
+  discoverKatolikusHuPages,
+  discoverVaticanIntratextPages,
+};

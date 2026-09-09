@@ -133,7 +133,37 @@ export type CorpusDefectKind =
    *  historically fragile boundary, and this is what notices when it moves. */
   | "footnote-unbalanced"
   /** The final tally does not match the manifest's `expected_units`. */
-  | "count-mismatch";
+  | "count-mismatch"
+  /** A page's own generated enumeration of its units disagrees with the units
+   *  parsed from its body. Watches the same boundary `footnote-unbalanced`
+   *  watches, for a source that ships a table of its contents per page. */
+  | "enumeration-mismatch"
+  /** A scholastic article carries no `co.` unit. The respondeo is the article's
+   *  actual teaching, so its absence is either a real feature of that article
+   *  or a boundary the parser stopped finding — both worth stopping for. */
+  | "respondeo-absent"
+  /** A question's prooemium states how many articles follow, and the parse
+   *  found a different number. The only signal in the Summa written by its
+   *  author rather than by its transcriber (ADR-022). */
+  | "article-count-mismatch"
+  /** A question's prooemium states no countable article number, so
+   *  `article-count-mismatch` is SKIPPED for it rather than passed vacuously.
+   *  Declared per question so the skipped set is visible and bounded. */
+  | "article-count-unstated"
+  /** Two of a unit's several statements of its own address do not agree — the
+   *  `TITLE`, the apparatus span, and the enclosing headings should be one
+   *  address said three times. */
+  | "label-disagreement"
+  /** A page ships no enumeration of its own units, so `enumeration-mismatch`
+   *  is SKIPPED for it rather than passed vacuously (ADR-020). */
+  | "enumeration-absent"
+  /** A scholastic article carries a reply numbered past anything it could be
+   *  answering. NOT the same as having fewer replies than objections, which is
+   *  ordinary: Aquinas answers several objections in one reply 120 times. */
+  | "reply-without-objection"
+  /** An article's objections are not numbered 1..n. Nothing in the Summa is
+   *  numbered this way by accident, so a gap means one went missing. */
+  | "objection-not-contiguous";
 
 export interface CorpusDefect {
   kind: CorpusDefectKind;
@@ -148,14 +178,43 @@ export interface CorpusDefect {
 export interface ParsedUnit {
   /** Canonical address, after any declared relabelling: 'ccc:146'. */
   locator: string;
-  /** The paragraph number the locator resolves to. */
-  paragraph: number;
+  /**
+   * The unit's position in its work, as a lexicographically comparable tuple.
+   *
+   * A numbered document is one-dimensional — `ccc:146` is `[146]` — and a
+   * scholastic one is a tree: `summa:I.q2.a1.arg3` is `[1, 2, 1, 1, 3]`, part
+   * then question then article then role then index. Comparing tuples rather
+   * than integers is what lets `assert.ts` state "strictly increasing" once,
+   * for both shapes, instead of once per source (ADR-002).
+   *
+   * ⚠️ This is OUR ordering key, not an address. It is derived from the
+   * locator, never stored on the row, and never shown to a reader.
+   */
+  sequence: number[];
+  /**
+   * The address as the SOURCE states it, before any relabelling — '147' for a
+   * Catechism paragraph, 'I q. 2 a. 1 arg. 3' for a Summa unit.
+   *
+   * Kept distinct from `locator` because a declared `misnumbered` erratum is
+   * matched on what the source PRINTED, which after relabelling the locator no
+   * longer records.
+   */
+  label: string;
   /** The anchor exactly as found, or null. Corroboration only — never the
    *  source of the locator (ADR-019). */
   anchor: string | null;
+  /**
+   * What `anchor` should be, by this source's own convention — `K0056` for
+   * katolikus.hu. Null when the source has no second signal to check.
+   *
+   * ⚠️ Computed by the PARSER, not by `assert.ts`. The convention is a fact
+   * about one edition's markup, and the assertion step should not have to know
+   * that one Hungarian publisher pads to four digits behind a `K`.
+   */
+  anchorExpected: string | null;
   /** Set when a declared `misnumbered` erratum moved this unit: the wrong
    *  label the source printed. Null for the overwhelming majority. */
-  relabelledFrom: number | null;
+  relabelledFrom: string | null;
   /** Normalised text. This is permanent: ADR-017 compares reader-facing
    *  quotations against it byte-for-byte. */
   text: string;
@@ -202,6 +261,23 @@ export interface ParseResult {
    * check per page and a cross-lingual locator-set equality test.
    */
   anchorSignal: boolean;
+  /**
+   * Is the unit sequence DENSE — must every integer between the first and the
+   * last exist?
+   *
+   * True for a numbered document: the Catechism runs §1–§2865 with nothing
+   * skipped, so a jump is a missing paragraph and `assert.ts` can name the
+   * absentee. False for a tree: nothing about `summa:I.q2.a1.arg3` says what
+   * the next unit must be, because how many objections an article has is a
+   * fact about the article.
+   *
+   * ⚠️ Like `anchorSignal`, a statement about the SOURCE made by its parser in
+   * code, and a debt rather than a discount. Declaring `false` gives up the
+   * completeness half of check 2, and ADR-020's rule applies: the parser owes a
+   * compensating check. `corpus-thomisticum` pays with the per-page enumeration
+   * its source ships and with each question's own stated article count.
+   */
+  denseSequence: boolean;
 }
 
 // ── Errata (ADR-003, ADR-019) ────────────────────────────────────────────────
@@ -313,6 +389,16 @@ export interface ManifestDocument {
   encoding: string;
   /** Path to this document's errata file, or null when none is declared. */
   errata: string | null;
+  /**
+   * The licence of this TRANSCRIPTION, or null when the work's licence governs.
+   *
+   * A work has one copyright status; its transcriptions do not. The Summa is
+   * public domain and the digitisation this pipeline fetches is not offered as
+   * such — the same shape as `revision`, which is on this row for the same
+   * reason: it is a property of the fetch, not of the work (ADR-021).
+   */
+  license: string | null;
+  licenseNote: string | null;
 }
 
 export interface ManifestSource {
