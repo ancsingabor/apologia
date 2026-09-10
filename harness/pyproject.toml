@@ -1,0 +1,50 @@
+[project]
+name = "apologia-eval"
+version = "0.1.0"
+description = "Embedding bake-off and retrieval evaluation harness for Apologia (ADR-023)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Split deliberately. The deployed function (Phase D) must never pull the
+# harness's dependency set — torch alone exceeds the 500 MB Python bundle
+# limit. See ADR-023 § Consequences.
+db = ["psycopg[binary]>=3.2"]
+local-models = ["sentence-transformers>=3.0", "torch>=2.4"]
+stats = ["numpy>=2.0", "scipy>=1.14", "pandas>=2.2"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "types-pyyaml>=6.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The repo's unit gate is sub-second and service-free (ADR-015). Nothing under
+# tests/ may touch Postgres, the network, or a model.
+addopts = "-q"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["apologia_eval"]

@@ -17,6 +17,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The Python measurement harness (ADR-023). A separate job rather than a step
+  # in `verify`, for the same reason the unit suite is ordered before the
+  # Supabase stack there: this gate is service-free and sub-second, so it should
+  # fail in its own lane in under a minute instead of queueing behind a Node
+  # install, a stack boot and a Next build it has nothing to do with.
+  #
+  # What it gates is the deterministic half only — metric functions, gold-set
+  # parsing, and the corpus-hash port's agreement with `lib/corpus/hash.ts`. The
+  # embedding bake-off and the eval run are NOT here: they need a database, they
+  # cost money, and they are operator-initiated. That is ADR-004's argument about
+  # ingestion applied unchanged to the same shape of job.
+  harness:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: harness
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: harness/uv.lock
+
+      # --frozen: fail if uv.lock disagrees with pyproject.toml rather than
+      # silently resolving something new. The harness exists to produce
+      # reproducible measurements; a CI run on an unpinned dependency set is not
+      # checking the code anyone will actually run.
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Typecheck
+        run: uv run mypy apologia_eval tests
+
+      - name: Unit tests
+        run: uv run pytest
+
   verify:
     runs-on: ubuntu-latest
     steps:
