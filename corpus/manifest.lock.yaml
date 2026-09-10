@@ -12,8 +12,8 @@
 # corpus revision; the per-page `raw_hash` values answer the separate question
 # of what exactly was downloaded.
 
-generated_at: '2026-09-08T13:37:08.474Z'
-corpus_hash: cae2ecaa1ba637e3df4fcc94c314a5e92aa47ed38b604e11d221ddd4002e764a
+generated_at: '2026-09-10T14:47:58.544Z'
+corpus_hash: 42a33a159bfef11abeeec05ecdbdf942ebdbf89c0bde79148f6a5fe826f09597
 documents:
   - source: ccc
     language: en
@@ -890,3 +890,197 @@ documents:
         raw_hash: 1a8cf113da988a98788a045c6cc7e81f50772d1b1ae55ec0b0d7b33c9c09b2f7
       - slug: kek-targymutato
         raw_hash: 75caed45a792e712fee67ae9036734f00aeee0cdae3f0f2b6f7b39167fa754d1
+  - source: summa
+    language: la
+    revision: leonina-1888
+    edition: Textus Leoninus (Romae 1888), rec. Busa/Alarcón
+    encoding: iso-8859-1
+    index_url: https://www.corpusthomisticum.org/iopera.html
+    parser: corpus-thomisticum-scholastic
+    chunking: scholastic-article@1
+    content_hash: c697b39661e22e1f1fc6881cc26b081d87385bd1bde1f4c9bfbecdecc98a6181
+    unit_count: 23326
+    chunk_count: 3453
+    assertions:
+      ok: true
+      undeclared: 0
+      allowances_stale: 0
+      anchor_agreement: checked
+      cross_lingual: no other language ingested
+    unnumbered_pages: []
+    skipped: {}
+    pages:
+      - slug: sth0000
+        raw_hash: 7aa84d0fa61e4aa7042f4eab17b47e9979c877808abe7f22c99941e76b0e730c
+      - slug: sth1001
+        raw_hash: 5a12bc7d183bd6b68d389f5e46eaad8c366686cb74e97e2500a31a53d9a823b2
+      - slug: sth1002
+        raw_hash: e5bc216a594116fa5e0c238012de9963990b07fafaea1cf40bfc0064366fdf67
+      - slug: sth1003
+        raw_hash: 093ea58da9759010a2c8834edb15bef5a6274bbbf65e7bc511064fb37088f923
+      - slug: sth1015
+        raw_hash: 0a3b2a9df913578c6cb94c13cb517544f776ee7555f46569bbfd0562d92ed0d4
+      - slug: sth1028
+        raw_hash: a1c3ad5214cb08d8eca2b7fd6dce42bc99ffbb3dabdc3d4796919490a01a09d8
+      - slug: sth1044
+        raw_hash: 41c6edfab20faec48a4181d11d3dbde6549398127633854b20c60bce9f3c5b9c
+      - slug: sth1050
+        raw_hash: e2cfab53e3a057155f3e241b32c059123265ae7cfe58da04e9d7cb41f3fb0ee7
+      - slug: sth1065
+        raw_hash: 7ecac116b5d9eebd381bfb838aacbb4c4421c9041d3fa65a9ddda5866ccecc45
+      - slug: sth1075
+        raw_hash: a32d975659d756b0e7df3adf3e587ecbfa9f080cc2e4a7f15f6aeb173390381c
+      - slug: sth1077
+        raw_hash: d94d71351d8ec6edb379f1e0cae8859364a78e2aca5b915806b1f4b54fba5bdd
+      - slug: sth1084
+        raw_hash: 4b2ce10c68ccca2aa93c2ed1d7a4dc5bc0fff877025dc232ee83bc1f0495f623
+      - slug: sth1090
+        raw_hash: 6dd5bd042610f3d689584ddfa14ab2245f63e49deea42432ce114219e94c9ad8
+      - slug: sth1103
+        raw_hash: 5736abad11534d6a5ebb3fa0c76ff5df228d6558cbb69163f5f437523f2c2ed1
+      - slug: sth2000
+        raw_hash: 75ee5f8bc33fddaa5458e5b3c71b94adec0c241571241c710f4014f835d3ec22
+      - slug: sth2001
+        raw_hash: d0526c5194eba0ddd37f8aa0c73a4c883bca89a900b4df97be84efd6f1da09d9
+      - slug: sth2006
+        raw_hash: dba05b92a49f1f0c2677391c6a3a796622df3d4f01cb16f665697d67af4b9211
+      - slug: sth2022
+        raw_hash: 52f997b0f6fc81b22b615ab449823ace97cf35e398b2da05b789fa36a9f5ba0d
+      - slug: sth2026
+        raw_hash: 8e7a33e7a807111bfca93144af778bab294220b6b3d300e2afa7607184fc3db5
+      - slug: sth2040
+        raw_hash: ef33480986ec12f609c40cdaafc95adb744f2537724cc55440ce17c321444518
+      - slug: sth2049
+        raw_hash: 24faa0532d26245038d241b416399872871227e8e7cc26a59686c59d6d1e36c2
+      - slug: sth2055
+        raw_hash: 21c9d41883766ba77a04a84946a8eb0d4e26326ce4b1e4039d0c8b8b6ce0e8cd
+      - slug: sth2071
+        raw_hash: e8a66cfcdc13f85ffd11af9b9cd466c452d3d9ee974a53efbfeb385cec0e5730
+      - slug: sth2072
+        raw_hash: 798c5dae667054338dcddff967a2f6166f2b2e9b2a3fe8e6b4b08bdbfb57af33
+      - slug: sth2073
+        raw_hash: 9794d7e78ea4d04144571407403ca5bc7712fcf471ea0a35ea9675d67e71418a
+      - slug: sth2074
+        raw_hash: 82a3ab0c0702a4236adb4e8ee4c71642d3ea79d95343d4f0b0d8ad7289499cf0
+      - slug: sth2075
+        raw_hash: 00cae95777705e824c31f80619182f4b542104013b58eba74688000847b97a4a
+      - slug: sth2085
+        raw_hash: 7ec704003979f4be5819f474bcd2a4364b12664cd825c98e9292ca3ec427c928
+      - slug: sth2090
+        raw_hash: b06d31d0a683427d98da5246cfa975463cad35145e221fefb1f398a1feed2791
+      - slug: sth2093
+        raw_hash: 5660edfff2b31a2e8c25cc882d0d0a07f755919daddddd66cf3e40e2d5356fbd
+      - slug: sth2094
+        raw_hash: af568d0cfcf41e3b370f82695329b5d4de529420e762b37e0ed228d55a94c479
+      - slug: sth2095
+        raw_hash: 4532fe3e4ba554a122e4ee821db116c2126f0bf10f22b8b7b6e52e46492ee6cf
+      - slug: sth2098
+        raw_hash: e641b65a63732fcf05d24a4bd19dc81abd70cf8c2a51fefec946be42fa664444
+      - slug: sth2106
+        raw_hash: 96699feb81895785638bf3e4cb7f5e8a09b14df7498e07ae62b488053d2b24cc
+      - slug: sth2109
+        raw_hash: 40b36268020de72684f079cfed103c1bc65a2ffc0a5748fed53b6eb26230cf83
+      - slug: sth3000
+        raw_hash: dba680a98650ea9b5dd1f974fbfb4a0b98f81c2ef9b0570c0c7a8f02bbf30d45
+      - slug: sth3001
+        raw_hash: 3aaaaf74ae4339f03d57363568626ae97837528b92f119f1d89b0adcd891df9f
+      - slug: sth3017
+        raw_hash: 8767938d107e00b656823ef54964b8afb1cb82c266f317392fb7f69bdbd1772f
+      - slug: sth3023
+        raw_hash: 39f79d2816cb876f4466071d199a3ec8fd8f1794f1c8143de2e4e17ed795408e
+      - slug: sth3025
+        raw_hash: e031a834f5289289350518ecbfe5dc7619ec9ee9f902589b25e350fdae5ccf6b
+      - slug: sth3027
+        raw_hash: d74afc58939e51881ed5535c826eb73c184d908e3615b5ff998fadf5404e4d2c
+      - slug: sth3034
+        raw_hash: cd2e8355570f00e5bcf0377330dc7bfd99ed270249200dd1c7ac1fe10c97023e
+      - slug: sth3044
+        raw_hash: 77870e2dcf8f9228cda8865d656263a0d8f992e488b4dfa7fd421df6784b3e5e
+      - slug: sth3045
+        raw_hash: 7b7d74b1647d74a8c72107bea19a61ae8854b1628a850a02058ad224b753ad28
+      - slug: sth3047
+        raw_hash: 824f2397781d2a0f7c5da4cb7a36de6702fa84a79d190846a5f42d978bbfd2e2
+      - slug: sth3057
+        raw_hash: 6ec90bd9296962019946bcbc0264f9e79e9837a6346b3093a049564bb5f0ba2d
+      - slug: sth3061
+        raw_hash: cc2ed1dc21c590b4a7df9b53440294e4116d5a310d2200b129207e72be105b64
+      - slug: sth3079
+        raw_hash: a31a71f527619893cdc27f1b97815f89dd5102cc49605001f0bcd01a88e68c52
+      - slug: sth3080
+        raw_hash: 47b12739a1b3f355f13ad6fcd0ff566cf1e63801d5eb8308fb5edcb840fa4c06
+      - slug: sth3081
+        raw_hash: 8099ac2a4cf60dc1b56d9240b6bd73c7877099db6297732058129a6105d1dd7d
+      - slug: sth3082
+        raw_hash: 56512de7c132d501f8e5d92084e8d9046c4f4cc8558bf27a02f1526352ae0820
+      - slug: sth3092
+        raw_hash: aaf63eab32fe278946ae4b292b149f67fe3ce85021ef424c6a80b4f4ed6aa141
+      - slug: sth3101
+        raw_hash: 828b74e6bfdf438321cac8c316cffe6c3c6b985c94b7c1cc7842c079d79dbfd7
+      - slug: sth3102
+        raw_hash: 1cbf4cf43edf104cb4a2936df04e045af81a5d24410fee1afc5dc2a58d4ed705
+      - slug: sth3106
+        raw_hash: 24bb61ffd78eb40e40387c3969f53881bd7ab222e2d6692a38d364ea1d555042
+      - slug: sth3109
+        raw_hash: 4600709d7689772b046be5d7ee625f32a1a406a232a3e03ff03fdc6ed8d11afe
+      - slug: sth3121
+        raw_hash: d1f0b58f3fbad66448f8ea54399512421029e38fa20068483d9586fffe08ff31
+      - slug: sth3122
+        raw_hash: fcce83e26c43defe009e2cdf21bfd7e0de5216f515d0adff2e172f8a161ecd7f
+      - slug: sth3123
+        raw_hash: 3d58fb602709cbde950983fd5e779daae2c8ad8e88689660b7811a1cd681d4d2
+      - slug: sth3141
+        raw_hash: 2789f5620ef8e2effcdb95bbeb0d02802beae8c8de41d69a2a9eedc2cb1a04da
+      - slug: sth3143
+        raw_hash: cf52d06f7e372d9724d26426b1a13ba2598b48a93fa78a051650faf47128af89
+      - slug: sth3144
+        raw_hash: ee37ba00faa76b43c7b443c4586374c4211968e076311912e07dcdfa6811064d
+      - slug: sth3146
+        raw_hash: 321e7d2e11c466a3bf9646c018c0c11b80ed5007f7a190f9895a2e104c90a391
+      - slug: sth3155
+        raw_hash: 567e8fb7eb0f9749ffc1994f3fd47087b069171bd41d784352b0241c54a6f2f4
+      - slug: sth3170
+        raw_hash: d86743b4c5f262de6425361e894dd3c495caaec3d015da222fb2197e3963ac26
+      - slug: sth3171
+        raw_hash: 445f3875b3381a009828b99228b29beb9f875e2ea0922dc08c17feed00cdbdc2
+      - slug: sth3179
+        raw_hash: b9e7efc97cb0e5a664b874d5977ccadd0d2a65ad015e611b255577ed83fd4fff
+      - slug: sth3183
+        raw_hash: 7c8c485485ee4109884bde551a285b44b4c3f8a2d2ef2f2601d056b8cc9c2698
+      - slug: sth4000
+        raw_hash: 2e00e5ef29c4f1582a965c26d3a19e3dc540e22189bb05065238d0e3ba25c026
+      - slug: sth4001
+        raw_hash: dca2873f89bc034c734f1ea7b1ac432695710adb2acdcb51af5478bb3bf8db44
+      - slug: sth4002
+        raw_hash: 3c6e8783bd7c396063261f33dd7b2d1f4b6356466eca5e07464f202e6401956e
+      - slug: sth4016
+        raw_hash: 5bb5f028a54767c26389e93f338f854eb750674e991817bc8406c995605ffb6d
+      - slug: sth4027
+        raw_hash: 5194d64c15bb57bb77bf0c769a4a0c04c646651006837b96b5725ab65290fa26
+      - slug: sth4040
+        raw_hash: ce2b4b3c269baefaaa9f031b0cf8e9f9b5246bcaee6a9f68a19cd820f9ce5511
+      - slug: sth4046
+        raw_hash: 56e1d8d54fb8c1a6c6c2fe7719244700f11508f68a58fe29c7b82fd7aa6f4798
+      - slug: sth4053
+        raw_hash: 4d96bdb03adcc441d962b6cbf978fce93293325be47d4a99cf4236f809c132ef
+      - slug: sth4060
+        raw_hash: 9646874f94e43b5c581e9ae44e473c386c751d5f79d096d8bbb00c818abaf7bc
+      - slug: sth4066
+        raw_hash: 61092c6b756ea064a9e2439c7a57c9fe6b8f731d3f55546092a1d7822ed1f9f4
+      - slug: sth4072
+        raw_hash: eb34ff4d4e48db1d20850e1b8983a12ae9ee709080bee42f8f5e73b939aba696
+      - slug: sth4073
+        raw_hash: a06741cb74de7127ea76e74a94a771d54afde9d386f4e663f2fac1e0c6e5d07c
+      - slug: sth4074
+        raw_hash: e750447bd9a458a155376ecca0dda05ee0db97479f165ef7f7130ed45099bf6d
+      - slug: sth4078
+        raw_hash: e7348279accdf5e9f267cddfce3d689898d7169ae6c274ff97736de8bdfce350
+      - slug: sth4079
+        raw_hash: de0ed814e45d8ec585c097e3e185876890df84d50669b78e2300ac498c240f9b
+      - slug: sth4080
+        raw_hash: 8e6b1cb73ac82e8b424be34206167aa05cd70ba0965d650f70f33569a1d13975
+      - slug: sth4082
+        raw_hash: cd319f630b012f0c8ec8c779dac83d7ef6da964a396977679ac4fd5e8471eadb
+      - slug: sth4083
+        raw_hash: 892c7abd3d0e872f1bbd0ab6d88351753e77bddcfe2f6dfbc4465061efc78fb5
+      - slug: sth4084
+        raw_hash: 6b2a109d90ce6e34b58be7649c0a6ec97cde9013f197fc57b91de85b9601de72
