@@ -28,9 +28,9 @@ domain knowledge to know what a good answer draws on.
 `npm run eval:lint` now resolves every locator against ingested units and fails
 if one that should resolve does not.
 
-As of the Hungarian CCC ingest: **13 CCC locators resolve; 3 Summa locators are
-pending**, because the Summa is licensed but not yet located or ingested. The
-command distinguishes the two cases deliberately —
+As of the Hungarian CCC ingest: **13 CCC locators resolve; 4 Summa locators are
+pending**, because the Summa is parsed and licensed but not yet ingested into a
+database. The command distinguishes the two cases deliberately —
 
 | Case | Verdict |
 |---|---|
@@ -39,8 +39,26 @@ command distinguishes the two cases deliberately —
 
 — because failing on the second would make the check unrunnable until the whole
 corpus exists, and a check nobody can run is a check nobody runs. ⚠️ **Pending
-is not a pass.** It is the honest statement that those three have still never
-been checked against a real text.
+is not a pass.** It is the honest statement that those four have still never
+been checked against a database.
+
+### The Summa locators were wrong, and pending is why nobody noticed
+
+They were written as `summa:I.q2.a3` and `summa:I.q3.a4` — **articles**, which
+under the implemented scheme (ADR-002, `corpus-thomisticum`) are containers and
+not citable units. Units are leaf-level: `.arg1`, `.sc`, `.co`, `.ad1`. Corrected
+to the leaves each question actually wants, checked against the parsed source.
+
+The correction improved the questions rather than only their spelling. q-0003
+and q-0004 both named the same article; they now name the objection and the
+respondeo of that article respectively, so the pair tests whether passage role
+survived ingestion. q-0003 also gained `.ad1`, because expecting the objection
+alone would have scored a retriever full marks for returning the problem of evil
+without Aquinas's answer to it.
+
+This is the failure mode the ⚠️ above exists for: three locators sat in the gold
+set for a milestone, reported every run, and were wrong about the addressing
+scheme the whole time. Pending is not a pass.
 
 This is recorded rather than glossed because an unverified gold set produces
 confident, meaningless numbers, which is worse than no numbers. The specific
