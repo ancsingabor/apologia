@@ -81,3 +81,77 @@ the alternative is a legal exposure that cannot be mitigated at all.
 **A "just clone and run" experience is lost.** Real, and the cost is highest for
 the portfolio goal. Partly recovered by the public-domain fixture corpus, which
 gives a runnable end-to-end path with no licensing questions.
+
+## Open question — 2026-09-10: an API embedding pass is not obviously "private"
+
+Status of this question: **open**. It does not change the decision above; it
+names a case the decision was not written about, before ADR-008 settles it by
+accident.
+
+The licensing posture rests on one sentence, restated in
+`.claude/project.md` as non-negotiable #3:
+
+> Embedding is not redistribution — that is what makes restricted magisterial
+> sources usable.
+
+That was written about **a private index**: text is fetched, vectorised, and the
+vectors live in our own Postgres. Nothing leaves.
+
+The ADR-008 bake-off may break that premise without anyone deciding to. A hosted
+embedding provider is a candidate like any other, and measuring one means
+transmitting the full text of every current chunk — 5,730 CCC units of
+LEV-copyright material — to a third party, per candidate, per pass. Whatever
+that is, it is not "nothing leaves."
+
+The question is genuinely open, and both answers are arguable:
+
+- **It is still not redistribution.** The provider is a processor, the
+  transmission is transient, and it is no different in kind from any cloud
+  service touching the text — including Supabase, which already stores all of
+  it. On this reading the existing sentence covers it and only needs widening.
+- **It is a distinct act.** ADR-003 accepted a legal exposure it could not
+  mitigate and chose the posture that minimises it; sending the corpus to a
+  provider whose retention and training terms we do not control is a new
+  exposure that the original reasoning never weighed.
+
+**What must not happen is that this gets decided by running the bake-off.** That
+is the same failure ADR-008's deferral guards against, one layer down: an
+architectural commitment made as a side effect of a measurement.
+
+### It is not a question about one offline pass
+
+The first draft of this note said the question had to be answered "before the
+first API candidate runs", as though it governed an ingestion detail. It governs
+more than that.
+
+Dense retrieval is only meaningful **inside a single embedding space**. A query
+vector and a chunk vector can be compared only if the same model produced both —
+same weights, same version, same pooling. `chunk_embeddings` already encodes
+this by keying on `(chunk_id, model)`. There is no arrangement in which the
+corpus is embedded by one model and the user's question by another; the cosine
+would be noise, and it would not error.
+
+So the answer here does not merely permit or forbid an offline pass. **It decides
+which models can ever serve a query.** Rule out transmitting the corpus to a
+hosted provider and hosted models are excluded from production, not just from
+ingestion — because a model that cannot embed the corpus cannot be the model that
+embeds the question either.
+
+The reverse asymmetry the query path *does* enjoy is worth stating, since it is
+the part that genuinely carries no corpus-licensing weight: embedding a user's
+own question sends the user's sentence, not ours. E5- and BGE-family models
+distinguish the two with a `query:` / `passage:` **prefix on the same weights** —
+an asymmetry of input, never of model.
+
+### Why it is tractable rather than blocking
+
+Local open-weights candidates raise the question not at all, so the experiment
+can begin without an answer. And provider terms are a checkable fact —
+zero-retention and no-training-on-inputs are offered by several — so the answer
+is likely to be "permitted, under these terms, recorded in the manifest" rather
+than a prohibition. It needs to be written down either way, because
+[ADR-021](021-licence-belongs-to-the-transcription.md) established that this
+project resolves licensing per artefact rather than by general impression.
+
+Carried into [ADR-023](023-python-at-the-measurement-boundary.md), which
+introduces the bake-off.

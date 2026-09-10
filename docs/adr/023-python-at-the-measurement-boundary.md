@@ -68,10 +68,18 @@ contact with the next temptation:
 ## Reasoning
 
 **The obvious argument is wrong, and it is worth writing down why.** The first
-version of this decision claimed TypeScript simply could not run the candidate
-models. Checking that claim falsified it: `transformers.js` runs ONNX exports of
-both `multilingual-e5-large` and `bge-m3` today. Any ADR resting on "it is
+version of this decision claimed TypeScript could not run the candidate models
+**locally** — in-process inference over open weights, as distinct from calling a
+hosted embedding API, which is a `fetch` in any language and was never in
+question. Checking that claim falsified it: `transformers.js` drives ONNX Runtime
+in Node, and ONNX exports of both `multilingual-e5-large` and `bge-m3` are
+published today. Local inference from TypeScript works. Any ADR resting on "it is
 impossible" would have been resting on something untrue.
+
+What TypeScript genuinely cannot do is **produce** such an export. That is
+`optimum-cli`, and it is Python. But the gap is narrower than it sounds, because
+for the two headline candidates somebody has already done it — so the honest
+position is that TypeScript is blocked only on models nobody has exported yet.
 
 **The argument that survives is about provenance, not capability.** Those ONNX
 files are third-party conversions, frequently quantized, and versioned by
@@ -131,6 +139,23 @@ TypeScript would mean the thing measured and the thing shipped are two code
 paths, and the release rule would be gating on a number that does not describe
 production.
 
+**And there is no escape hatch, because retrieval is confined to one embedding
+space.** A query vector and a chunk vector are comparable only if the same model
+produced both — same weights, same version, same pooling. `chunk_embeddings` is
+keyed `(chunk_id, model)` for exactly this reason: the model is part of a
+vector's identity. So "embed the corpus with an open model offline, call a hosted
+API at request time" is not an available design. The cosine would be noise, and
+nothing would raise an error.
+
+The only asymmetry that exists is a **prefix on the same weights** — E5 and BGE
+expect `query:` versus `passage:` — which the bake-off must apply correctly,
+since omitting it degrades recall silently. It is not a second model.
+
+The consequence for this ADR is direct: if an open-weights model wins, production
+*must* run those weights at request time, and that is the Python service. The
+query side is cheap — one forward pass over a single short question, against
+9,183 chunks offline — which is what makes an ONNX export in a function viable.
+
 ## Consequences
 
 - A second toolchain: `uv`, `ruff`, `mypy`, `pytest`, pinned to Python 3.12 to
@@ -150,6 +175,21 @@ production.
   authenticated proxy — never the harness's dependency set.
 - `ADR-004`'s consequence about the embedding key is superseded by the paragraph
   above.
+- **A licensing question is now on the critical path, and it is not ours to
+  settle by running code.** [ADR-003](003-ship-manifests-not-corpus.md) § *Open
+  question — 2026-09-10* records that "embedding is not redistribution" was
+  written about a private index, not about transmitting the corpus to a hosted
+  provider. Local open-weights candidates raise it not at all, so the bake-off
+  starts with those; it must be answered before the first API candidate runs.
+- **The corpus itself constrains the slate.** Measured 2026-09-10: ~80% of Summa
+  chunks exceed 2,048 characters, against ~0% of CCC chunks, because
+  `scholastic-article@1` chunks a whole article. A 512-token model therefore
+  truncates most of the Summa and none of the Catechism, so ranking it against
+  an 8k-token model would largely measure window size. Max sequence length and a
+  per-candidate truncation count are recorded in the report as provenance, and
+  the report slices by source. This is ADR-020's rule applied to a comparison
+  rather than an assertion, and it is language-independent — the same trap
+  exists in TypeScript.
 
 ## Trade-offs
 
@@ -164,12 +204,29 @@ already a case, since it reads the same gold set and the same `units` table from
 TypeScript. It stays where it is. If the duplication becomes real rather than
 theoretical, that is a later decision with evidence behind it.
 
-**If the bake-off's winner is a hosted API**, the deployed service collapses to a
-thin proxy that TypeScript could have written, and half of this ADR's
-justification evaporates retroactively. Recorded here in advance, before the
-result is known, so the outcome can be read against the prediction rather than
-the prediction quietly rewritten. The offline half is unaffected either way:
-running the open candidates is what would have *produced* that finding.
+**Three outcomes are possible, and only two were originally written down.**
+Recorded in advance, before the result is known, so the outcome can be read
+against the prediction rather than the prediction quietly rewritten:
+
+| | outcome | effect on this ADR |
+|---|---|---|
+| 1 | An open-weights model wins | The service runs it. Fully justified. |
+| 2 | A hosted API wins, and the [ADR-003](003-ship-manifests-not-corpus.md) question permits it | The service collapses to a thin proxy TypeScript could have written; half this ADR's Phase D justification evaporates. |
+| 3 | A hosted API wins, but the licence question forbids it | The best *usable* model is local, the service is justified — **for the wrong reason**. |
+
+**Outcome 3 is the one to guard against, precisely because it flatters this
+ADR.** If the corpus cannot be sent to a provider, the slate collapses to local
+by *constraint*, and a reader would see "local won" where in truth a licence
+decided and the measurement never got to. It requires only that a hosted model
+be good and the licence question resolve conservatively — both plausible.
+
+Should it happen, ADR-008 must say so in terms: *"X scored highest; Y is chosen
+because X is not licensable for this corpus."* Recording it as a measurement
+result would be the same class of error as counting `pending` as a pass — a
+number presented as evidence for something it never tested.
+
+The offline half is unaffected in all three cases: running the open candidates is
+what would have *produced* the finding.
 
 **Ten questions is a thin basis for a permanent decision.** Confidence intervals
 make the thinness visible rather than fixing it. Expanding the gold set toward
