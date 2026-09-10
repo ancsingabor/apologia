@@ -428,7 +428,7 @@ describe("the cross-lingual role check", () => {
    *
    * So the divergence is pinned to a declared set rather than merely measured.
    */
-  it("differs from the other language only where the errata say so", async () => {
+  it("differs from the other language only where the errata say so", async (ctx) => {
     const sources = parseManifest(
       load(await readFile("corpus/sources.yaml", "utf8"))
     );
@@ -439,7 +439,12 @@ describe("the cross-lingual role check", () => {
     for (const language of languages) {
       const units = await currentUnits(db, "ccc", language);
       if (units.length === 0) {
-        console.warn(`  ⚠ skipped: no current ccc (${language}) document ingested locally`);
+        // Reported as a skip, never as a pass — see the note in
+        // corpus-text-probes.test.ts. This check is the one ADR-020 calls the
+        // thing that "converts ADR-002's central claim from an assertion into
+        // a test", so it silently passing on an empty database is the least
+        // affordable version of that mistake in the suite.
+        ctx.skip(`no current ccc (${language}) document ingested locally`);
         return;
       }
       byLanguage.set(language, new Map(units.map((u) => [u.locator, u.role])));
