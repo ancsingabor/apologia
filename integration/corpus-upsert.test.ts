@@ -50,9 +50,23 @@ import type {
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 
 /**
- * Hard guard, in the spirit of `e2e/fixtures/seed.ts`. This suite TRUNCATES the
- * corpus tables, so unlike the ingest CLI — which may legitimately target the
- * cloud project with --remote — it must never run anywhere but a local stack.
+ * Hard guard, in the spirit of `e2e/fixtures/seed.ts`. This suite WRITES to the
+ * corpus tables with the service role, so unlike the ingest CLI — which may
+ * legitimately target the cloud project with --remote — it must never run
+ * anywhere but a local stack.
+ *
+ * ⚠️ IT DOES NOT TRUNCATE, AND MUST NOT START. `clean()` deletes exactly one
+ * row — `sources` where id = 'test-source' — and lets the FK cascade take the
+ * invented documents, units, chunks and chunk_units with it. Nothing else is
+ * touched, by construction.
+ *
+ * That narrowness is load-bearing rather than incidental. The local stack holds
+ * the REAL ingested corpus — 37,651 units across three documents, tens of
+ * minutes of fetching to rebuild — and `corpus-text-probes.test.ts` in this
+ * same suite asserts against it. An unscoped `delete()` here would destroy that
+ * corpus, and the damage would surface later and elsewhere: as `eval:lint`
+ * silently returning to "pending", or as an eval report computed over a corpus
+ * missing a source. Widen the cleanup and you break a different file's premise.
  */
 function localClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -144,6 +158,8 @@ const db = localClient();
 
 async function clean() {
   // Cascades from `sources` clear documents, units, chunks and chunk_units.
+  // Scoped to SOURCE.id on purpose — never widen this to an unscoped delete;
+  // the same database holds the real corpus. See localClient() above.
   await db.from("sources").delete().eq("id", SOURCE.id);
 }
 

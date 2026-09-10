@@ -146,7 +146,17 @@ directory, so this follows a convention the repo has rather than inventing one.
   for Playwright, so the stack boot is shared rather than paid twice.
 - The pgvector top-*k* tests ADR-008 will need have a home already, with the
   stack wiring and the localhost guard written.
-- The guard differs from the ingest CLI's on purpose. This suite truncates
-  tables and refuses any non-local target outright, the way `e2e/fixtures/seed.ts`
-  does; the CLI may legitimately target the cloud project and therefore only
-  requires that a remote target be *chosen* (`--remote`), never forbidden.
+- The guard differs from the ingest CLI's on purpose. This suite writes to the
+  corpus tables with the service role and refuses any non-local target outright,
+  the way `e2e/fixtures/seed.ts` does; the CLI may legitimately target the cloud
+  project and therefore only requires that a remote target be *chosen*
+  (`--remote`), never forbidden.
+
+  **Corrected 2026-09-10:** this bullet previously said the suite "truncates
+  tables". It does not, and never did — cleanup deletes one `test-source` row
+  and relies on the FK cascade. The wording mattered because it was wrong in the
+  dangerous direction: it described a wider blast radius than the code has, and
+  so would have read as licence for a future edit to truncate for real. By then
+  the same local database held the ingested Summa, and
+  `corpus-text-probes.test.ts` asserts against that corpus. A comment that
+  overstates what code does is a latent instruction to make the code match it.
