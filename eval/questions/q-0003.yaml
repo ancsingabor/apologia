@@ -7,11 +7,23 @@ expected_units:
   - ccc:309
   - ccc:310
   - ccc:311
-  - summa:I.q2.a3
+  - summa:I.q2.a3.arg1
+  - summa:I.q2.a3.ad1
 expects_refusal: false
 notes: >
   MULTI-SOURCE by design — this is the question that gives `full-recall@k`
   meaning. A good answer draws on the Catechism's treatment of providence and on
-  Aquinas. Note summa:I.q2.a3 contains the problem of evil as an OBJECTION to
-  God's existence, not as teaching: this question doubles as a test of whether
-  the parser preserved passage role (see docs/corpus.md).
+  Aquinas.
+
+  The two Summa units are the objection and its reply, and naming BOTH is the
+  point. summa:I.q2.a3.arg1 is the problem of evil stated as an OBJECTION to
+  God's existence, not as teaching; summa:I.q2.a3.ad1 is Aquinas answering it.
+  Expecting the objection alone would award full marks to a retriever that
+  surfaced only the problem — which is precisely the failure docs/corpus.md
+  § Why chunking is per-source describes. Expecting both means the question can
+  detect it.
+
+  Not a guess: ccc:311 quotes the Augustine passage (Enchiridion) that
+  summa:I.q2.a3.ad1 quotes, so the Catechism and the Summa units expected here
+  are carrying the same argument in two languages and two centuries. That is
+  also what makes this a real cross-lingual multi-source case.

@@ -4,10 +4,16 @@ language: hu
 category: philosophy
 cross_lingual: true
 expected_units:
-  - summa:I.q2.a3
+  - summa:I.q2.a3.co
 expects_refusal: false
 notes: >
   Hungarian question, English source — a core cross-lingual case. A correct
   answer draws on the respondeo (the Five Ways), NOT the objections. If retrieval
   returns the objection text and the answer presents it as Aquinas's position,
   that is the failure docs/corpus.md § Why chunking is per-source describes.
+
+  `.co` is the respondeo of the same article q-0003 draws its objection from.
+  The two questions therefore expect DIFFERENT units of one article, which is
+  the sharpest test in the set of whether passage role survived ingestion: a
+  retriever that treats the article as one undifferentiated blob cannot score
+  well on both.

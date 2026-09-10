@@ -4,9 +4,14 @@ language: en
 category: philosophy
 cross_lingual: false
 expected_units:
-  - summa:I.q3.a4
+  - summa:I.q3.a4.co
 expects_refusal: false
 notes: >
   English question, English source — the same-language control against which the
   cross-lingual slice is compared. Without controls like this, a cross-lingual
   gap cannot be distinguished from a generally weak retriever.
+
+  `.co` because the doctrine is in the respondeo — "Deus non solum est sua
+  essentia sed etiam suum esse". The objections of this article argue the
+  contrary position and would be cited AGAINST Aquinas if retrieved in its
+  place.
