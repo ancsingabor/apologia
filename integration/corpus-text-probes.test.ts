@@ -50,6 +50,23 @@ import {
  * A fresh clone has an empty database. Skipping is the honest outcome — the
  * probe has nothing to ask — but it is announced rather than silent, because a
  * check that quietly passes on no rows is worse than no check at all.
+ *
+ * ⚠️ IT MUST SKIP AS A SKIP, NOT AS A PASS. The first version of this warned on
+ * stderr and then `return`ed, which Vitest counts as a passing test. So the
+ * suite reported the same "31 passed" whether it had probed 37,651 units or
+ * zero, and the warning scrolled past above it.
+ *
+ * That is not hypothetical. CI never ingests a corpus — `.github/workflows/ci.yml`
+ * boots an empty stack — so every document skipped on every run since this file
+ * was written, and the summary line said passed each time. The one place these
+ * probes are guaranteed never to have run is the one place a green tick is
+ * reported to a reviewer.
+ *
+ * `ctx.skip()` makes the count tell the truth: the run reports skipped tests,
+ * and a reader comparing a local run against CI can see that CI checked
+ * nothing. It does not make CI probe the corpus — that would mean fetching
+ * ~500 pages from three external sites on every run — but it stops the summary
+ * line from claiming it did.
  */
 
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
@@ -142,12 +159,13 @@ const documents = await declaredDocuments();
 describe.each(documents)(
   "the stored text of $sourceId ($language)",
   ({ sourceId, language, errataPath }) => {
-    it("contains only its own text, or a declared exception", async () => {
+    it("contains only its own text, or a declared exception", async (ctx) => {
       const documentId = await currentDocumentId(sourceId, language);
       if (documentId === null) {
-        // Announced, never silent. `npm run ingest -- --source=… --language=…`.
-        console.warn(
-          `  ⚠ skipped: no current ${sourceId} (${language}) document ingested locally`
+        // Reported as a skip, never as a pass. To make it run:
+        // `npm run ingest -- --source=… --language=…` against a local stack.
+        ctx.skip(
+          `no current ${sourceId} (${language}) document ingested locally`
         );
         return;
       }
@@ -169,12 +187,17 @@ describe.each(documents)(
       ).toEqual([]);
     });
 
-    it("declares no exception that has stopped firing", async () => {
+    it("declares no exception that has stopped firing", async (ctx) => {
       // A declaration nobody revisits is how a strict check goes soft — and
       // here a stale one also means the text moved under a note that was
       // checked against the old wording.
       const documentId = await currentDocumentId(sourceId, language);
-      if (documentId === null) return;
+      if (documentId === null) {
+        ctx.skip(
+          `no current ${sourceId} (${language}) document ingested locally`
+        );
+        return;
+      }
 
       const errata = parseErrata(load(await readFile(errataPath, "utf8")));
       const hits = probeUnits(await storedUnits(documentId), TEXT_PROBES);
