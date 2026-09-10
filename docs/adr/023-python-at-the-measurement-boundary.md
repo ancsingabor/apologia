@@ -1,0 +1,177 @@
+# ADR-023 — Python at the measurement boundary
+
+Status: **Accepted** · Milestone 1
+Enables [ADR-008](README.md) (deferred: the embedding provider boundary) and
+amends one consequence of [ADR-004](004-offline-ingestion-cli.md).
+
+## Context
+
+This repository is one language. The immediate prompt for reconsidering that is
+not technical — it is a course requirement to work outside JavaScript — and
+recording that honestly matters, because a decision made for an external reason
+and then dressed in engineering rationale is the thing this directory exists to
+prevent. The requirement is why the question was *asked*. It is not, on its own,
+an answer.
+
+What makes the question live is that the project has a measurement it cannot
+currently take. **ADR-007 and ADR-008 are deferred and explicitly "decided by
+measurement"**, and the architecture is arranged so they cannot be settled by
+accident: `chunk_embeddings` is keyed `(chunk_id, model)`, its `embedding`
+column is deliberately undimensioned and unindexed, and `scripts/ingest/main.ts`
+omits an `embed` stage on purpose so that embedding is a separate pass run once
+per candidate. Nothing in the repository embeds anything yet.
+
+The measurement ADR-008 needs is a bake-off of candidate embedding models over
+Hungarian queries against a mixed hu/en/la corpus, scored on the frozen gold set
+in `eval/questions/`. The candidates that matter most in that setting are the
+open multilingual models, whose native ecosystem is `sentence-transformers` and
+PyTorch.
+
+## Problem
+
+Does a second language earn a place in this repository, and if so, where exactly
+does the boundary fall?
+
+The failure mode is not "Python is a bad choice". It is a repository that
+acquires two toolchains, two CI lanes and two dependency surfaces in exchange
+for a rewrite that demonstrates familiarity with a language while making the
+system harder to run — which is, almost word for word, the reason ADR-004
+rejected a queue.
+
+## Alternatives considered
+
+1. **Stay in TypeScript; run the candidates with `transformers.js`.**
+   Community ONNX exports of the headline candidates exist
+   (`Xenova/multilingual-e5-large`, `onnx-community/bge-m3-ONNX`), so this is
+   genuinely possible, not a straw man.
+2. **Port the ingestion pipeline to Python.** Maximum new-language surface:
+   parsers, chunkers, the assertion machinery, `pytest`. ADR-004 specifies *an
+   offline CLI*, not a TypeScript one, so nothing forbids it.
+3. **Run the bake-off outside the repository** — a notebook, numbers copied into
+   ADR-008 by hand. Zero permanent cost.
+4. **Python only where the *measurement* is produced**, TypeScript everywhere
+   else.
+
+## Decision
+
+**Four.** Python is introduced for the embedding bake-off and the evaluation
+harness that scores it, plus the query-time embedding service those two produce.
+Nothing that currently works in TypeScript is ported.
+
+The boundary is stated as a rule rather than a file list, so it survives
+contact with the next temptation:
+
+> Python is permitted where the deliverable is **a measurement or the model that
+> produced it**. Everything the request path touches, and everything already
+> covered by the TypeScript unit suite, stays TypeScript.
+
+## Reasoning
+
+**The obvious argument is wrong, and it is worth writing down why.** The first
+version of this decision claimed TypeScript simply could not run the candidate
+models. Checking that claim falsified it: `transformers.js` runs ONNX exports of
+both `multilingual-e5-large` and `bge-m3` today. Any ADR resting on "it is
+impossible" would have been resting on something untrue.
+
+**The argument that survives is about provenance, not capability.** Those ONNX
+files are third-party conversions, frequently quantized, and versioned by
+whoever uploaded them. `docs/evaluation.md` requires every report to record the
+embedding model that produced it, precisely so a number can be traced back to
+the system that produced it. A report saying `multilingual-e5-large` when what
+ran was somebody's int8 export of it is not traceable — and the gap would be
+invisible, because the number would look entirely reasonable. This repository
+has a standing position on that shape of problem, from ADR-020:
+
+> An assertion that cannot fail for the right reason is worse than an absent
+> one, because the report says "checked".
+
+A measurement whose subject is not exactly what the report names is the same
+defect wearing different clothes.
+
+**Producing a trustworthy export is itself Python.** The conversion tool is
+`optimum-cli export onnx`. So "stay in TypeScript" does not remove Python from
+the project; it removes Python from the *repository* while keeping it in the
+process, undocumented and unversioned, which is worse than either honest option.
+
+**The second half is statistics, and there the gap is real.** The gold set is
+ten questions. A `recall@10` reported off n=10 without an interval is exactly
+the "confident, meaningless numbers" `eval/README.md` already warns against, and
+it would be the basis of a permanent ADR. Bootstrap confidence intervals are one
+`scipy.stats.bootstrap` call; the equivalent in TypeScript is hand-rolled and
+unreviewed. Comparison figures, per-slice aggregation and the same-language /
+cross-lingual split are `pandas` one-liners.
+
+**Alternative 1 rejected** on provenance, above — not on capability.
+
+**Alternative 2 rejected** because `lib/corpus/` is 234 unit-test cases over
+~1,550 lines of pure functions, and that suite is not decoration: it is what
+caught the §146/147/148 misnumbering (ADR-019) and the unordered-paging false
+positive in `siblings.ts`. A port trades a tested implementation for an untested
+one and buys a language exercise. ADR-004's own reasoning applies unchanged —
+"harder to run and understand" is the cost, and there is no corresponding
+benefit, because the ingestion pipeline is not where the missing measurement is.
+
+**Alternative 3 rejected** by the release rule. `docs/evaluation.md` makes an
+eval report diff a merge gate on any retrieval, chunking, embedding or prompt
+change. A harness that lives in a notebook on one person's machine cannot gate
+anything, cannot be re-run against a later corpus hash, and produces exactly the
+artefact the rule exists to prevent: a number that was screenshotted once.
+
+**On the query-time service.** ADR-004's consequences state that the embedding
+API key is "needed only by an operator running the CLI, never by the deployed
+application." That is an error, and this ADR corrects it: the query path in
+`docs/architecture.md` retrieves by pgvector cosine over the *user's question*,
+which must therefore be embedded at request time. The deployed application needs
+embedding capability, and the security win ADR-004 claimed is smaller than
+written — the service-role key remains operator-only, the embedding key does not.
+
+Given that the app must embed queries anyway, the service doing it should be the
+same implementation the bake-off measured. Reimplementing query embedding in
+TypeScript would mean the thing measured and the thing shipped are two code
+paths, and the release rule would be gating on a number that does not describe
+production.
+
+## Consequences
+
+- A second toolchain: `uv`, `ruff`, `mypy`, `pytest`, pinned to Python 3.12 to
+  match the Vercel runtime default.
+- A second CI lane, gating only the deterministic half — metric functions,
+  gold-set parsing, corpus-hash reproduction. The bake-off and the eval run are
+  operator-initiated and stay out of CI, by ADR-004's reasoning applied to the
+  same shape of job.
+- **A serialisation contract appears.** `eval/questions/*.yaml` and the eval
+  report schema are now read by two languages, and `corpusHash`
+  (`lib/corpus/hash.ts`) must be reproduced byte-for-byte in Python. That
+  reproduction is pinned by a test; without it the provenance field this whole
+  ADR argues for would silently drift.
+- The deployed function acquires a bundle-size constraint TypeScript did not
+  have. Torch and `sentence-transformers` exceed the standard 500 MB Python
+  bundle limit, so the deployed service ships an ONNX export or a thin
+  authenticated proxy — never the harness's dependency set.
+- `ADR-004`'s consequence about the embedding key is superseded by the paragraph
+  above.
+
+## Trade-offs
+
+**The contributor barrier doubles.** A reader who could previously run
+everything with `npm install` now needs `uv` as well. Mitigated by keeping one
+entry point — `npm run eval` shells out — but the mitigation is cosmetic and
+should not be described as more than that.
+
+**The measurement boundary is a judgement, not a lookup.** "Where the deliverable
+is a measurement" will be arguable at the edges; `scripts/eval-lint.ts` is
+already a case, since it reads the same gold set and the same `units` table from
+TypeScript. It stays where it is. If the duplication becomes real rather than
+theoretical, that is a later decision with evidence behind it.
+
+**If the bake-off's winner is a hosted API**, the deployed service collapses to a
+thin proxy that TypeScript could have written, and half of this ADR's
+justification evaporates retroactively. Recorded here in advance, before the
+result is known, so the outcome can be read against the prediction rather than
+the prediction quietly rewritten. The offline half is unaffected either way:
+running the open candidates is what would have *produced* that finding.
+
+**Ten questions is a thin basis for a permanent decision.** Confidence intervals
+make the thinness visible rather than fixing it. Expanding the gold set toward
+the 40–60 that `docs/evaluation.md` specifies matters more to ADR-008's quality
+than the language its harness is written in.

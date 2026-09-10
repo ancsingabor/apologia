@@ -32,8 +32,10 @@ value; the decision itself is usually the least interesting line.
 | [020](020-asserting-a-single-signal-source.md) | Asserting a source that carries one signal | Accepted |
 | [021](021-licence-belongs-to-the-transcription.md) | A licence describes a transcription, not only a work | Accepted |
 | [022](022-asserting-a-source-with-no-sibling-edition.md) | Asserting a source with no sibling edition | Accepted |
+| [023](023-python-at-the-measurement-boundary.md) | Python at the measurement boundary; TypeScript everywhere else | Accepted |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a
 mixed-language corpus, would be choosing on marketing copy. They get written
-when there is a number behind them.
+when there is a number behind them. [023](023-python-at-the-measurement-boundary.md)
+builds the harness that produces it.
