@@ -70,6 +70,12 @@ Chapters 01–03 plus status take about 15 minutes. After that you can explain
 the system at the level of "what does what". Chapters 04–07 take the same
 explanation down to how each part works.
 
+**A separate track, [python/](python/README.md)**, is for a TypeScript
+developer reading the harness. It has a learning path with a progress
+checklist, a TS ↔ Python [vocabulary](python/vocabulary.md), and a
+[walkthrough](python/walkthrough.md) of each module with an exercise that
+breaks something on purpose.
+
 ## How the documentation is layered
 
 | Layer | For | Where | Style |

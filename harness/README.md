@@ -21,6 +21,11 @@ TypeScript. `lib/corpus/` and `scripts/ingest/` stay where they are.
 > - A retrieval result is a ranked list of **sets** of units, because one Summa
 >   chunk covers a whole article.
 
+**New to Python, coming from TypeScript?** Start at
+[docs/guide/python/](../docs/guide/python/README.md): a learning path, a
+TS ↔ Python vocabulary with a location for every idiom used here, and a
+walkthrough of each module.
+
 ## Running it
 
 ```bash
