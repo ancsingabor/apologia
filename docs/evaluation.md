@@ -1,8 +1,9 @@
 # Evaluation
 
-> Status: **Milestone 0** — the metric definitions, the gold set format and the
-> release rule are fixed here, before any retrieval code exists. The harness
-> itself lands in Milestone 1. Thresholds are deliberately absent; see below.
+> Written in Milestone 0: the metric definitions, the gold set format and the
+> release rule were fixed here before any retrieval code existed, and that order
+> is part of the argument. Thresholds are deliberately absent; see below. Where
+> the harness stands today: [guide/status.md](guide/status.md).
 
 ## Why this file exists before the retriever does
 

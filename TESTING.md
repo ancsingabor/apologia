@@ -84,8 +84,9 @@ assertion was green (ADR-019 § Amendment (second)).
 Retrieval ranking, generated prose, groundedness, refusal behaviour. A change is
 **a number that moved**, judged against a committed baseline.
 
-`npm run eval` (Milestone 1). Metric definitions, the gold-set format and the
-release rule: `docs/evaluation.md`.
+`npm run eval` — not built yet; the harness is in `harness/` (Python, ADR-023)
+and its state is in `docs/guide/status.md`. Metric definitions, the gold-set
+format and the release rule: `docs/evaluation.md`.
 
 `npm run eval:lint` is **not** part of this layer despite living in `eval/`. It
 asserts that every `expected_units` locator resolves to a real ingested unit,

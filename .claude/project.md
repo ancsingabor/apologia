@@ -55,7 +55,11 @@ logic is sitting in the wrong file and belongs in `lib/`.
 
 ## Where things are
 
-- Current milestone and next steps: `docs/architecture.md` header + `docs/adr/README.md`
-- Gold set: `eval/questions/` — expected units are UNVERIFIED until Milestone 1's
-  `eval:lint` resolves them against ingested text
+- Current milestone, next steps and blockers: `docs/guide/status.md` — the only
+  place status is written; update it in the same PR that changes the truth
+- Human-readable overview and diagrams: `docs/guide/` (summarises and links down
+  to the ADRs; never the only home of a rationale)
+- Gold set: `eval/questions/` — every `expected_units` locator is verified by
+  `npm run eval:lint` against ingested text; a new question is unverified until
+  it passes
 - Source manifest: `corpus/sources.yaml` — no entry without a resolved licence

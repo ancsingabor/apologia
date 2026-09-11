@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Split deliberately. The deployed function (Phase D) must never pull the
+# Split deliberately. The deployed query-embedding function must never pull the
 # harness's dependency set — torch alone exceeds the 500 MB Python bundle
 # limit. See ADR-023 § Consequences.
 db = ["psycopg[binary]>=3.2"]
