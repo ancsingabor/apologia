@@ -86,6 +86,12 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Same reasoning: sub-second, no services. Checks the documentation's
+      # structure (ADR TL;DRs, the ADR index, the Python walkthrough, relative
+      # links) — presence, not truth; see lib/docs/check.ts.
+      - name: Docs structure
+        run: npm run docs:lint
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 

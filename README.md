@@ -92,6 +92,7 @@ indexes it locally.
 | `npm run test:e2e` | Playwright against an ephemeral local Supabase stack |
 | `npm run ingest` | ingest a source — see below |
 | `npm run eval:lint` | resolve every gold-set locator against ingested text |
+| `npm run docs:lint` | check the docs' structure: ADR TL;DRs and index, Python walkthrough, relative links (also on `git push`) |
 | `npm run eval` | *(Milestone 1)* score the gold set, write a report |
 
 ### Ingesting the corpus

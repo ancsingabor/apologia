@@ -13,3 +13,5 @@ pre-push:
     # stack and a build) and stays a CI-and-on-demand gate.
     - name: unit tests
       run: npm test
+    - name: docs structure
+      run: npm run docs:lint

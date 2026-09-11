@@ -137,11 +137,11 @@ policy.
 
 ## The broad gate
 
-`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run test:integration`,
-`npm run build` — all reproduced
+`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run docs:lint`,
+`npm run test:integration`, `npm run build` — all reproduced
 in CI on every PR (`.github/workflows/ci.yml`), with the unit suite ordered
 before the Supabase stack so a deterministic regression fails in seconds rather
-than after a stack boot and a build. `npm test` and the typecheck also run on
-pre-push (`lefthook.yml`); the E2E suite does not, since it needs a stack and a
-build. The Supabase CLI is pinned in CI; keep the pin in lockstep with the
+than after a stack boot and a build. `npm test`, `docs:lint` and the typecheck
+also run on pre-push (`lefthook.yml`); the E2E suite does not, since it needs a
+stack and a build. The Supabase CLI is pinned in CI; keep the pin in lockstep with the
 validated local version.

@@ -14,7 +14,8 @@
     "test:e2e": "bash scripts/e2e.sh",
     "test:e2e:ui": "bash scripts/e2e.sh --ui",
     "ingest": "tsx scripts/ingest/main.ts",
-    "eval:lint": "tsx scripts/eval-lint.ts"
+    "eval:lint": "tsx scripts/eval-lint.ts",
+    "docs:lint": "tsx scripts/docs-lint.ts"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",

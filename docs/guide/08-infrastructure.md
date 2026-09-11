@@ -78,9 +78,9 @@ committed.
 | Gate | When | Runs | Budget |
 |---|---|---|---|
 | `lefthook` pre-commit | `git commit` | ESLint on staged files | seconds |
-| `lefthook` pre-push | `git push` | `tsc --noEmit`, `npm test` | seconds |
+| `lefthook` pre-push | `git push` | `tsc --noEmit`, `npm test`, `npm run docs:lint` | seconds |
 | CI `harness` lane | every PR | ruff, format check, mypy `--strict`, pytest | under a minute |
-| CI `verify` lane | every PR | lint, types, unit, **local Supabase** + integration, build, E2E | a few minutes |
+| CI `verify` lane | every PR | lint, types, unit, docs structure, **local Supabase** + integration, build, E2E | a few minutes |
 | Release rule | any retrieval, chunking, embedding or prompt change | an eval report diff attached to the PR | human review |
 
 The unit suites run **before** the database boots, on purpose. A parser or

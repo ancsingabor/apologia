@@ -51,9 +51,10 @@ The roadmap is reconstructed from where the ADRs refer to it:
 | Fail-closed rate limiter (ADR-009) | `lib/rate-limit.ts` | `npm test` |
 | Python harness contract layer: gold-set reader, metrics, corpus-hash port | `harness/apologia_eval/` | `cd harness && uv run pytest` |
 | Admin auth (proxy + `requireAdmin()`), deny-by-default grants, themes, copy | inherited from the template | `npm run test:e2e` |
-| CI: a `harness` lane (Python) and a `verify` lane (lint, types, unit, integration, build, E2E) | `.github/workflows/ci.yml` | any PR |
+| CI: a `harness` lane (Python) and a `verify` lane (lint, types, unit, docs structure, integration, build, E2E) | `.github/workflows/ci.yml` | any PR |
+| Docs structure check: ADR TL;DRs, ADR index, Python walkthrough, relative links | `lib/docs/check.ts`, `scripts/docs-lint.ts` | `npm run docs:lint` |
 
-Test counts on 2026-09-11: **315** Vitest cases in 19 files, **34** pytest
+Test counts on 2026-09-11: **339** Vitest cases in 20 files, **34** pytest
 cases.
 
 ## In progress 🚧

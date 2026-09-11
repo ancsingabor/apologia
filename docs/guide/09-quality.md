@@ -35,7 +35,7 @@ to write no tests because "it's AI", when most of the system is plain code.
 
 | Layer | Runner | What | Count (2026-09-11) |
 |---|---|---|---|
-| Pure TS | Vitest, `npm test` | parsers, assert, chunk, hash, manifest, gate, limiter | 315 cases / 19 files |
+| Pure TS | Vitest, `npm test` | parsers, assert, chunk, hash, manifest, gate, limiter, docs checks | 339 cases / 20 files |
 | Pure Python | pytest, `uv run pytest` | metrics (hand-computed), gold-set parsing, hash port | 34 cases |
 | Real Postgres | Vitest + local Supabase, `npm run test:integration` | upsert ordering invariants, text probes over stored units, cross-lingual role sets | — |
 | Browser | Playwright, `npm run test:e2e` | admin auth guard | — |
