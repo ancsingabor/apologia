@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0 (controls land in Phase 2)
 
+> **TL;DR**
+> - **Decision:** The rate limiter fails closed, backed by a global daily spend ceiling.
+> - **Because:** Every accepted request costs money, and a limiter outage is when abuse is likeliest — the template's fail-open suited contact forms, not this.
+> - **Cost:** A limiter outage blocks legitimate drafting, and hashed-IP limits are weak against distributed callers. The controls land in Phase 2.
+
 ## Context
 
 `lib/rate-limit.ts` is inherited from the template this repo was scaffolded

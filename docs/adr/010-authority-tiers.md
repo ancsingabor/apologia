@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** Every source carries a human-assigned authority tier (1 Scripture and dogma … 5 contemporary apologetics); scientific sources get no tier, only a separate `source_kind`.
+> - **Because:** An answer must not present a theologian's opinion as Church teaching — and a physics paper has authority of a different kind, not a lower one.
+> - **Cost:** Five buckets simplify finer theological distinctions, and each placement is our judgement, kept in a public manifest so it can be argued with.
+
 ## Context
 
 The corpus mixes sources that carry radically different weight. A conciliar

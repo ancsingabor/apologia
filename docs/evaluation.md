@@ -1,8 +1,24 @@
 # Evaluation
 
-> Status: **Milestone 0** — the metric definitions, the gold set format and the
-> release rule are fixed here, before any retrieval code exists. The harness
-> itself lands in Milestone 1. Thresholds are deliberately absent; see below.
+> Written in Milestone 0: the metric definitions, the gold set format and the
+> release rule were fixed here before any retrieval code existed, and that order
+> is part of the argument. Thresholds are deliberately absent; see below. Where
+> the harness stands today: [guide/status.md](guide/status.md).
+
+> **TL;DR**
+> - The **gold set comes before the retriever** and is frozen in git, so the
+>   benchmark cannot be fitted to the system it judges.
+> - **No target numbers in advance.** Metric definitions, the gold set and the
+>   release rule are fixed; the first baseline becomes the number to beat.
+> - Retrieval: `recall@k`, `full-recall@k`, `MRR@10`, **split into
+>   same-language and cross-lingual slices**. Generation: citation validity and
+>   quote fidelity must read 100%, and authority correctness is the domain
+>   metric.
+> - **Release rule:** a retrieval, chunking, embedding or prompt change attaches
+>   an eval diff. More than 2pp off `recall@10`, or any drop in citation validity
+>   or quote fidelity, blocks the merge.
+> - Every report records corpus hash, models and prompt version, because a
+>   number without provenance is not evidence.
 
 ## Why this file exists before the retriever does
 

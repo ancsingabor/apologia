@@ -3,6 +3,11 @@
 Status: **Accepted** · Milestone 1
 Supersedes part of [ADR-014](014-translation-and-quotation.md) — display posture only.
 
+> **TL;DR**
+> - **Decision:** Quotation is permitted, and each legal condition — faithful, attributed, proportionate — is a deterministic check in the citation gate, with limits in one config object.
+> - **Because:** "quote minimally" cannot be implemented or tested, and a link-only answer hands the sceptic our paraphrase instead of the Church's own words.
+> - **Cost:** Rights exposure rises from zero to small, taken knowingly; the analysis is jurisdiction-specific.
+
 > **Legal responsibility.** The reading of Hungarian quotation law below, and the
 > thresholds set from it, are the project owner's decision, taken with that
 > stated explicitly. This ADR does not constitute legal advice. What the

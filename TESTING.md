@@ -14,6 +14,17 @@ that was considered and rejected, is [ADR-015](docs/adr/015-testing-strategy.md)
 Components, route handlers and Server Actions get **no** unit tests. If one
 seems necessary, deterministic logic has ended up in the wrong file.
 
+> **TL;DR**
+> - `npm test`: pure TypeScript, sub-second, no services; runs on pre-push.
+>   `cd harness && uv run pytest` is the same layer in Python (ADR-023).
+> - `npm run test:integration`: Vitest against an ephemeral local Supabase;
+>   hard-guarded to localhost.
+> - `npm run test:e2e`: Playwright for user-visible flows, same local stack.
+> - Probabilistic behaviour is **measured, never asserted**.
+> - **A skip must report as a skip** (`ctx.skip()`), and a check over a set
+>   asserts the set is non-empty. The case for both is in
+>   [docs/guide/09-quality.md](docs/guide/09-quality.md).
+
 ## Deterministic — Vitest
 
 ```bash
@@ -74,18 +85,22 @@ Currently covered:
   run leaving an `is_current = false AND unit_count = 0` signature the next run
   sweeps.
 
-To add as features land: pgvector top-*k* over a fixture corpus (ADR-008), and
-post-ingest probes over stored unit text for markup residue — the check that
-caught the footnote apparatus leaking into §1065 and §1666 when every structural
-assertion was green (ADR-019 § Amendment (second)).
+- **`integration/corpus-text-probes.test.ts`** — post-ingest probes over stored
+  unit text for markup residue, the check that caught the footnote apparatus
+  leaking into §1065 and §1666 when every structural assertion was green
+  (ADR-019 § Amendment (second)). Needs an ingested corpus; without one each
+  document **skips**, and the summary line says so.
+
+To add as features land: pgvector top-*k* over a fixture corpus (ADR-008).
 
 ## Probabilistic — the eval harness
 
 Retrieval ranking, generated prose, groundedness, refusal behaviour. A change is
 **a number that moved**, judged against a committed baseline.
 
-`npm run eval` (Milestone 1). Metric definitions, the gold-set format and the
-release rule: `docs/evaluation.md`.
+`npm run eval` — not built yet; the harness is in `harness/` (Python, ADR-023)
+and its state is in `docs/guide/status.md`. Metric definitions, the gold-set
+format and the release rule: `docs/evaluation.md`.
 
 `npm run eval:lint` is **not** part of this layer despite living in `eval/`. It
 asserts that every `expected_units` locator resolves to a real ingested unit,
@@ -122,11 +137,11 @@ policy.
 
 ## The broad gate
 
-`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run test:integration`,
-`npm run build` — all reproduced
+`npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run docs:lint`,
+`npm run test:integration`, `npm run build` — all reproduced
 in CI on every PR (`.github/workflows/ci.yml`), with the unit suite ordered
 before the Supabase stack so a deterministic regression fails in seconds rather
-than after a stack boot and a build. `npm test` and the typecheck also run on
-pre-push (`lefthook.yml`); the E2E suite does not, since it needs a stack and a
-build. The Supabase CLI is pinned in CI; keep the pin in lockstep with the
+than after a stack boot and a build. `npm test`, `docs:lint` and the typecheck
+also run on pre-push (`lefthook.yml`); the E2E suite does not, since it needs a
+stack and a build. The Supabase CLI is pinned in CI; keep the pin in lockstep with the
 validated local version.

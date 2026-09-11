@@ -4,6 +4,11 @@ Status: **Accepted** · Milestone 1
 Enables [ADR-008](README.md) (deferred: the embedding provider boundary) and
 amends one consequence of [ADR-004](004-offline-ingestion-cli.md).
 
+> **TL;DR**
+> - **Decision:** Python is permitted only where the deliverable is a measurement or the model that produced it; everything else, and everything already working, stays TypeScript.
+> - **Because:** Provenance of model exports and honest statistics (bootstrap intervals) — not capability, since TypeScript can run the candidate models.
+> - **Cost:** A second toolchain, and a corpus-hash contract that must match byte-for-byte across two languages.
+
 ## Context
 
 This repository is one language. The immediate prompt for reconsidering that is
@@ -211,7 +216,7 @@ against the prediction rather than the prediction quietly rewritten:
 | | outcome | effect on this ADR |
 |---|---|---|
 | 1 | An open-weights model wins | The service runs it. Fully justified. |
-| 2 | A hosted API wins, and the [ADR-003](003-ship-manifests-not-corpus.md) question permits it | The service collapses to a thin proxy TypeScript could have written; half this ADR's Phase D justification evaporates. |
+| 2 | A hosted API wins, and the [ADR-003](003-ship-manifests-not-corpus.md) question permits it | The service collapses to a thin proxy TypeScript could have written; half this ADR's justification for the query-time service evaporates. |
 | 3 | A hosted API wins, but the licence question forbids it | The best *usable* model is local, the service is justified — **for the wrong reason**. |
 
 **Outcome 3 is the one to guard against, precisely because it flatters this

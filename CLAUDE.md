@@ -6,7 +6,34 @@ Guidance for Claude Code working in this repository.
 
 The project brief, non-negotiables, and the list of things deliberately absent
 (with the ADR that argues for each) are in **`.claude/project.md`**. Read it
-first, then `docs/architecture.md`.
+first, then `docs/architecture.md`. Current state: **`docs/guide/status.md`**.
+
+## Human layer — keeping `docs/guide/` current is part of done
+
+The docs have three layers (`docs/guide/README.md` § How the documentation is
+layered). ADRs, long docs and module headers are the complete record and stay
+as they are — **never shorten them, and never move reasoning out of them into
+the guide.** The guide summarises and links down; where the two disagree, the
+lower layer is right and the guide is the bug.
+
+In the **same PR** as the change that causes it:
+
+| When a change… | …also update |
+|---|---|
+| alters what exists, what is next, or what is blocked | `docs/guide/status.md` — the only place status is written. Never restate status elsewhere; link to it. Re-derive every number from its source (lock file, test run), never from memory. |
+| adds, removes or renames a box or an arrow | the Mermaid diagram in the guide chapter that draws it (solid = built, dashed = planned). Render it before committing. |
+| adds an ADR | a `> **TL;DR**` block (Decision · Because · Cost) after its Status paragraph, a row in `docs/adr/README.md`, and a link from the guide chapter it affects |
+| adds a module to `harness/apologia_eval/` | a `## \`name.py\`` section in `docs/guide/python/walkthrough.md` (with a break-it exercise whose outcome you ran), vocabulary rows in `docs/guide/python/vocabulary.md` for new idioms, and its level in `docs/guide/python/README.md` |
+| fixes a bug that failed silently | an entry in `docs/guide/10-war-stories.md` (symptom · why invisible · how found · what changed · commit) |
+| changes a gate (CI step, hook, release rule) | `docs/guide/08-infrastructure.md` § gates and `TESTING.md` |
+
+`npm run docs:lint` (CI and pre-push) enforces the TL;DR, ADR-index,
+walkthrough and link parts. It checks **presence, not truth** — whether
+`status.md` is accurate is on the author of the change.
+
+Guide pages follow one shape: TL;DR (≤ 5 bullets) · ≤ ~150 lines · ≤ 2
+diagrams · "Where this lives in code" · "Go deeper" · "Check yourself" with
+answers in `<details>`.
 
 ## Stack
 

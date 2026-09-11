@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** Generate the complete answer, run the deterministic citation gate, then display — no streaming in v1.
+> - **Because:** The gate has to see the whole answer to decide whether any of it may be shown; a check that is not a hard gate is a score.
+> - **Cost:** The reviewer waits with no token feedback, and "no streaming" can read as naivety rather than as a decision.
+
 ## Context
 
 The generation step returns an answer plus a list of cited unit ids. Because the

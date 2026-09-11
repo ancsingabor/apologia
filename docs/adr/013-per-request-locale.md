@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0 (implemented Milestone 1)
 
+> **TL;DR**
+> - **Decision:** The locale is a route segment (`app/[lang]/`) resolved per request; `getCopy(locale)` replaces the build-time `copy` constant.
+> - **Because:** One deployment must serve `/hu/…` and `/en/…`, where the template chose one language at build time.
+> - **Cost:** Divergence from the template, and some pages will exist in one language only.
+
 ## Context
 
 The template this repo grew from selects one language at build time:

@@ -11,10 +11,9 @@ mechanically** before anyone sees it. Answers are drafted by the system and
 It is a research aid that shows its work. It is not catechesis, not spiritual
 direction, and not the Magisterium.
 
-> **Status: Milestone 0.** The architecture is decided and documented; the
-> pipeline is not built. This README does not describe features that do not
-> exist — see [`docs/architecture.md`](docs/architecture.md) for what is planned
-> and what is real.
+> **Status:** see [`docs/guide/status.md`](docs/guide/status.md) — the one
+> place it is kept, so that it cannot drift here. This README does not describe
+> features that do not exist.
 
 ## Why this repository might be worth reading
 
@@ -77,8 +76,8 @@ Add yourself to `admin_users` to reach `/dashboard`.
 
 **The corpus is not in this repository**, by design — see
 [ADR-003](docs/adr/003-ship-manifests-not-corpus.md). `corpus/sources.yaml`
-describes each source and how to obtain it; the ingestion CLI (Milestone 1)
-fetches and indexes it locally.
+describes each source and how to obtain it; the ingestion CLI fetches and
+indexes it locally.
 
 ## Commands
 
@@ -93,6 +92,7 @@ fetches and indexes it locally.
 | `npm run test:e2e` | Playwright against an ephemeral local Supabase stack |
 | `npm run ingest` | ingest a source — see below |
 | `npm run eval:lint` | resolve every gold-set locator against ingested text |
+| `npm run docs:lint` | check the docs' structure: ADR TL;DRs and index, Python walkthrough, relative links (also on `git push`) |
 | `npm run eval` | *(Milestone 1)* score the gold set, write a report |
 
 ### Ingesting the corpus
@@ -120,10 +120,13 @@ be *chosen* rather than inherited from whatever `.env.local` happens to hold.
 ## Secrets
 
 No credentials are committed. `.env.example` documents every variable by name.
-Note that the ingestion keys — the Supabase service role key and the embedding
-provider key — are needed only by an operator running the CLI, never by the
-deployed app. That is a side effect of
-[ADR-004](docs/adr/004-offline-ingestion-cli.md), and a welcome one.
+The Supabase service role key is needed only by an operator running the CLI or
+`eval:lint`, never by the deployed app — a side effect of
+[ADR-004](docs/adr/004-offline-ingestion-cli.md), and a welcome one. The
+embedding key is not so contained: the query path must embed the question at
+request time with the same model that embedded the corpus
+([ADR-023](docs/adr/023-python-at-the-measurement-boundary.md) corrects
+ADR-004 on this).
 
 ## Provenance
 

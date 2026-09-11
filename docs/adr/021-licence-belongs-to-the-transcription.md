@@ -4,6 +4,11 @@ Status: **Accepted** · Milestone 1
 Extends [ADR-003](003-ship-manifests-not-corpus.md) and follows the shape
 [ADR-019](019-ccc-editions.md) established for `revision`.
 
+> **TL;DR**
+> - **Decision:** A document (the transcription) may carry its own licence, separate from the source's (the work's); null means the work's licence governs.
+> - **Because:** The Summa is public domain while its digital transcription's rights are reserved — which text you got is a property of the fetch, not of the work.
+> - **Cost:** A null licence can mean either "inherited" or "nobody looked".
+
 ## Context
 
 `corpus/sources.yaml` carries `license` on the **source** — the work. That was

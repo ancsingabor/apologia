@@ -10,6 +10,22 @@ Python lives here and nowhere else in the repository, on the rule
 Nothing here runs in a request, and nothing here was ported from working
 TypeScript. `lib/corpus/` and `scripts/ingest/` stay where they are.
 
+> **TL;DR**
+> - The Python half of the repo exists only to **measure**. Its first job is
+>   the embedding bake-off that decides ADR-008.
+> - Built: the gold-set reader (`gold.py`), the retrieval metrics
+>   (`metrics.py`) and a **byte-exact port** of the TypeScript corpus hash
+>   (`hashing.py`). Still to come: `db.py`, `bakeoff.py`, `score.py`.
+> - `uv` owns the interpreter (3.12). The gates are `pytest`, `ruff` and
+>   `mypy --strict`, in their own CI lane.
+> - A retrieval result is a ranked list of **sets** of units, because one Summa
+>   chunk covers a whole article.
+
+**New to Python, coming from TypeScript?** Start at
+[docs/guide/python/](../docs/guide/python/README.md): a learning path, a
+TS ↔ Python vocabulary with a location for every idiom used here, and a
+walkthrough of each module.
+
 ## Running it
 
 ```bash

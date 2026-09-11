@@ -1,10 +1,22 @@
 # Architecture
 
-> Status: **Milestone 1, in progress.** The ingestion pipeline is built and the
-> Hungarian Catechism is ingested — 2,865 citable units, end to end. The query
-> path is not. Sections marked *(planned)* describe the intended shape and are
-> the contract the rest of Milestone 1 implements against. This file is kept
-> honest: if it claims something exists, it exists.
+> Status lives in [guide/status.md](guide/status.md), and only there. Sections
+> here marked *(built)* or *(planned)* say which half of the shape they describe;
+> *(planned)* sections are the contract the remaining work implements against.
+> This file is kept honest in both directions: if it claims something exists,
+> it exists, and if it claims something is missing, it is.
+
+> **TL;DR**
+> - A research aid that answers **from a curated corpus**, and every citation
+>   in an answer is checked mechanically before display.
+> - The atom is the **citable unit**, a passage with a canonical address
+>   (`ccc:1730`). That is what makes a citation verifiable (ADR-002).
+> - **Two processes**: an offline ingestion CLI *(built)* and a query path
+>   *(planned)* whose centre is a deterministic citation gate.
+> - **Translate the explanation, never the quotation**. A quoted span must match
+>   its unit byte for byte (ADR-014).
+> - Deterministic parts are unit tested; probabilistic parts are measured on a
+>   gold set. The diagrams for all of this are in [the guide](guide/README.md).
 
 ## What this is
 
@@ -82,11 +94,13 @@ separate pass run once per candidate, which is what "ADR-008 is decided by
 measurement" has to mean concretely. Wiring one provider into the ingest would
 settle that question by accident.
 
-**As of the first run: the Hungarian CCC is ingested.** 2,865 units, 2,865
-chunks, every declared erratum firing and nothing undeclared. `npm run eval:lint`
-resolves every gold-set locator whose source is ingested. What is *not* done:
-the English document (revision-verified but uninventoried — ADR-019), and every
-embedding.
+**Every document the manifest declares is ingested** — the Catechism in
+Hungarian and English, the Summa in Latin; the KJV entry declares no documents
+yet — with every declared erratum firing and nothing
+undeclared, and `npm run eval:lint` resolves every gold-set locator. What is
+*not* done is every embedding. Counts and hashes are in
+`corpus/manifest.lock.yaml`; the current state is in
+[guide/status.md](guide/status.md).
 
 **`assert` is a step, not a flag.** Real web editions of canonical texts carry
 typesetting defects, and a parser that meets them and loosens its rules has

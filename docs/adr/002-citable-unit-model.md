@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** The corpus atom is the *citable unit* — a passage with a canonical address (`ccc:1730`) — and chunking aligns to unit boundaries, per source.
+> - **Because:** A canonical address makes a citation checkable by lookup, stable across re-chunking, and aligned across languages.
+> - **Cost:** A real parser per source type, paid up front; the design is bought by a property of this corpus and does not generalise.
+
 ## Context
 
 Apologia answers questions from a curated corpus and attributes every claim to a

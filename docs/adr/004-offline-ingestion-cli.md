@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** Ingestion is a standalone `tsx` CLI — idempotent, content-hashed, resumable — never a route, a cron or a queue.
+> - **Because:** No user waits on it; a web job imports timeouts and an attack surface, a queue a second runtime, for a batch run perhaps a dozen times a year.
+> - **Cost:** Ingestion is manual and single-process. (Its claim that the embedding key is operator-only is corrected by ADR-023.)
+
 ## Context
 
 Ingestion fetches, parses, chunks, embeds and upserts the corpus. For the full

@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** Every answer is a draft until a human publishes it at a permanent URL; the database itself keeps drafts non-public.
+> - **Because:** Automation can check that an answer is grounded, only a reviewer that it is right — and there is no anonymous LLM endpoint left to abuse.
+> - **Cost:** Throughput is bounded by one reviewer, and nobody gets an instant answer to a new question.
+
 ## Context
 
 The obvious shape for this product is a question box that returns an answer: ask,

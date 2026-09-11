@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 1
 
+> **TL;DR**
+> - **Decision:** The model returns segments — `claim` with citations, `connective`, `quotation` — and the gate checks that every marked claim cites a unit from the context.
+> - **Because:** Code cannot decide which sentences assert something; the model can label them, and mislabelling becomes a measurable behaviour instead of a hidden hole.
+> - **Cost:** The guarantee covers *marked* claims only, and structured output may cost some prose quality.
+
 ## Context
 
 ADR-005 commits the system to a deterministic citation gate with three checks,

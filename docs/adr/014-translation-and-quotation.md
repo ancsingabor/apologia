@@ -3,6 +3,11 @@
 Status: **Accepted** · Milestone 0
 Amended by [ADR-017](017-quotation-as-verified-invariant.md) — display posture only.
 
+> **TL;DR**
+> - **Decision:** Answer prose is generated in the reader's language; quotations appear only in a language with an authoritative text, never machine-translated.
+> - **Because:** A translated quotation is a sentence no source ever wrote, attributed to a real locator, passing a green check.
+> - **Cost:** Hungarian answers sometimes show English passages, labelled as English.
+
 > The core rule here is unchanged and is not up for revision: answer prose is
 > generated in the reader's language, source passages are never machine
 > translated, and a quoted span must match its unit's text exactly. What
