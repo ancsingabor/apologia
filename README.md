@@ -120,7 +120,7 @@ be *chosen* rather than inherited from whatever `.env.local` happens to hold.
 
 No credentials are committed. `.env.example` documents every variable by name.
 The Supabase service role key is needed only by an operator running the CLI or
-the harness, never by the deployed app — a side effect of
+`eval:lint`, never by the deployed app — a side effect of
 [ADR-004](docs/adr/004-offline-ingestion-cli.md), and a welcome one. The
 embedding key is not so contained: the query path must embed the question at
 request time with the same model that embedded the corpus
