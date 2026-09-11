@@ -4,6 +4,11 @@ Status: **Accepted** · Milestone 1
 Constrains [ADR-019](019-ccc-editions.md) (the assert step) and discharges the
 cross-lingual identity claim in [ADR-002](002-citable-unit-model.md).
 
+> **TL;DR**
+> - **Decision:** The anchor-agreement assertion runs only where a parser reports two signals; a one-signal source (vatican.va) owes compensating checks instead.
+> - **Because:** Waiving the check, declaring 2,865 allowances or faking a second signal would each produce a green report that checked nothing.
+> - **Cost:** Documents are now asserted differently, so the lock file must record which checks ran.
+
 ## Context
 
 ADR-019 chose `vatican.va/archive/ENG0015/` as the English Catechism and left

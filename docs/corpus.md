@@ -1,13 +1,29 @@
 # The corpus
 
-> Status: **Milestone 1**. Ingested: the Catechism in Hungarian and English
-> (2,865 units each) and the **Summa Theologiae in Latin** (23,326 units, 512
-> questions, 2,669 articles — [ADR-022](adr/022-asserting-a-source-with-no-sibling-edition.md)).
+> What is ingested today is in [guide/status.md](guide/status.md); per-document
+> counts and hashes are in `corpus/manifest.lock.yaml`. The Summa's shape — 512
+> questions, 2,669 articles — is argued in
+> [ADR-022](adr/022-asserting-a-source-with-no-sibling-edition.md).
 > `corpus/sources.yaml` holds the entries whose licence
 > status is settled. Everything else is a candidate, listed at the bottom of this
 > file with what still has to be established. The CCC additionally carries its
 > fetch locations and its revision, settled in
 > [ADR-019](adr/019-ccc-editions.md).
+
+> **TL;DR**
+> - A **source** is a work (the Catechism), carrying its authority tier, licence,
+>   locator scheme and chunking strategy. A **document** is one fetched text of
+>   it in one language and revision.
+> - **Chunking is per source**, because the Summa's objection/respondeo
+>   structure, the CCC's numbered paragraphs and Scripture's pericopes are three
+>   different problems. There is no default chunker.
+> - **Licensing is asymmetric where you would not expect.** Magisterial texts
+>   are copyrighted in *every* language, so the answer is to display locators
+>   and links, not to switch languages.
+> - **A licence belongs to the transcription** as well as the work, and
+>   **revisions must agree** across languages, or one locator means two texts.
+> - Source defects are **declared in errata, never tolerated**, and a source is
+>   inventoried by **parsing** it, not by counting one signal.
 
 ## What a source is
 

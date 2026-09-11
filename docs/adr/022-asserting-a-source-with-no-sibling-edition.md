@@ -4,6 +4,11 @@ Status: **Accepted** · Milestone 1
 Continues [ADR-020](020-asserting-a-single-signal-source.md); the Summa's entry
 into [ADR-002](002-citable-unit-model.md)'s unit model.
 
+> **TL;DR**
+> - **Decision:** The Summa, which has no second edition to compare against, is checked against Aquinas's own stated article counts plus per-page and article-shape invariants.
+> - **Because:** The prooemium's "quaeruntur quatuor" reaches us by an independent path — the closest a single-language source has to a sibling edition.
+> - **Cost:** It checks structure, not text: the Summa is checked differently from the Catechism, not as well.
+
 ## Context
 
 ADR-020 ended with the Catechism checked two ways that had nothing to do with

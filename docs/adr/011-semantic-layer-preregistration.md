@@ -2,6 +2,11 @@
 
 Status: **Accepted** · written Milestone 0, executed Phase 4
 
+> **TL;DR**
+> - **Decision:** The Phase 4 semantic layer (OWL/RDF) is pre-registered — three hypotheses, fixed metrics and thresholds, and a kill criterion — before any of it is built.
+> - **Because:** A result judged against criteria chosen afterwards proves nothing, and expensive complexity tends to survive because it was expensive.
+> - **Cost:** Thresholds set without data may be mis-sized, and exploration outside the three hypotheses is reported as exploratory only.
+
 ## Context
 
 Phase 4 introduces a small RDF/OWL ontology over the domain — `Doctrine`,

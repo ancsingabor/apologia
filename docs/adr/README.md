@@ -4,9 +4,12 @@ Each record states a decision that **could have gone the other way**. If there
 was no real alternative, it is a note, not a decision — and it does not belong
 here.
 
-Format: context · problem · alternatives considered · decision · reasoning ·
-consequences · trade-offs. The *reasoning* and *trade-offs* sections carry the
-value; the decision itself is usually the least interesting line.
+Format: a three-line **TL;DR** (decision · because · cost) · context · problem ·
+alternatives considered · decision · reasoning · consequences · trade-offs. The
+TL;DR is for a reader who needs the gist; the *reasoning* and *trade-offs*
+sections carry the value, and the decision itself is usually the least
+interesting line. For the system-level picture these decisions add up to, start
+at [the guide](../guide/README.md).
 
 | # | Decision | Status |
 |---|---|---|

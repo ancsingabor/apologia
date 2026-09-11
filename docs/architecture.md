@@ -6,6 +6,18 @@
 > This file is kept honest in both directions: if it claims something exists,
 > it exists, and if it claims something is missing, it is.
 
+> **TL;DR**
+> - A research aid that answers **from a curated corpus**, and every citation
+>   in an answer is checked mechanically before display.
+> - The atom is the **citable unit**, a passage with a canonical address
+>   (`ccc:1730`). That is what makes a citation verifiable (ADR-002).
+> - **Two processes**: an offline ingestion CLI *(built)* and a query path
+>   *(planned)* whose centre is a deterministic citation gate.
+> - **Translate the explanation, never the quotation**. A quoted span must match
+>   its unit byte for byte (ADR-014).
+> - Deterministic parts are unit tested; probabilistic parts are measured on a
+>   gold set. The diagrams for all of this are in [the guide](guide/README.md).
+
 ## What this is
 
 Apologia answers questions about Catholic apologetics, theology, philosophy,

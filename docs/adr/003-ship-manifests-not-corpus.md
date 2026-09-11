@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** The repo ships source manifests and the pipeline, never corpus text; no source enters without a resolved licence.
+> - **Because:** Magisterial texts are copyrighted in every language, and shipping them is an exposure nothing mitigates — while embedding into a private index is not redistribution.
+> - **Cost:** Outsiders must assemble the corpus to reproduce a number, and fetch fragility becomes our problem.
+
 ## Context
 
 The repository is public. The corpus mixes material with very different legal

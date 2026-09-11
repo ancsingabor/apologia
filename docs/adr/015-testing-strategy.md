@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 1
 
+> **TL;DR**
+> - **Decision:** A test's layer is chosen by whether its output is deterministic, not by where the code sits; components and route handlers get no unit tests.
+> - **Because:** Most of a RAG system is ordinary deterministic code — only ranking and prose need measuring rather than asserting.
+> - **Cost:** Two runners, and a boundary that has to be judged rather than looked up.
+
 ## Context
 
 `docs/architecture.md` and `TESTING.md` already split the system in two —

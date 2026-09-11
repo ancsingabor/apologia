@@ -5,6 +5,11 @@ Status: **Accepted** · Milestone 1 · **amended twice on 2026-09-07 — see the
 Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
 the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
 
+> **TL;DR**
+> - **Decision:** The Hungarian CCC comes from katolikus.hu and the English from vatican.va, because they share the 2018 revision; `revision` is required and checked before fetching.
+> - **Because:** The cleaner Hungarian archive is the 1997 text, where §2267 teaches the opposite of the English — and every downstream check would still pass.
+> - **Cost:** A more fragile fetch target, and alignment argued from one diagnostic paragraph rather than proved.
+
 ## Context
 
 `corpus/sources.yaml` has named `ccc` as the Milestone 1 source since Milestone 0,

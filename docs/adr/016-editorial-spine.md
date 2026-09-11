@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 1
 
+> **TL;DR**
+> - **Decision:** The topic spine is a small hand-written table (~20 topics) that aggregates published answers; the corpus is not topic-tagged and no book's structure is reproduced.
+> - **Because:** Authoring a content site is a year of domain work, not engineering — while no spine at all leaves an empty search box.
+> - **Cost:** Topic pages start empty by design, and a hand-made taxonomy will be wrong at the edges.
+
 ## Context
 
 Milestone 0 designed a question-answering engine: ask → retrieve → verify →

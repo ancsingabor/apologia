@@ -2,6 +2,11 @@
 
 Status: **Accepted** · Milestone 0
 
+> **TL;DR**
+> - **Decision:** pgvector inside the existing Supabase Postgres — no dedicated vector database.
+> - **Because:** Retrieval always joins similarity with tier, language and provenance, which in one Postgres is one query; the corpus is orders of magnitude below where a separate store pays off.
+> - **Cost:** A scale ceiling in the low millions of vectors, little index tuning, and an index that shares resources with the app database.
+
 ## Context
 
 The retrieval path needs approximate nearest-neighbour search over embedded

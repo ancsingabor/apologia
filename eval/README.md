@@ -13,6 +13,18 @@ eval/
 npm run eval:lint   # resolve every expected_units locator against ingested text
 ```
 
+> **TL;DR**
+> - `questions/` is the gold set: **10 hand-written questions (v0)**, frozen
+>   before any retriever existed. Expansion to 40–60 must come from domain
+>   authors, not a model.
+> - Expected answers are **citable units** (`ccc:283`,
+>   `summa:I.q2.a3.arg1`), and `eval:lint` checks every one exists in the
+>   database.
+> - **Pending is not a pass.** Four Summa locators sat unchecked for a
+>   milestone and were wrong the whole time.
+> - Two questions have no expected units, because they test refusal and are
+>   scored separately.
+
 ## The gold set
 
 `questions/` holds **v0: 10 questions**, written before any retriever exists so
