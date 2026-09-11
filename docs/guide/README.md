@@ -57,9 +57,14 @@ Two rules shape the product.
 | 01 | [What and why](01-what-and-why.md) | What problem, for whom, and what it deliberately is not | 3 |
 | 02 | [The citable unit](02-the-citable-unit.md) | The one idea everything follows from | 3 |
 | 03 | [System map](03-system-map.md) | The boxes, the arrows, and which file is which box | 4 |
+| 04 | [Ingestion](04-ingestion.md) ✅ | How a web page becomes verified citable units | 4 |
+| 05 | [Data model](05-data-model.md) | The tables, and the four choices worth defending | 3 |
+| 06 | [Query path](06-query-path.md) 📐 | One question end to end, and the citation gate | 4 |
+| 07 | [Measurement](07-measurement.md) 🚧 | What "better" is allowed to mean; the bake-off | 4 |
 
 Chapters 01–03 plus status take about 15 minutes. After that you can explain
-the system at the level of "what does what".
+the system at the level of "what does what". Chapters 04–07 take the same
+explanation down to how each part works.
 
 ## How the documentation is layered
 
