@@ -14,8 +14,9 @@ TypeScript. `lib/corpus/` and `scripts/ingest/` stay where they are.
 > - The Python half of the repo exists only to **measure**. Its first job is
 >   the embedding bake-off that decides ADR-008.
 > - Built: the gold-set reader (`gold.py`), the retrieval metrics
->   (`metrics.py`) and a **byte-exact port** of the TypeScript corpus hash
->   (`hashing.py`). Still to come: `db.py`, `bakeoff.py`, `score.py`.
+>   (`metrics.py`), a **byte-exact port** of the TypeScript corpus hash
+>   (`hashing.py`) and the corpus reader (`db.py`). Still to come:
+>   `bakeoff.py`, `score.py`.
 > - `uv` owns the interpreter (3.12). The gates are `pytest`, `ruff` and
 >   `mypy --strict`, in their own CI lane.
 > - A retrieval result is a ranked list of **sets** of units, because one Summa
@@ -31,10 +32,23 @@ walkthrough of each module.
 ```bash
 brew install uv          # once
 cd harness
-uv sync --all-groups
-uv run pytest            # 34 cases, sub-second, no database and no network
+uv sync --all-groups --extra db
+uv run pytest            # 49 cases, sub-second, no database and no network
 uv run ruff check .
 uv run mypy apologia_eval tests
+```
+
+`--extra db` is `psycopg`. It is not needed to run the tests — `db.py` imports
+the driver lazily so the pure half stays importable without it — but `mypy`
+needs it to typecheck the SQL layer instead of skipping it. The `local-models`
+extra (torch) is separate and is only needed to actually run the bake-off.
+
+The database-touching work reads `DB_URL`, which is the name
+`supabase status -o env` already prints:
+
+```bash
+supabase start
+eval "$(supabase status -o env | grep -E '^[A-Z0-9_]+=')"
 ```
 
 `uv` manages its own interpreter, which matters on a machine where `python3`
@@ -48,6 +62,7 @@ Vercel's default runtime.
 | `hashing.py` | `corpusHash` / `documentContentHash`, **ported** from `lib/corpus/hash.ts` |
 | `gold.py` | reads the frozen gold set from `eval/questions/*.yaml` |
 | `metrics.py` | `recall@k`, `full-recall@k`, MRR, as `docs/evaluation.md` defines them |
+| `db.py` | reads the current corpus, writes candidate vectors, searches by cosine |
 
 Still to come: the embedding bake-off, the scorer, and the report writer.
 

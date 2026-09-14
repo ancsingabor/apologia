@@ -73,9 +73,17 @@ commits.
       `pytest.raises(match=…)`, `@pytest.mark.parametrize`, `pytest.approx`
 - [ ] Why every expected value in `test_metrics.py` is worked out by hand
 
-### Level 4: `db.py` 📐, written when the file lands
-Expected topics: `psycopg`, context managers (`with`), and reading
-`documents.is_current` correctly.
+### Level 4: `db.py`, the I/O shell
+- [ ] Context managers (`with … as …`), and why they are the `try/finally` JS
+      has no syntax for
+- [ ] `if TYPE_CHECKING:` and a lazy `import` inside a function — the same
+      trick for two different reasons (typing; an optional extra)
+- [ ] Keyword-only arguments (`def f(*, remote: bool)`) and `setdefault`
+- [ ] Why every query joins `documents.is_current`, and what breaks silently
+      without it
+- [ ] Why `verify_document_hashes` may order by `ordinal` — the argument in
+      `lib/corpus/assert.ts`, not an assumption
+- [ ] Walkthrough exercise done
 
 ### Level 5: `bakeoff.py` 📐, written when the file lands
 Expected topics: `numpy` arrays (vs `Float32Array`), `sentence-transformers`,

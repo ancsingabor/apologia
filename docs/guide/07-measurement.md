@@ -26,7 +26,7 @@ flowchart LR
   subgraph harness["harness/ (Python)"]
     bake["bakeoff.py 📐<br/>embed every chunk<br/>once per candidate"]
     score["score.py 📐<br/>recall@k · full-recall@k · MRR<br/>+ bootstrap CIs"]
-    lib["gold.py ✅ · metrics.py ✅<br/>hashing.py ✅"]
+    lib["gold.py ✅ · metrics.py ✅<br/>hashing.py ✅ · db.py ✅"]
   end
 
   bake -.->|"(chunk, model) rows"| emb[("chunk_embeddings")]
@@ -96,7 +96,8 @@ byte-for-byte in Python** (`hashing.py`), and a test pins the two together.
 | `harness/apologia_eval/gold.py` | reads and validates the gold set (pydantic) | ✅ |
 | `harness/apologia_eval/metrics.py` | the three retrieval metrics, hand-verified tests | ✅ |
 | `harness/apologia_eval/hashing.py` | corpus-hash port, pinned to TS output | ✅ |
-| `db.py`, `bakeoff.py`, `score.py` | read, embed, score | 📐 |
+| `harness/apologia_eval/db.py` | reads current chunks, writes vectors, cosine search | ✅ |
+| `bakeoff.py`, `score.py` | embed, score | 📐 |
 
 ## Go deeper
 
