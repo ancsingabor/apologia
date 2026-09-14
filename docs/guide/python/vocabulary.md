@@ -96,6 +96,20 @@ first appears, so you can read it in context. Paths are relative to
 | String to bytes | implicit UTF-8 in `hash.update(str)` | explicit `.encode()` (UTF-8 by default) | `hashing.py:67` |
 | Hex digest | `.digest("hex")` | `.hexdigest()` | `hashing.py:98` |
 
+## Resources, environment and the database
+
+| Concept | TypeScript | Python | First seen in |
+|---|---|---|---|
+| Scoped resource | `try { … } finally { x.close() }` | `with conn.cursor() as cursor:` — a context manager | `db.py:271` |
+| Type-only import | `import type { X }` (erased) | `if TYPE_CHECKING:` + `from __future__ import annotations` | `db.py:34` |
+| Optional dependency | `await import("x")` inside a branch | `import psycopg` inside the function body | `db.py:259` |
+| Env var | `process.env.DB_URL` | `os.environ.get("DB_URL")` — returns `None`, never raises | `db.py:241` |
+| Keyword-only argument | an options object `f({ remote: true })` | a bare `*` in the signature: `def f(*, remote: bool)` | `db.py:227` |
+| Get or create | `m.get(k) ?? m.set(k, new Set()).get(k)` | `d.setdefault(k, set()).add(v)` | `db.py:125` |
+| Derived field | a getter | `@property` | `db.py:84` |
+| Parse a URL | `new URL(u).hostname` | `urlparse(u).hostname` | `db.py:224` |
+| Rows affected | `count` from the client | `cursor.rowcount` | `db.py:415` |
+
 ## Testing
 
 | Concept | Vitest | pytest | First seen in |

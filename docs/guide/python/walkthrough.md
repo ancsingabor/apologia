@@ -144,8 +144,84 @@ sets-not-lists decision, stated as a test.
 
 ---
 
+## `db.py`: the corpus, read out of Postgres
+
+**What it does.** It reads the current corpus (chunks, their unit mapping, the
+document keys the corpus hash is built from), writes candidate vectors into
+`chunk_embeddings`, and runs the cosine search the scorer needs.
+
+**TS twin.** `scripts/ingest/client.ts` and `scripts/ingest/upsert.ts`, and the
+resemblance is deliberate. The `--remote` guard is copied from the ingest CLI's
+reasoning almost word for word: a remote target cannot be *forbidden*, because
+embedding the production corpus is eventually necessary — it can be required to
+be **chosen**.
+
+**The shape to notice before the Python.** The module is split down the middle.
+Everything above `# ── Impure` is pure: rows in, objects out, unit tested
+against fake tuples. Everything below opens a connection and is not tested here
+at all. That is `CLAUDE.md`'s "pure stages in `lib/corpus/`, I/O in
+`scripts/ingest/`" rule, restated on the Python side of the boundary — and it
+is what lets `harness/tests/` stay service-free and sub-second.
+
+**Three decisions worth reading the comments for:**
+
+1. **`documents.is_current`.** Re-ingesting inserts a new document rather than
+   mutating the old one, so superseded rows stay. Every query joins on
+   `is_current`. Forgetting it does not error — it silently doubles the corpus
+   and scores every metric over text nobody would be served.
+2. **`verify_document_hashes` orders by `ordinal`, and that is argued, not
+   assumed.** `corpus_hash` is a hash of hashes: it reads
+   `documents.content_hash` and never looks at a unit, so a half-written ingest
+   yields a stable, plausible hash for a document that is not there. The
+   re-derivation closes that — and it is only correct because
+   `applyRelabels` (`lib/corpus/assert.ts`) ends with
+   `.sort(…).map((unit, index) => ({...unit, ordinal: index + 1}))`, making
+   `ordinal` literally the index of the array that was hashed.
+3. **`on conflict do nothing`, not an upsert**, in `write_embeddings`. If the
+   same `(chunk, model)` key produces a *different* vector, the model id is
+   lying about what produced it — the exact provenance failure ADR-023 says the
+   harness exists to prevent. Overwriting would hide it.
+
+**The Python it teaches:**
+- `with conn.cursor() as cursor:` — a context manager, the `try/finally` that
+  JavaScript has no syntax for (`db.py:271`)
+- `if TYPE_CHECKING:` plus `from __future__ import annotations`: an import that
+  exists for `mypy` and never at runtime (`db.py:34`)
+- A **lazy import** inside a function body, so an optional dependency stays
+  optional (`db.py:259`)
+- `os.environ.get("DB_URL")` ≈ `process.env.DB_URL` — `.get` returns `None`
+  rather than raising (`db.py:241`)
+- `def connect(*, remote: bool = False)`: the bare `*` makes every later
+  argument keyword-only. There is no JS equivalent short of an options object.
+- `collected.setdefault(key, set()).add(v)` — the one-line "get or create"
+  (`db.py:125`)
+- `@property` for a derived value that reads like a field (`db.py:84`)
+- `urlparse(url).hostname` ≈ `new URL(url).hostname` (`db.py:224`)
+
+**Exercise: three ways to make the corpus lie.**
+
+1. In `snapshot`, delete the `assert_every_chunk_maps_to_a_unit(chunks, links)`
+   line. `uv run pytest` → **1 failed, 48 passed**;
+   `test_snapshot_runs_the_orphan_assertion` reports `DID NOT RAISE ValueError`.
+   That test exists because an assertion that is merely *available* is not a
+   gate — it has to be on the path every caller uses.
+2. Undo that. In `units_by_chunk`, change `frozenset(units)` to `list(units)`.
+   `uv run pytest` → **3 failed, 46 passed**, and `uv run mypy` also fails with
+   `Value expression in dictionary comprehension has incompatible type
+   "list[str]"`. Two independent gates catch one mistake, which is the point of
+   the type alias: a list here would still "work" at every call site and would
+   let one Summa article count as seven hits.
+3. Undo that. In `to_vector_literal`, change `repr(float(value))` to
+   `f"{float(value):.6f}"`. `uv run pytest` → **2 failed**, with
+   `assert 0.3 == 0.30000000000000004`. Six decimal places looks generous and is
+   not: it silently truncates every vector, and the only symptom in production
+   would be recall that is slightly worse than it should be, for a reason no
+   metric attributes to formatting.
+
+---
+
 ## Modules not yet written 📐
 
-`db.py`, `bakeoff.py` and `score.py` get their sections here when they land.
-The docs lint requires it: a module in `harness/apologia_eval/` without a
-section in this file fails `npm run docs:lint`.
+`bakeoff.py` and `score.py` get their sections here when they land. The docs
+lint requires it: a module in `harness/apologia_eval/` without a section in this
+file fails `npm run docs:lint`.

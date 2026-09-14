@@ -46,8 +46,15 @@ jobs:
       # silently resolving something new. The harness exists to produce
       # reproducible measurements; a CI run on an unpinned dependency set is not
       # checking the code anyone will actually run.
+      # `--extra db` is psycopg, and it is here so that `mypy` can actually
+      # typecheck `db.py` rather than skip it as an unresolved import. It is a
+      # few megabytes and pulls in no model.
+      #
+      # ⚠️ `local-models` and `stats` are deliberately NOT installed. Torch is
+      # ~2 GB and this lane is meant to fail in under a minute; the modules that
+      # need them import them lazily and are exercised by their pure halves.
       - name: Install dependencies
-        run: uv sync --frozen --all-groups
+        run: uv sync --frozen --all-groups --extra db
 
       - name: Lint
         run: uv run ruff check .
