@@ -63,8 +63,38 @@ Vercel's default runtime.
 | `gold.py` | reads the frozen gold set from `eval/questions/*.yaml` |
 | `metrics.py` | `recall@k`, `full-recall@k`, MRR, as `docs/evaluation.md` defines them |
 | `db.py` | reads the current corpus, writes candidate vectors, searches by cosine |
+| `candidates.py` | the slate: which models compete, and the prefix each one needs |
+| `preflight.py` | whether a candidate can be *served* — measured before it competes |
 
 Still to come: the embedding bake-off, the scorer, and the report writer.
+
+## The servability pre-flight
+
+```bash
+npm run eval:preflight -- intfloat/multilingual-e5-large
+```
+
+One candidate per invocation, because the memory figure is a whole-process
+high-water mark. It exports the model to a quantized ONNX artifact — the thing
+that would actually serve queries — and reports the artifact size, the load and
+query time, and whether the export still **ranks** the probe texts the way the
+original does.
+
+It answers a question ADR-023's outcome table did not ask: a model that wins the
+bake-off and cannot be served has not produced a cheap option with a caveat, it
+has produced no query path at all. Running this first means that is discovered
+in an hour rather than after a full embedding pass per candidate.
+
+⚠️ It needs the `local-models` and `export` extras, which include torch. Both
+stay out of CI.
+
+⚠️ **Budget ~10 GB of free disk per candidate while it runs.** The download, a
+temporary fp32 ONNX export and the quantized artifact all coexist briefly; the
+fp32 intermediate is deleted as soon as the int8 one exists. Running out of
+space does **not** produce a finding — it raises, because a full disk says
+nothing about whether a model can be served (guide 10, story 8). Between
+candidates, `~/.cache/huggingface/hub/models--*` for anything already measured
+is safe to delete: the artifact and the report are what matter.
 
 ## Two things that look like duplication and are not
 

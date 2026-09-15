@@ -71,3 +71,8 @@ __pycache__/
 /harness/.ruff_cache
 /harness/.mypy_cache
 /harness/.pytest_cache
+
+# exported model artifacts from the servability pre-flight. Gigabytes, and
+# reproducible from the slate in `harness/apologia_eval/candidates.py` — what is
+# worth keeping is the REPORT, which is force-added like an eval baseline.
+/.preflight

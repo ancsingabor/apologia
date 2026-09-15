@@ -83,9 +83,22 @@ byte-for-byte in Python** (`hashing.py`), and a test pins the two together.
 
 | If… | Then |
 |---|---|
-| an open-weights model wins | the Python query-embedding service runs it |
+| an open-weights model wins **and can be served** | the Python query-embedding service runs it |
 | a hosted API wins and its licence permits sending the corpus | a thin API call; Python was only needed offline |
 | a hosted API wins but the licence forbids it | a local model is used, and ADR-008 must say *"X scored highest; Y is chosen because X is not licensable"*, not that local won on merit |
+| an open-weights model wins but **cannot be served** | there is no query path with it at all. Added 2026-09-15 — the row the table did not have |
+
+That last row is why servability is measured **before** a candidate competes,
+not after. Retrieval lives in one embedding space, so the model that embedded
+the corpus must also embed the question; a winner with no serving route is not a
+cheap option with a caveat, it is unusable — and the offline pass costs hours per
+candidate before anyone finds out.
+
+`npm run eval:preflight` establishes it: does the model export, how large is the
+artifact, and **does the export still rank the way the original does**. That
+second question is ADR-023's own provenance argument turned on our own export —
+if a quantized artifact is what serves queries, the quantized artifact is what
+has to be measured.
 
 ## Where this lives in code
 

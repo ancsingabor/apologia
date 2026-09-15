@@ -46,15 +46,24 @@ jobs:
       # silently resolving something new. The harness exists to produce
       # reproducible measurements; a CI run on an unpinned dependency set is not
       # checking the code anyone will actually run.
-      # `--extra db` is psycopg, and it is here so that `mypy` can actually
-      # typecheck `db.py` rather than skip it as an unresolved import. It is a
-      # few megabytes and pulls in no model.
+      # `db` is psycopg and `stats` is numpy/scipy/pandas. Both are here so that
+      # `mypy` actually typechecks the code using them instead of skipping it as
+      # an unresolved import — and both ship real type information, so the
+      # checking is worth having. `stats` in particular carries the bootstrap
+      # intervals behind ADR-008's numbers.
       #
-      # ⚠️ `local-models` and `stats` are deliberately NOT installed. Torch is
-      # ~2 GB and this lane is meant to fail in under a minute; the modules that
-      # need them import them lazily and are exercised by their pure halves.
+      # ⚠️ THE POINT IS THAT CI MATCHES THE ENVIRONMENT MYPY PASSES IN LOCALLY.
+      # An operator has these installed, so a rule that holds on their machine
+      # and not here produces a green local run and a red CI one for a reason
+      # that is nothing to do with the change. That already happened once:
+      # `numpy` resolved locally (torch pulls it in) and failed here.
+      #
+      # ⚠️ `local-models` and `export` stay OUT. Torch is gigabytes and this lane
+      # is meant to fail in under a minute. The modules needing them import them
+      # lazily, are exercised through their pure halves, and are covered by the
+      # mypy overrides in pyproject.toml.
       - name: Install dependencies
-        run: uv sync --frozen --all-groups --extra db
+        run: uv sync --frozen --all-groups --extra db --extra stats
 
       - name: Lint
         run: uv run ruff check .

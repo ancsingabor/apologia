@@ -85,6 +85,18 @@ commits.
       `lib/corpus/assert.ts`, not an assumption
 - [ ] Walkthrough exercise done
 
+### Level 4½: `candidates.py` and `preflight.py`, the servability gate
+- [ ] `Enum`, and comparing members with `is` rather than `==`
+- [ ] Frozen dataclasses used as a registry of module-level constants
+- [ ] `zip(a, b, strict=True)` and why it is not the same as `zip(a, b)`
+- [ ] `try/except Exception` where the failure is the *result*, and
+      `model_copy(update=…)` for an immutable pydantic update
+- [ ] Why **ranking agreement** is the headline and cosine is the footnote
+- [ ] Why there is no pass/fail threshold on agreement, but there *is* one on
+      the dimension
+- [ ] The `ru_maxrss` unit trap (bytes on macOS, kilobytes on Linux)
+- [ ] Walkthrough exercises done (there are two)
+
 ### Level 5: `bakeoff.py` 📐, written when the file lands
 Expected topics: `numpy` arrays (vs `Float32Array`), `sentence-transformers`,
 query/passage prefixes, and a CLI entry point with `if __name__ == "__main__"`.

@@ -1,0 +1,74 @@
+[
+  {
+    "model_id": "intfloat/multilingual-e5-large",
+    "base_family": "xlm-roberta",
+    "declared_dimensions": 1024,
+    "serving": "bundled-onnx",
+    "exported": true,
+    "export_error": null,
+    "artifact_bytes": 577714393,
+    "observed_dimensions": 1024,
+    "load_seconds": 2.5982810830464587,
+    "query_seconds": 0.018960945802973583,
+    "peak_rss_mb_process": 851.859375,
+    "min_cosine": 0.9913470750330795,
+    "mean_cosine": 0.9924194812579582,
+    "ranking_agreement_at_3": 0.6,
+    "mean_reference_margin_at_3": 0.0018964093624237234,
+    "cosine_perturbation": 0.007580518742041797,
+    "fp32_control_cosine": null,
+    "probes_with_margin_below_perturbation": 10,
+    "probe_count": 10,
+    "notes": [
+      "pooling read from the model: mean"
+    ]
+  },
+  {
+    "model_id": "BAAI/bge-m3",
+    "base_family": "xlm-roberta",
+    "declared_dimensions": 1024,
+    "serving": "bundled-onnx",
+    "exported": true,
+    "export_error": null,
+    "artifact_bytes": 585640250,
+    "observed_dimensions": 1024,
+    "load_seconds": 5.8891632910235785,
+    "query_seconds": 0.019150016602361576,
+    "peak_rss_mb_process": 2901.09375,
+    "min_cosine": 0.9791117346420514,
+    "mean_cosine": 0.982739809299623,
+    "ranking_agreement_at_3": 0.7,
+    "mean_reference_margin_at_3": 0.015004497599585142,
+    "cosine_perturbation": 0.017260190700376987,
+    "fp32_control_cosine": null,
+    "probes_with_margin_below_perturbation": 6,
+    "probe_count": 10,
+    "notes": [
+      "pooling read from the model: cls"
+    ]
+  },
+  {
+    "model_id": "Qwen/Qwen3-Embedding-0.6B",
+    "base_family": "qwen3",
+    "declared_dimensions": 1024,
+    "serving": "bundled-onnx",
+    "exported": true,
+    "export_error": null,
+    "artifact_bytes": 613875619,
+    "observed_dimensions": 1024,
+    "load_seconds": 2.8748546660062857,
+    "query_seconds": 0.033678866596892475,
+    "peak_rss_mb_process": 3013.328125,
+    "min_cosine": 0.44749474208856477,
+    "mean_cosine": 0.6239436985440039,
+    "ranking_agreement_at_3": 0.1,
+    "mean_reference_margin_at_3": 0.013511719940366523,
+    "cosine_perturbation": 0.3760563014559961,
+    "fp32_control_cosine": 0.9999999999864331,
+    "probes_with_margin_below_perturbation": 10,
+    "probe_count": 10,
+    "notes": [
+      "pooling read from the model: lasttoken"
+    ]
+  }
+]

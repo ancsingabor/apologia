@@ -102,6 +102,12 @@ Retrieval ranking, generated prose, groundedness, refusal behaviour. A change is
 and its state is in `docs/guide/status.md`. Metric definitions, the gold-set
 format and the release rule: `docs/evaluation.md`.
 
+`npm run eval:preflight` is **not** part of this layer either, though it runs
+models. It asks whether a candidate can be *served* — does it export, and does
+the export still rank the way the original does — which is a deterministic
+property of an artifact, not a judgement about retrieval quality. It is
+operator-initiated and stays out of CI, because it needs torch.
+
 `npm run eval:lint` is **not** part of this layer despite living in `eval/`. It
 asserts that every `expected_units` locator resolves to a real ingested unit,
 which is ordinary deterministic checking — and it is what keeps the

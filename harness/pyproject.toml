@@ -10,11 +10,22 @@ dependencies = [
 
 [project.optional-dependencies]
 # Split deliberately. The deployed query-embedding function must never pull the
-# harness's dependency set — torch alone exceeds the 500 MB Python bundle
-# limit. See ADR-023 § Consequences.
+# harness's dependency set — torch alone is gigabytes, and what ships is an
+# exported artifact rather than this environment. See ADR-023 § Consequences,
+# and the note there about the bundle-size figure being restated.
 db = ["psycopg[binary]>=3.2"]
 local-models = ["sentence-transformers>=3.0", "torch>=2.4"]
 stats = ["numpy>=2.0", "scipy>=1.14", "pandas>=2.2"]
+
+# The servability pre-flight. Separate from `local-models` because exporting is
+# a different job from embedding: the bake-off needs weights, the pre-flight
+# needs an exporter and a runtime that is NOT torch — the whole question it
+# answers is what happens once torch is gone.
+export = [
+    "optimum[onnxruntime]>=1.23",
+    "onnx>=1.17",
+    "onnxruntime>=1.20",
+]
 
 [dependency-groups]
 dev = [
@@ -35,6 +46,41 @@ select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 warn_unreachable = true
+
+# ⚠️ AN ACKNOWLEDGED GAP, NOT A TIDY-UP. These live in the `local-models` and
+# `export` extras, which CI deliberately does not install — torch is gigabytes
+# and the harness lane is meant to fail in under a minute. So mypy cannot
+# resolve them and must not fail on it.
+#
+# The cost is real and worth naming: the code that touches these libraries is
+# NOT typechecked. That is why the modules using them keep their logic in the
+# pure half, where the tests and the type checker both reach it, and leave only
+# the library calls on the other side of the line.
+[[tool.mypy.overrides]]
+module = [
+    "sentence_transformers.*",
+    "optimum.*",
+    "transformers.*",
+    "onnxruntime.*",
+]
+ignore_missing_imports = true
+
+# ⚠️ AND THIS ONE IS ABOUT A DIVERGENCE, WHICH IS WORSE THAN A GAP.
+# `preflight.py` calls those libraries directly, so mypy sees something
+# DIFFERENT depending on whether the extras happen to be installed: on an
+# operator's machine `transformers` is present and partially typed, making
+# `AutoTokenizer.from_pretrained` an untyped call in a strict context; in CI it
+# is absent and resolves to `Any`, so the same line is clean. A `# type: ignore`
+# would fix one and be flagged as unused in the other.
+#
+# So the two checks whose verdict depends on the environment are relaxed for
+# this module only, and nothing else is. Everything that does not depend on the
+# libraries — the pure similarity and ranking half, which is where the logic
+# lives — stays under full strict checking.
+[[tool.mypy.overrides]]
+module = "apologia_eval.preflight"
+disallow_untyped_calls = false
+warn_unused_ignores = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

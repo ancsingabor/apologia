@@ -218,6 +218,7 @@ against the prediction rather than the prediction quietly rewritten:
 | 1 | An open-weights model wins | The service runs it. Fully justified. |
 | 2 | A hosted API wins, and the [ADR-003](003-ship-manifests-not-corpus.md) question permits it | The service collapses to a thin proxy TypeScript could have written; half this ADR's justification for the query-time service evaporates. |
 | 3 | A hosted API wins, but the licence question forbids it | The best *usable* model is local, the service is justified — **for the wrong reason**. |
+| 4 | An open-weights model wins **and cannot be served** | Added 2026-09-15. There is no service, so there is no query path with that model at all — see below. |
 
 **Outcome 3 is the one to guard against, precisely because it flatters this
 ADR.** If the corpus cannot be sent to a provider, the slate collapses to local
@@ -232,6 +233,61 @@ number presented as evidence for something it never tested.
 
 The offline half is unaffected in all three cases: running the open candidates is
 what would have *produced* the finding.
+
+### Outcome 4, added 2026-09-15: the row this table did not have
+
+The table above was written claiming three outcomes, having originally had two.
+It had three because outcome 1 was stated as a single happy case — *"an
+open-weights model wins → the service runs it"* — and that hides an assumption:
+**that the winner can be served at all.**
+
+It can fail. Retrieval is confined to one embedding space (above), so the model
+that embedded the corpus must also embed the user's question. A candidate that
+scores highest offline and has no serving route has therefore not produced a
+cheap option with a caveat; it has produced **no query path**. And the cost of
+discovering that late is asymmetric: the offline pass is hours of compute per
+candidate, and it is spent before anyone finds out.
+
+So servability is established **before** a candidate competes, not after, and it
+is measured rather than assumed — `harness/apologia_eval/preflight.py`. Two
+facts decide it:
+
+1. **Does the model export, and how large is the artifact?** What ships is an
+   exported artifact, never the harness environment.
+2. **Does the export agree with the original?** This is this ADR's own
+   provenance argument, turned on our own export rather than a stranger's. It
+   rejected third-party ONNX files because "a report saying
+   `multilingual-e5-large` when what ran was somebody's int8 export is not
+   traceable" — and scoring the corpus with PyTorch weights while serving
+   queries from a quantized export is the *same* defect, committed deliberately.
+   If int8 is what ships, int8 is what must be measured.
+
+`Serving` in `candidates.py` makes the outcome representable: `bundled-onnx`,
+`proxied`, `hosted-api`, or `none`. `assert_servable` refuses `none`, so a model
+that cannot answer a query cannot win a retrieval bake-off.
+
+**One asymmetry worth stating, because it is easy to miss.** A *proxied* route —
+open weights running on a host we call — does **not** raise
+[ADR-003](003-ship-manifests-not-corpus.md) § *Open question*. That question is
+about transmitting the **corpus**; the corpus is embedded offline and never
+leaves. What a proxied query transmits is the user's own sentence, which ADR-003
+already sets apart: "embedding a user's own question sends the user's sentence,
+not ours." So outcome 4 has an escape hatch that outcome 3 does not, and the two
+must not be collapsed into "it's a hosted call either way."
+
+### A restated figure: the bundle-size limit
+
+§ *Consequences* above says torch and `sentence-transformers` "exceed the
+standard 500 MB Python bundle limit". **That figure is out of date** — the
+platform's limit is now substantially larger (current guidance says 5 GB on
+Fluid Compute). Recorded rather than silently edited, because the ADR's
+reasoning was partly *built* on the tighter number.
+
+What survives unchanged: the deployed function still must not pull the harness's
+dependency set, and what ships is still an exported artifact. What changes is
+that no candidate on the current slate is excluded on size alone — the binding
+constraint is function **memory** on a cold start, which is why the pre-flight
+measures load time and artifact size rather than asserting a limit.
 
 **Ten questions is a thin basis for a permanent decision.** Confidence intervals
 make the thinness visible rather than fixing it. Expanding the gold set toward
