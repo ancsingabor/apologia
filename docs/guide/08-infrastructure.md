@@ -80,7 +80,7 @@ committed.
 | `lefthook` pre-commit | `git commit` | ESLint on staged files | seconds |
 | `lefthook` pre-push | `git push` | `tsc --noEmit`, `npm test`, `npm run docs:lint` | seconds |
 | CI `harness` lane | every PR | ruff, format check, mypy `--strict`, pytest | under a minute |
-| — its extras | — | installs `db` (psycopg) so `mypy` really typechecks the SQL layer instead of skipping it as an unresolved import. **Never** `local-models` or `export`: torch is gigabytes and this lane has a one-minute budget | — |
+| — its extras | — | installs `db` (psycopg) and `stats` (numpy/scipy/pandas) so `mypy` really typechecks that code instead of skipping it as an unresolved import — and so the lane matches the environment mypy passes in on an operator's machine. **Never** `local-models` or `export`: torch is gigabytes and this lane has a one-minute budget | — |
 | CI `verify` lane | every PR | lint, types, unit, docs structure, **local Supabase** + integration, build, E2E | a few minutes |
 | Release rule | any retrieval, chunking, embedding or prompt change | an eval report diff attached to the PR | human review |
 
