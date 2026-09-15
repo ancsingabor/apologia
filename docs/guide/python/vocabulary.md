@@ -110,6 +110,20 @@ first appears, so you can read it in context. Paths are relative to
 | Parse a URL | `new URL(u).hostname` | `urlparse(u).hostname` | `db.py:224` |
 | Rows affected | `count` from the client | `cursor.rowcount` | `db.py:415` |
 
+## Enums, immutable updates and measurement
+
+| Concept | TypeScript | Python | First seen in |
+|---|---|---|---|
+| Enum | a string union, or `enum` | `class Serving(Enum)`, compared with `is` | `candidates.py:32` |
+| Registry of constants | exported `const` objects | module-level frozen dataclass instances | `candidates.py:120` |
+| Immutable sequence type | `readonly Candidate[]` | `tuple[Candidate, ...]` | `candidates.py:172` |
+| Strict pairwise iteration | no equivalent — `zip` truncates silently in both | `zip(a, b, strict=True)` raises on a length mismatch | `preflight.py:79` |
+| Immutable update | `{ ...result, exported: true }` | `result.model_copy(update={...})` (pydantic) | `preflight.py` |
+| Counter | `m.set(k, (m.get(k) ?? 0) + 1)` | `d[k] = d.get(k, 0) + 1` | `candidates.py:248` |
+| Monotonic clock | `performance.now()` | `time.perf_counter()` | `preflight.py` |
+| Recursive glob | `fs.readdir(…, {recursive:true})` | `Path.rglob("*")` | `preflight.py:140` |
+| Exit code from main | `process.exit(n)` | `raise SystemExit(main())` | `preflight.py` |
+
 ## Testing
 
 | Concept | Vitest | pytest | First seen in |
@@ -129,3 +143,5 @@ first appears, so you can read it in context. Paths are relative to
 | **`None` in an f-string** | `f"{None}"` is `"None"`, and JS `` `${null}` `` is `"null"`. Neither is `""`, which is what the hash needs. | `hashing.py:66` |
 | **Unknown keys** | `eval-lint.ts` reads the gold set loosely and `gold.py` strictly. A typo'd key is caught by pytest in CI, not by `eval:lint`. | `scripts/eval-lint.ts:44`, `gold.py:42` |
 | **Mutable defaults** | `def f(x=[])` shares one list across every call, where JS would create a fresh one | see the note under *Types* |
+| **`zip` truncates** | `zip([1,2,3], [1,2])` yields two pairs and raises nothing. Comparing a 768-dim export against a 1024-dim reference returns a plausible cosine. `strict=True` is the fix. | `preflight.py:79`, `tests/test_preflight.py:59` |
+| **`ru_maxrss` units** | bytes on macOS, kilobytes on Linux. The raw number makes a Mac look 1,024 times hungrier than a CI runner, and nobody notices the unit. | `preflight.py:143` |

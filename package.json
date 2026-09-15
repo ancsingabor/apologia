@@ -15,6 +15,7 @@
     "test:e2e:ui": "bash scripts/e2e.sh --ui",
     "ingest": "tsx scripts/ingest/main.ts",
     "eval:lint": "tsx scripts/eval-lint.ts",
+    "eval:preflight": "uv run --project harness --extra local-models --extra export python -m apologia_eval.preflight",
     "docs:lint": "tsx scripts/docs-lint.ts"
   },
   "dependencies": {

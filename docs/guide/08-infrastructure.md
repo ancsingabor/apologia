@@ -66,7 +66,7 @@ local stack on the runner (see the gates table below).
 |---|---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `…_PUBLISHABLE_KEY` | ✅ | ✅ | local demo values | safe to expose; RLS and grants protect the data |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | **never** | local demo value | bypasses RLS; only operator tools (the ingest CLI, `eval:lint`) use it (ADR-004) |
-| Postgres connection string | 📐 for the harness | **never** | local | the planned `harness/db.py` reads through psycopg, which is just as privileged as the service-role key |
+| `DB_URL` (Postgres connection string) | ✅ for the harness | **never** | local | `harness/apologia_eval/db.py` reads through psycopg, which is just as privileged as the service-role key. It refuses a non-local target without `--remote`, the same guard the ingest CLI uses |
 | `ANTHROPIC_API_KEY` | — | 📐 yes | — | generation happens in the query route |
 | `EMBEDDING_API_KEY` | ✅ if a hosted candidate is measured | ❓ only if a hosted API wins | — | queries are embedded at request time (ADR-023) |
 
@@ -80,6 +80,7 @@ committed.
 | `lefthook` pre-commit | `git commit` | ESLint on staged files | seconds |
 | `lefthook` pre-push | `git push` | `tsc --noEmit`, `npm test`, `npm run docs:lint` | seconds |
 | CI `harness` lane | every PR | ruff, format check, mypy `--strict`, pytest | under a minute |
+| — its extras | — | installs `db` (psycopg) so `mypy` really typechecks the SQL layer instead of skipping it as an unresolved import. **Never** `local-models` or `export`: torch is gigabytes and this lane has a one-minute budget | — |
 | CI `verify` lane | every PR | lint, types, unit, docs structure, **local Supabase** + integration, build, E2E | a few minutes |
 | Release rule | any retrieval, chunking, embedding or prompt change | an eval report diff attached to the PR | human review |
 

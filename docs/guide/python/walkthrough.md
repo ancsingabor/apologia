@@ -220,6 +220,145 @@ is what lets `harness/tests/` stay service-free and sub-second.
 
 ---
 
+## `candidates.py`: the slate, as data that can be checked
+
+**What it does.** It lists the embedding models that compete, and the facts
+about each one that make a comparison honest: pretraining family, context
+window, dimensions, and the **prefix convention**.
+
+**TS twin.** `corpus/sources.yaml` plus its Zod schema, in spirit — a table of
+facts about external things, validated rather than trusted.
+
+**Why prefixes are data and not string literals.** Each family wants something
+different, and two of the three are counter-intuitive:
+
+| model | query prefix | passage prefix |
+|---|---|---|
+| `multilingual-e5-large` | `"query: "` | `"passage: "` — the trailing space is part of it |
+| `bge-m3` | `""` | `""` — its card says instructions are *not* required |
+| `Qwen3-Embedding-0.6B` | `"Instruct: …\nQuery:"` | `""` — **asymmetric, per its card** |
+
+Get one wrong and nothing raises; recall is simply worse for the entire run.
+ADR-023 names this as the silent-degradation case, so the values live in one
+table with tests on them rather than inside an embedding loop.
+
+**The asymmetry is why `prefix_note` exists.** The first version of this file
+asserted that prefixes are both set or both empty, reasoning that a query prefix
+with an empty passage prefix is a half-finished entry. Qwen3 is a real,
+documented asymmetry and the rule would have rejected it. But the risk the rule
+aimed at is genuine — a *forgotten* passage prefix embeds the corpus into a
+different space from the queries, silently — so asymmetry is now allowed and
+must be **declared**: `assert_prefixes_are_declared` refuses one with no note.
+
+**And one prefix is a tunable that must not be tuned.** Qwen3's card reports a
+1–5% swing from the instruction's wording — the same order as the differences
+the bake-off is trying to measure. So the instruction is fixed, generic, and
+written before any score exists. That is `docs/evaluation.md`'s rule about
+freezing the gold set, applied to a prompt.
+
+**The three refusals.** `assert_measurable` blocks a candidate whose measurement
+would transmit the corpus (ADR-003 § Open question — a licence question must not
+be settled as a side effect of running code). `assert_servable` blocks one that
+could never embed a query. `assert_slate_is_informative` blocks a slate where
+every candidate shares a pretraining family — not a style rule: `e5` and `bge-m3`
+are both XLM-RoBERTa, so comparing only those two cannot say anything about
+pretraining, and their Latin comes from the same source.
+
+**The Python it teaches:**
+- `Enum`, and `is` rather than `==` for comparing members
+- Module-level constants as frozen `@dataclass` instances — a registry with no
+  class hierarchy and no framework
+- `tuple[Candidate, ...]` for a fixed-length-unknown immutable sequence, versus
+  `list[Candidate]`
+- `dict.get(key, 0) + 1` as the counter idiom
+
+**Exercise: make the bake-off unable to answer its own question.**
+
+Delete `QWEN3_EMBEDDING_06B` from `SLATE`. Run `uv run pytest
+tests/test_candidates.py` → **2 failed, 13 passed**, and the interesting failure
+reads:
+
+```
+ValueError: every candidate is 'xlm-roberta'-based, so this bake-off compares
+fine-tuning and context window only — it cannot compare pretraining.
+```
+
+That is the assertion doing the thing a comment could not: a two-model slate
+still *runs*, still produces numbers, and quietly cannot answer the question
+ADR-008 asks.
+
+---
+
+## `preflight.py`: can this model actually answer a query?
+
+**What it does.** Before a candidate competes, it exports the model to a
+quantized ONNX artifact and measures whether that artifact still behaves like
+the original — because the artifact is what would serve queries in production.
+
+**Why it exists.** ADR-023's outcome table had no row for *"an open-weights model
+wins and cannot be served."* Retrieval lives in one embedding space, so the model
+that embedded the corpus must embed the question too. A winner with no serving
+route is unusable — and the offline pass costs hours per candidate before anyone
+would find out.
+
+**The subtle part: ranking, not cosine.** Cosine agreement between the original
+and the export is the *weak* check. Quantization can shift every vector slightly
+and cost retrieval nothing, because retrieval only ever consumes the **order**
+similarities induce. So the headline measure is: does the export rank the probe
+texts the way the original does?
+
+**And no invented threshold.** `docs/evaluation.md` refuses pre-baseline target
+numbers, and "cosine ≥ 0.99" would be exactly that. The only binary check is the
+one that is not invented: did it export, and is the dimension what the slate
+declares.
+
+**The control is what makes a low number mean anything.** Disagreement has three
+possible causes — the quantization damaged the model, the export is wrong, or
+our handling of that architecture is wrong — and only the first is a fact about
+the candidate. So the *unquantized* export is measured against the original too,
+from the fp32 intermediate that already exists on disk. It cost one extra model
+load and settled the slate's one real finding immediately: `Qwen3` scored 0.62
+on int8 with a control of **1.00000**, which is attributable — the pipeline is
+exact and the quantization is not.
+
+**Two measurements that mean less than they look**, both flagged in the module
+docstring: `ru_maxrss` is **bytes on macOS and kilobytes on Linux**, and it is a
+whole-process high-water mark — so the CLI measures one candidate per run, and
+the field is called `peak_rss_mb_process` to say so.
+
+**Pooling is read, never guessed.** `e5` mean-pools; `bge-m3` takes the CLS
+token. Guessing produces vectors confidently in the wrong place, and the
+agreement check would then be measuring our own mistake. So `pooling_mode()`
+reads it off the sentence-transformers module list.
+
+**The Python it teaches:**
+- `try/except Exception` where the failure *is* the result, not a crash
+- `model_copy(update={...})` — pydantic's immutable update
+- `zip(a, b, strict=True)`, which raises on length mismatch instead of truncating
+- `resource.getrusage`, `time.perf_counter`, `Path.rglob`
+- A `main()` returning an exit code, with `raise SystemExit(main())`
+- Deliberately *not* numpy: the probe set is ten vectors, and staying
+  dependency-free keeps the tests runnable in a CI lane that installs no extras
+
+**Exercise: truncate a vector silently.**
+
+In `cosine`, delete the `len(a) != len(b)` guard and change
+`zip(a, b, strict=True)` to `zip(a, b)`. Run `uv run pytest
+tests/test_preflight.py` → **1 failed, 17 passed**, with
+`DID NOT RAISE ValueError`.
+
+Both halves of that edit matter, and that is the lesson: `strict=True` is the
+one that would still have caught it after someone removed the explicit guard as
+"redundant". Without either, comparing a 768-dimensional export against a
+1024-dimensional reference returns a perfectly plausible number.
+
+Then read `test_moving_one_vector_can_change_two_probes_orderings`. Its docstring
+records that the first draft expected the wrong answer — every probe is both a
+query and a document, so perturbing one vector changes two probes' rankings. A
+recorded "expected" value would have frozen that mistake in place.
+
+---
+
 ## Modules not yet written 📐
 
 `bakeoff.py` and `score.py` get their sections here when they land. The docs
