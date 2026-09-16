@@ -35,8 +35,8 @@ The system has two halves.
 
 - **Offline ingestion CLI.** It fetches each source and parses it into citable
   units. It asserts that nothing is missing or misnumbered, then writes the
-  result to Postgres with pgvector. That half is built: three documents, about
-  29,000 units.
+  result to Postgres with pgvector. That half is **built** — which documents,
+  and how many units each, is in [status.md](status.md).
 - **Query path.** It retrieves units, has Claude draft an answer, runs the
   citation gate, and queues the draft for human review. That half is designed
   but not built. It waits on one open decision: which embedding model to use.

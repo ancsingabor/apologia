@@ -1,17 +1,13 @@
-import { brand } from "./brand";
-import type { Theme, ThemeName } from "./themes/types";
+import type { Theme } from "./themes/types";
 import { defaultTheme } from "./themes/default";
-import { bakeryTheme } from "./themes/bakery";
-import { medicalTheme } from "./themes/medical";
 
-const THEMES: Record<ThemeName, Theme> = {
-  default: defaultTheme,
-  bakery: bakeryTheme,
-  medical: medicalTheme,
-};
-
-/** The theme selected in `config/brand.ts`. */
-export const activeTheme: Theme = THEMES[brand.theme] ?? defaultTheme;
+/**
+ * The project's theme. Singular, deliberately: the template this grew from
+ * shipped a preset registry so one codebase could be re-skinned per client,
+ * which is a requirement Apologia does not have. Adding a second theme means
+ * reintroducing the registry, not editing this one.
+ */
+export const activeTheme: Theme = defaultTheme;
 
 /**
  * Render the active theme's tokens as a `:root { ... }` CSS string.

@@ -49,7 +49,7 @@ real `corpus_hash` from `corpus/manifest.lock.yaml`.
    `key=lambda d: d.key, reverse=True`. Run `uv run pytest`.
    `test_corpus_hash_ignores_document_order` fails, as it should.
 2. Now change it to `key=lambda d: d.key.upper()` instead. Run it again.
-   **All 34 tests pass.**
+   **The whole suite still passes.**
 
 Why does step 2 pass? Every key the corpus can produce today (`ccc:en`,
 `ccc:hu`, `summa:la`) is lowercase ASCII, and for those keys upper-case order,

@@ -122,7 +122,7 @@ explained without reading the code.
 
 | Weakness | Mitigation, or why it is accepted |
 |---|---|
-| The gold set is 10 questions | CIs make the thinness visible; expansion to 40–60 is requested from domain authors |
+| The gold set is far below the 40–60 `docs/evaluation.md` asks for ([status.md](status.md) has the current size and the per-slice split) | CIs make the thinness visible, and `score.py` reports the n that *would* separate two candidates; expansion is requested from domain authors |
 | Nothing runs end to end yet; the query path is unbuilt | Its gate and limiter are built and tested; the rest waits on ADR-008 |
 | Revision alignment is argued from one paragraph (§2267), not proved | `revision` is recorded, so it becomes checkable once a diff exists (ADR-019) |
 | A claim mislabelled as a `connective` passes the gate | It becomes a measurable generator behaviour, not a hidden hole (ADR-018) |
