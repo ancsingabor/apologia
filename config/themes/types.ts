@@ -85,4 +85,6 @@ export interface Theme {
   shadows: ThemeShadows;
 }
 
-export type ThemeName = "default" | "bakery" | "medical";
+// The template carried a registry of interchangeable presets and a `ThemeName`
+// union to pick between them. This project has one theme and no theme picker,
+// so `defaultTheme` is simply the theme — see `config/theme.ts`.

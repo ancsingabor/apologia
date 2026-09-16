@@ -1,4 +1,3 @@
-import type { ThemeName } from "./themes/types";
 import type { Locale } from "./copy";
 
 /**
@@ -12,14 +11,16 @@ import type { Locale } from "./copy";
  * same deployment under `/hu/...` and `/en/...`, so the locale is a per-request
  * value resolved from the URL. `defaultLocale` below only decides where a
  * request with no locale segment gets redirected. See ADR-013.
+ *
+ * Note on `theme`: also unlike the template, there is no theme field. The
+ * template let one codebase be re-skinned per client; this is one product with
+ * one theme, and `config/theme.ts` holds it directly.
  */
 export interface Brand {
   /** Short product name, used in nav and metadata. */
   name: string;
   /** One-line description, used in default <meta description> and hero. */
   tagline: string;
-  /** Active design theme — see `config/themes/`. */
-  theme: ThemeName;
   /** Where a request without a locale segment is sent. */
   defaultLocale: Locale;
   /** Locales this deployment serves, in menu order. */
@@ -33,7 +34,6 @@ export interface Brand {
 export const brand: Brand = {
   name: "Apologia",
   tagline: "Hittani kérdések, forrásokkal megválaszolva.",
-  theme: "default",
   defaultLocale: "hu",
   locales: ["hu", "en"] as const,
   contact: {

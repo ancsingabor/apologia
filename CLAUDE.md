@@ -108,15 +108,21 @@ Record the reasoning in the migration, as `0005` does.
 Zod messages come from `copy.validation`. Prefer `getCopy(locale)` — the
 module-level `copy` constant is retired as `app/[lang]/` routing lands (ADR-013).
 
-### Template residue — *not* convention
+### What the template left that this project does not have
 
-Some of the template arrived and was never swept. Do not read it as a decision,
-do not extend it, and do not treat its absence of use as a bug to fix:
-`config/themes/bakery.ts` and `medical.ts` (wired into `config/theme.ts`),
-`lib/email/` with `resend` and `react-email`, and `lucide-react` — all
-currently unused by any Apologia code. `server/actions/` is an empty directory,
-so the "every Server Action also calls `requireAdmin()`" rule above governs no
-code yet; it is the rule for the first one.
+The template shipped a **theme registry** so one codebase could be re-skinned
+per client. Apologia has one theme, so `config/theme.ts` holds it directly and
+there is no `ThemeName`, no `brand.theme` and no picker. Adding a second theme
+means reintroducing the registry, not editing the one.
+
+Its **transactional email** module and deps are gone too — nothing here sends
+mail; admin sign-in is a Supabase magic link. `lucide-react` is likewise
+uninstalled: it is still the icon library to reach for, but install it with
+the first icon rather than carrying it unused.
+
+`server/actions/` is an empty directory, so the "every Server Action also calls
+`requireAdmin()`" rule above governs no code yet. It is the rule for the first
+one.
 
 ## The citation gate
 

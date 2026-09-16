@@ -19,18 +19,14 @@
     "docs:lint": "tsx scripts/docs-lint.ts"
   },
   "dependencies": {
-    "@react-email/components": "^1.0.12",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "js-yaml": "^5.4.1",
-    "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-email": "^6.3.2",
-    "resend": "^6.12.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
