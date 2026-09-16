@@ -33,13 +33,16 @@ to write no tests because "it's AI", when most of the system is plain code.
 
 ## Test layers
 
-| Layer | Runner | What | Count (2026-09-11) |
-|---|---|---|---|
-| Pure TS | Vitest, `npm test` | parsers, assert, chunk, hash, manifest, gate, limiter, docs checks | 339 cases / 20 files |
-| Pure Python | pytest, `uv run pytest` | metrics (hand-computed), gold-set parsing, hash port | 34 cases |
-| Real Postgres | Vitest + local Supabase, `npm run test:integration` | upsert ordering invariants, text probes over stored units, cross-lingual role sets | — |
-| Browser | Playwright, `npm run test:e2e` | admin auth guard | — |
-| Probabilistic | eval harness | retrieval metrics now, generation metrics later | 📐 |
+| Layer | Runner | What |
+|---|---|---|
+| Pure TS | Vitest, `npm test` | parsers, assert, chunk, hash, manifest, gate, limiter, docs checks |
+| Pure Python | pytest, `uv run pytest` | metrics (hand-computed), gold-set parsing, hash port |
+| Real Postgres | Vitest + local Supabase, `npm run test:integration` | upsert ordering invariants, text probes over stored units, cross-lingual role sets |
+| Browser | Playwright, `npm run test:e2e` | admin auth guard |
+| Probabilistic | eval harness | retrieval metrics now, generation metrics later |
+
+Case counts are in [status.md](status.md), re-derived from a run. They used to
+sit in this table and were stale within three days.
 
 The unit suites are **sub-second and need no services**, which is why they run
 on every push and first in CI.

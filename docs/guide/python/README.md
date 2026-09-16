@@ -23,7 +23,7 @@
 brew install uv                  # once. uv is npm + nvm + npx in one tool
 cd harness
 uv sync --all-groups             # ≈ npm ci: creates .venv/ from uv.lock
-uv run pytest                    # ≈ npx vitest run. 34 tests, under a second
+uv run pytest                    # ≈ npx vitest run. Under a second, no services
 uv run ruff check .              # ≈ npx eslint .
 uv run ruff format --check .     # ≈ npx prettier --check .
 uv run mypy apologia_eval tests  # ≈ npx tsc --noEmit, in --strict mode

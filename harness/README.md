@@ -33,7 +33,7 @@ walkthrough of each module.
 brew install uv          # once
 cd harness
 uv sync --all-groups --extra db
-uv run pytest            # 49 cases, sub-second, no database and no network
+uv run pytest            # sub-second, no database and no network
 uv run ruff check .
 uv run mypy apologia_eval tests
 ```
