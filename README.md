@@ -3,17 +3,19 @@
 Source-grounded answers to questions of Catholic apologetics, theology and
 philosophy — in Hungarian and English.
 
-Every claim is traced to a specific, canonically addressable passage
-(CCC §1730, *Summa* I q.2 a.3, Jn 1:1–14), and every citation is **checked
-mechanically** before anyone sees it. Answers are drafted by the system and
-**published by a human**.
+The design commitment: every claim will be traced to a specific, canonically
+addressable passage (CCC §1730, *Summa* I q.2 a.3, Jn 1:1–14), every citation
+**checked mechanically** before anyone sees it, and every answer **published by
+a human**.
 
 It is a research aid that shows its work. It is not catechesis, not spiritual
 direction, and not the Magisterium.
 
-> **Status:** see [`docs/guide/status.md`](docs/guide/status.md) — the one
-> place it is kept, so that it cannot drift here. This README does not describe
-> features that do not exist.
+> **What exists today is not the whole of that.** The corpus is ingested and
+> the measurement harness runs; **the query path does not, so nobody can ask a
+> question yet.** This page marks each piece ■ built or ░ planned, and
+> [`docs/guide/status.md`](docs/guide/status.md) is the only place the detail
+> is kept — where the two disagree, status.md is right.
 
 ## Why this repository might be worth reading
 
@@ -21,6 +23,10 @@ It is an attempt to show how a **production-oriented** AI application is
 designed, rather than how quickly one can be assembled. The interesting parts
 are the decisions, and they are written down:
 
+- **[docs/guide/](docs/guide/README.md)** — the human layer: eleven short
+  chapters that summarise the system and link down into the detail. Start at
+  [11 — questions a reviewer asks](docs/guide/11-questions-a-reviewer-asks.md)
+  if you are here to judge the engineering.
 - **[docs/adr/](docs/adr/)** — every meaningful decision, including the ones
   that went *against* the more impressive-looking option, and the trade-offs
   each one accepted.
@@ -37,6 +43,8 @@ are the decisions, and they are written down:
 - **[ADR-011](docs/adr/011-semantic-layer-preregistration.md)** — a
   pre-registered experiment, with hypotheses, a kill criterion, and a prediction
   recorded before the result is known.
+- **[docs/guide/10-war-stories.md](docs/guide/10-war-stories.md)** — the bugs
+  that passed every check while being wrong, and what each one changed.
 
 A few things it deliberately does **not** do: no dedicated vector database, no
 queue, no streaming, no agent framework. Each of those is a decision with an ADR
@@ -44,24 +52,42 @@ behind it, not an oversight.
 
 ## Architecture in one diagram
 
+`■` built · `░` not built yet — the detail, and what is next, is in
+[status.md](docs/guide/status.md).
+
 ```
-                          ┌─ ingestion (offline CLI) ─────────────┐
-  corpus/sources.yaml ───▶│ fetch → parse → citable units →       │
-  (manifest, not text)    │ chunk per strategy → embed → upsert   │
-                          └───────────────┬───────────────────────┘
-                                          ▼
-                                   Postgres + pgvector
-                                          ▲
-                          ┌───────────────┴───────────────────────┐
-  question ──────────────▶│ validate → rate limit → retrieve →    │
-                          │ compose context → generate →          │
-                          │ ▸ VERIFY CITATIONS ◂ → draft          │
-                          └───────────────┬───────────────────────┘
-                                          ▼
-                              human review → published
-                                          ▼
-                            /hu/kerdes/<slug>   (permanent, cited)
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ ■ ingestion — an offline CLI, never runs in a request (ADR-004) │
+  │                                                                 │
+  │   corpus/sources.yaml ──▶ fetch ──▶ parse ──▶ citable units     │
+  │   (a manifest, not text)      └──▶ chunk per strategy ──▶ upsert│
+  └────────────────────────────────┬────────────────────────────────┘
+                                   ▼
+                         ■ Postgres + pgvector
+                                   │
+           ┌───────────────────────┴────────────────────────┐
+           ▼                                                ▼
+  ┌──────────────────────────────┐   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+  │ measurement — offline,       │   ┊ ░ query path (guide 06)        ┊
+  │ Python only (ADR-023)        │   ┊                                ┊
+  │                              │   ┊   question ──▶ validate ──▶    ┊
+  │  ■ servability pre-flight    │   ┊   rate limit ──▶ retrieve ──▶  ┊
+  │  ░ bake-off ──▶ ░ score      │   ┊   compose context ──▶ generate ┊
+  │         │                    │   ┊          │                     ┊
+  │         ▼                    │   ┊          ▼                     ┊
+  │  ░ ADR-008 decided by number │   ┊   ▸ VERIFY CITATIONS ◂ ──▶ draft┊
+  └──────────────────────────────┘   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄│┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
+                                                       ▼
+                                      ░ human review ──▶ published
+                                                       ▼
+                                      ░ /hu/kerdes/<slug>  (permanent, cited)
 ```
+
+The citation gate is the exception worth naming: `lib/citation/verify.ts` is
+**built and unit tested, and wired to nothing** — it exists before the path it
+guards. The rule it enforces, that the whole answer is generated and checked
+before any of it is shown (and therefore that v1 does not stream), is
+[ADR-005](docs/adr/005-verify-then-display.md).
 
 ## Getting started
 
@@ -72,7 +98,11 @@ npx supabase db push           # or paste supabase/migrations/* into the SQL edi
 npm run dev
 ```
 
-Add yourself to `admin_users` to reach `/dashboard`.
+**What you will see:** the template's landing page and, once you add yourself to
+`admin_users`, an admin dashboard at `/dashboard` showing your email and role.
+Both are real and guarded — the proxy checks the allowlist and every Server
+Action re-checks it — but neither is an Apologia screen yet. There is no
+question box. The interesting work today is at the command line, below.
 
 **The corpus is not in this repository**, by design — see
 [ADR-003](docs/adr/003-ship-manifests-not-corpus.md). `corpus/sources.yaml`
@@ -80,6 +110,8 @@ describes each source and how to obtain it; the ingestion CLI fetches and
 indexes it locally.
 
 ## Commands
+
+Working today:
 
 | | |
 |---|---|
@@ -92,8 +124,14 @@ indexes it locally.
 | `npm run test:e2e` | Playwright against an ephemeral local Supabase stack |
 | `npm run ingest` | ingest a source — see below |
 | `npm run eval:lint` | resolve every gold-set locator against ingested text |
+| `npm run eval:preflight` | can a candidate embedding model be served at all — see below |
 | `npm run docs:lint` | check the docs' structure: ADR TL;DRs and index, Python walkthrough, relative links (also on `git push`) |
-| `npm run eval` | *(Milestone 1)* score the gold set, write a report |
+
+Not written yet — listed so their absence is visible, not to imply they run:
+
+| | |
+|---|---|
+| `npm run eval` | score the gold set and write a report. Waits on the bake-off. |
 
 ### Ingesting the corpus
 
@@ -117,6 +155,40 @@ run leaves a document the next run sweeps). It writes `corpus/manifest.lock.yaml
 ingesting into the cloud project is a legitimate operator action. It just has to
 be *chosen* rather than inherited from whatever `.env.local` happens to hold.
 
+### Measuring — the Python harness
+
+Python lives in [`harness/`](harness/README.md) and nowhere else, under a rule
+that has to be stated to be enforceable: it is permitted where the deliverable
+is *a measurement or the model that produced it*
+([ADR-023](docs/adr/023-python-at-the-measurement-boundary.md)). Nothing here
+runs in a request.
+
+The harness exists to settle **ADR-008 — which embedding model** — by
+measurement rather than by reputation. The order is deliberate:
+
+```bash
+npm run eval:preflight -- <model-id>   # ■ can this candidate be served?
+                                       # ░ bakeoff.py — embed the corpus, per candidate
+                                       # ░ score.py   — score the gold set, with CIs
+```
+
+The pre-flight runs **first**, before any candidate embeds a corpus, because a
+model that wins a bake-off and then cannot be served has cost hours to discover.
+It already paid for itself: one of the three candidates reproduces itself at
+cosine 1.00000 unquantized and falls apart under int8, which would otherwise
+have entered the bake-off and produced plausible, meaningless numbers. The
+measured baseline is committed at `eval/reports/preflight.json`; the reading of
+it is in [status.md](docs/guide/status.md) and
+[guide 07](docs/guide/07-measurement.md).
+
+The gold set it scores against is ten hand-written questions in
+[`eval/`](eval/README.md) — not generated by a model, and deliberately small
+enough that the harness reports the sample size that *would* separate two
+candidates rather than pretending the current one does.
+
+Coming from TypeScript and new to Python? The guide has a
+[learning path, a TS ↔ Python vocabulary, and a walkthrough of every module](docs/guide/python/README.md).
+
 ## Secrets
 
 No credentials are committed. `.env.example` documents every variable by name.
@@ -133,7 +205,8 @@ ADR-004 on this).
 Scaffolded from a private Next.js + Supabase starter template, which supplied
 the admin auth (proxy guard + `requireAdmin()` double guard), the Supabase
 client factories, the deny-by-default privilege model, the theming and copy
-layers, and the Playwright + local-Supabase CI harness.
+layers, and the Playwright + local-Supabase CI harness. The landing page and
+dashboard you see on `npm run dev` are still the template's.
 
 What was changed and why is in
 [docs/architecture.md § Inherited from the template](docs/architecture.md#inherited-from-the-template).
