@@ -16,14 +16,47 @@ import { posix } from "node:path";
  * | ADR index | an ADR file is not linked from `docs/adr/README.md` |
  * | walkthrough | a harness module has no section in the Python walkthrough |
  * | links | a relative markdown link points at a file that does not exist |
+ * | anchors | a link's `#fragment` names no heading in the file it points at |
+ *
+ * ── Why anchors get their own check ─────────────────────────────────────────
+ *
+ * A heading is an API. `docs/guide/05-data-model.md` links to
+ * `architecture.md#data-model-0005-built-and-populated-0006-planned`, an anchor
+ * GitHub derives from that heading's exact words — so editing the heading
+ * breaks the link, from a file the editor never opened. Nothing in the diff
+ * looks wrong and the link still renders; it just lands at the top of the page
+ * instead of the section. That is the failure shape this repository keeps
+ * meeting (docs/guide/10-war-stories.md), which is why it is worth code rather
+ * than a convention nobody remembers.
+ *
+ * `slugify` reimplements GitHub's rule: trim, lower-case, drop everything that
+ * is not a letter, a digit, a space, `_` or `-`, then each remaining space
+ * becomes a hyphen. Two details are load-bearing and both were got wrong
+ * first time:
+ *
+ * - **Runs of spaces are NOT collapsed.** Stripping the em-dash out of
+ *   `Query path — a route handler` leaves two spaces, so the anchor carries
+ *   two hyphens: `…query-path--a-route-handler…`. Collapsing produces a slug
+ *   that looks right and matches nothing.
+ * - **Letters are Unicode.** `Miért` slugs to `miért`; stripping accents would
+ *   be wrong for half this project's headings.
  *
  * ── What it cannot check, and must say so ───────────────────────────────────
  *
  * PRESENCE, NOT TRUTH. A TL;DR that misstates its ADR passes. A status page
- * that claims something is built when it is not passes. Link anchors
- * (`file.md#section`) are not resolved — only the file is. The report states
- * these limits in its summary line, because "we did not check this" and "we
- * checked and it was fine" must not read the same (ADR-020).
+ * that claims something is built when it is not passes. An anchor check proves
+ * a heading with that name EXISTS — never that it still means what the linking
+ * sentence claims. A section renamed in place keeps its slug and passes.
+ *
+ * Anchors into files outside the checked set — a `.sql` migration, a line
+ * anchor like `#L42` — cannot be resolved and are counted as *skipped* rather
+ * than passed. The report prints that count, because "we did not check this"
+ * and "we checked and it was fine" must not read the same (ADR-020).
+ *
+ * Anchors get no vacuity check, unlike the sets below: a repository whose docs
+ * legitimately contain no `#fragment` links would fail for having nothing
+ * wrong. The printed count is the guard instead — if it falls to zero, that is
+ * visible.
  *
  * ── Non-vacuity ─────────────────────────────────────────────────────────────
  *
@@ -42,7 +75,13 @@ export interface DocFile {
   content: string;
 }
 
-export type DocRule = "adr-tldr" | "adr-index" | "walkthrough" | "link" | "vacuous";
+export type DocRule =
+  | "adr-tldr"
+  | "adr-index"
+  | "walkthrough"
+  | "link"
+  | "anchor"
+  | "vacuous";
 
 export interface DocViolation {
   rule: DocRule;
@@ -126,6 +165,26 @@ export interface MarkdownLink {
 }
 
 /**
+ * Lines outside fenced code blocks, 1-based.
+ *
+ * Both callers need this and for the same reason: a `# comment` in a bash
+ * fence is not a heading, and a link inside a fence is an example. The
+ * walkthrough and `harness/README.md` are full of both.
+ */
+function proseLines(content: string): { text: string; line: number }[] {
+  const lines: { text: string; line: number }[] = [];
+  let fenced = false;
+  content.split("\n").forEach((raw, index) => {
+    if (/^\s*(```|~~~)/.test(raw)) {
+      fenced = !fenced;
+      return;
+    }
+    if (!fenced) lines.push({ text: raw, line: index + 1 });
+  });
+  return lines;
+}
+
+/**
  * Inline markdown links and images, `[text](target)`, outside code.
  *
  * Fenced blocks and inline code spans are blanked first: a link written inside
@@ -134,19 +193,114 @@ export interface MarkdownLink {
  */
 export function markdownLinks(content: string): MarkdownLink[] {
   const links: MarkdownLink[] = [];
-  let fenced = false;
-  content.split("\n").forEach((raw, index) => {
-    if (/^\s*(```|~~~)/.test(raw)) {
-      fenced = !fenced;
-      return;
+  for (const { text, line } of proseLines(content)) {
+    const stripped = text.replace(/`[^`]*`/g, "");
+    for (const match of stripped.matchAll(
+      /\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g
+    )) {
+      links.push({ target: match[1] as string, line });
     }
-    if (fenced) return;
-    const line = raw.replace(/`[^`]*`/g, "");
-    for (const match of line.matchAll(/\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g)) {
-      links.push({ target: match[1] as string, line: index + 1 });
-    }
-  });
+  }
   return links;
+}
+
+// ── Anchors ───────────────────────────────────────────────────────────────────
+
+/** Heading text, in document order, ignoring fenced code. */
+export function markdownHeadings(content: string): string[] {
+  return proseLines(content)
+    .map(({ text }) => /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/.exec(text))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => match[2]!);
+}
+
+/**
+ * GitHub's heading → anchor rule. A link's text survives, its target does not,
+ * so `## [Foo](bar.md)` anchors at `foo` rather than at `foobarmd`.
+ */
+export function slugify(heading: string): string {
+  return heading
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N} _-]/gu, "")
+    .replace(/ /g, "-");
+}
+
+/**
+ * Every anchor a file offers. Repeated headings get `-1`, `-2` … exactly as
+ * GitHub numbers them, so the second "Go deeper" is `#go-deeper-1`.
+ */
+export function headingSlugs(content: string): Set<string> {
+  const seen = new Map<string, number>();
+  const slugs = new Set<string>();
+  for (const heading of markdownHeadings(content)) {
+    const base = slugify(heading);
+    if (!base) continue;
+    const count = seen.get(base) ?? 0;
+    seen.set(base, count + 1);
+    slugs.add(count === 0 ? base : `${base}-${count}`);
+  }
+  return slugs;
+}
+
+/** The `#fragment` of a link target, decoded and lower-cased, or null. */
+function fragmentOf(target: string): string | null {
+  const hash = target.indexOf("#");
+  if (hash === -1) return null;
+  const raw = target.slice(hash + 1);
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw).toLowerCase();
+  } catch {
+    return raw.toLowerCase();
+  }
+}
+
+/**
+ * Anchors that name no heading in the file they point at.
+ *
+ * Same-page links (`#section`) are checked too — `isRelative` excludes them
+ * from the file check because there is no file to find, but the heading they
+ * name still has to exist.
+ */
+export function brokenAnchors(docs: DocFile[]): {
+  violations: DocViolation[];
+  checked: number;
+  skipped: number;
+} {
+  const slugs = new Map(docs.map((doc) => [doc.path, headingSlugs(doc.content)]));
+  const violations: DocViolation[] = [];
+  let checked = 0;
+  let skipped = 0;
+
+  for (const doc of docs) {
+    for (const { target, line } of markdownLinks(doc.content)) {
+      const samePage = target.startsWith("#");
+      if (!samePage && !isRelative(target)) continue;
+
+      const fragment = fragmentOf(target);
+      if (fragment === null) continue;
+
+      const path = samePage ? doc.path : resolveLink(doc.path, target);
+      const known = slugs.get(path);
+      if (known === undefined) {
+        skipped += 1;
+        continue;
+      }
+
+      checked += 1;
+      if (!known.has(fragment)) {
+        violations.push({
+          rule: "anchor",
+          path: `${doc.path}:${line}`,
+          detail: `${target} → ${path} has no heading anchored at #${fragment}`,
+        });
+      }
+    }
+  }
+  return { violations, checked, skipped };
 }
 
 function stripFragment(target: string): string {
@@ -202,11 +356,19 @@ export interface DocsInput {
 export interface DocsReport {
   ok: boolean;
   violations: DocViolation[];
-  counts: { adrs: number; modules: number; docs: number; links: number };
+  counts: {
+    adrs: number;
+    modules: number;
+    docs: number;
+    links: number;
+    anchors: number;
+    anchorsSkipped: number;
+  };
 }
 
 export function checkDocs(input: DocsInput): DocsReport {
   const links = brokenLinks(input.linkedDocs, input.exists);
+  const anchors = brokenAnchors(input.linkedDocs);
   const modules = input.harnessModules.filter(
     (path) => posix.basename(path) !== "__init__.py"
   );
@@ -231,6 +393,7 @@ export function checkDocs(input: DocsInput): DocsReport {
     ),
     ...modulesMissingWalkthrough(modules, input.walkthrough),
     ...links.violations,
+    ...anchors.violations,
   ];
 
   return {
@@ -241,6 +404,8 @@ export function checkDocs(input: DocsInput): DocsReport {
       modules: modules.length,
       docs: input.linkedDocs.length,
       links: links.checked,
+      anchors: anchors.checked,
+      anchorsSkipped: anchors.skipped,
     },
   };
 }

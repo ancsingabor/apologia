@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   adrsMissingFromIndex,
   adrsMissingTldr,
+  brokenAnchors,
   brokenLinks,
   checkDocs,
+  headingSlugs,
+  markdownHeadings,
   markdownLinks,
   modulesMissingWalkthrough,
   resolveLink,
+  slugify,
   TLDR_WITHIN_LINES,
   type DocFile,
   type DocsInput,
@@ -166,6 +170,102 @@ describe("broken links", () => {
   });
 });
 
+describe("heading slugs", () => {
+  // Every expected value here is the anchor GitHub actually serves for that
+  // heading, taken from a real link in this repository — not from running
+  // slugify and writing down what it said.
+  it("matches GitHub for a heading full of punctuation", () => {
+    expect(slugify("Data model *(`0005` built and populated; `0006` planned)*")).toBe(
+      "data-model-0005-built-and-populated-0006-planned"
+    );
+  });
+
+  it("does NOT collapse the spaces a stripped character leaves behind", () => {
+    // The em-dash goes, its two surrounding spaces stay, and each becomes a
+    // hyphen. Collapsing them produces a slug that looks right and resolves to
+    // nothing — the bug this check was written with.
+    expect(slugify("2. Query path — a route handler *(planned, Milestone 1)*")).toBe(
+      "2-query-path--a-route-handler-planned-milestone-1"
+    );
+    expect(slugify("4 · `--dryrun` wrote to the database")).toBe(
+      "4----dryrun-wrote-to-the-database"
+    );
+  });
+
+  it("keeps accented letters, because half this project's headings have them", () => {
+    expect(slugify("Miért nem streamelünk?")).toBe("miért-nem-streamelünk");
+  });
+
+  it("keeps a heading link's text and drops its target", () => {
+    expect(slugify("[Query path](06-query-path.md)")).toBe("query-path");
+  });
+
+  it("numbers repeated headings the way GitHub does", () => {
+    const slugs = headingSlugs("## Go deeper\n\n## Go deeper\n\n## Go deeper\n");
+    expect([...slugs]).toEqual(["go-deeper", "go-deeper-1", "go-deeper-2"]);
+  });
+
+  it("ignores a # comment inside a fenced block", () => {
+    const content = "# Real\n\n```bash\n# once\nbrew install uv\n```\n\n## Also real\n";
+    expect(markdownHeadings(content)).toEqual(["Real", "Also real"]);
+  });
+});
+
+describe("broken anchors", () => {
+  const target: DocFile = {
+    path: "docs/architecture.md",
+    content: "# Architecture\n\n## Two languages, one corpus\n",
+  };
+
+  it("passes a fragment that names a real heading", () => {
+    const doc: DocFile = {
+      path: "docs/guide/05-data-model.md",
+      content: "[x](../architecture.md#two-languages-one-corpus)\n",
+    };
+    expect(brokenAnchors([doc, target])).toMatchObject({ violations: [], checked: 1 });
+  });
+
+  it("flags a fragment that names no heading, with its line", () => {
+    const doc: DocFile = {
+      path: "docs/guide/05-data-model.md",
+      content: "intro\n[x](../architecture.md#two-languages)\n",
+    };
+    const { violations } = brokenAnchors([doc, target]);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toMatchObject({
+      rule: "anchor",
+      path: "docs/guide/05-data-model.md:2",
+    });
+  });
+
+  it("checks same-page fragments, which the file check cannot", () => {
+    const doc: DocFile = {
+      path: "docs/architecture.md",
+      content: "# Architecture\n\n[a](#privileges) [b](#nope)\n\n### Privileges\n",
+    };
+    const { violations, checked } = brokenAnchors([doc]);
+    expect(checked).toBe(2);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain("#nope");
+  });
+
+  it("counts an unresolvable target as skipped rather than passed", () => {
+    const doc: DocFile = {
+      path: "docs/architecture.md",
+      content: "[sql](../supabase/migrations/0005_corpus.sql#L42)\n",
+    };
+    expect(brokenAnchors([doc])).toMatchObject({ violations: [], checked: 0, skipped: 1 });
+  });
+
+  it("ignores fragments on links that leave the repository", () => {
+    const doc: DocFile = {
+      path: "docs/architecture.md",
+      content: "[ext](https://example.test/page#section)\n",
+    };
+    expect(brokenAnchors([doc])).toMatchObject({ checked: 0, skipped: 0 });
+  });
+});
+
 describe("the whole check", () => {
   const good: DocsInput = {
     adrs: [adr("001", `# ADR-001\n\nStatus: x\n\n${TLDR}`)],
@@ -180,7 +280,14 @@ describe("the whole check", () => {
     const report = checkDocs(good);
     expect(report.ok).toBe(true);
     // __init__.py is not counted as a module.
-    expect(report.counts).toEqual({ adrs: 1, modules: 1, docs: 1, links: 1 });
+    expect(report.counts).toEqual({
+      adrs: 1,
+      modules: 1,
+      docs: 1,
+      links: 1,
+      anchors: 0,
+      anchorsSkipped: 0,
+    });
   });
 
   it("fails when it finds no ADRs, rather than passing over nothing", () => {

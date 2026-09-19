@@ -219,7 +219,7 @@ Hence the rule, and it is why "Adding a source" puts inventory before the parser
 and defines inventory as *running one*: pattern-matching a single signal found
 six faults and misdiagnosed the most serious. A parser found the same six, three
 more structural classes, and the misnumbering. See
-[ADR-019 § Amendment](adr/019-ccc-editions.md#amendment--2026-09-07).
+[ADR-019 § Amendment (first)](adr/019-ccc-editions.md#amendment--2026-09-07-first-what-writing-the-parser-found).
 
 ## Pending licence resolution
 

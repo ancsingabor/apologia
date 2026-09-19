@@ -48,7 +48,7 @@ sequenceDiagram
   API-->>R: received. Answered once a reviewer publishes it
 ```
 
-## The gate, in three rules
+## The gate, rule by rule
 
 | Rule | Violation | Outcome |
 |---|---|---|
