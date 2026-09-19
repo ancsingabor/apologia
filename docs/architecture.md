@@ -430,16 +430,45 @@ plainly because it decides how each part is tested:
 | | Deterministic | Probabilistic |
 |---|---|---|
 | **What** | parsers, chunkers, locator resolution, citation verification, rate limiting, auth | retrieval ranking, generated prose, groundedness, refusal behaviour |
-| **How it's checked** | ordinary unit tests (Vitest) — a failure is a *bug* | the eval harness on a gold set — a change is a *number that moved* |
+| **How it's checked** | **asserted** — Vitest, pytest, or a real Postgres, by what the test must touch. A failure is a *bug* | **measured** — the eval harness on a gold set. A change is a *number that moved* |
 | **Standard** | must be exactly right | must be measurably better than the last baseline |
 
 The line runs through the model call itself: the prose it returns is never
 asserted, while the schema parsing, the timeout and retry, and the verification
 gate around it are ordinary deterministic code. Which layer a given test belongs
-in — Vitest, an integration test against a real Postgres, or Playwright — is
-decided by that same axis and not by stack position; see
+in is decided by that same axis and not by stack position; see
 [ADR-015](adr/015-testing-strategy.md). Components, route handlers and Server
 Actions deliberately get no unit tests.
+
+**"Deterministic" does not mean "unit test".** The left column has three
+runners of its own, and which one a test lands in follows from what it must
+touch, not from what it is testing:
+
+| | Runner | For |
+|---|---|---|
+| pure, TypeScript | Vitest, `npm test` | parsers, chunkers, the citation gate |
+| pure, Python | pytest | the harness's metrics and hashing |
+| crosses Postgres | Vitest + local stack, `npm run test:integration` | behaviour that only exists in the database |
+
+That third row is the one people forget, and it is not a convenience. Some
+deterministic rules are enforced *by Postgres* and are unrepresentable in
+TypeScript: `integration/corpus-upsert.test.ts` exercises the partial unique
+index that makes two current documents impossible, and the crashed-run
+signature (`is_current = false, unit_count = 0`) that the next run sweeps.
+Both are exactly deterministic and neither can be reached without a database.
+`integration/corpus-text-probes.test.ts` is the other case — it searches the
+*stored* text for leftover markup, which the assertions cannot see because they
+check the corpus's shape rather than its content. Playwright is the fourth
+runner, for a user-visible flow. The routing table is in
+[TESTING.md](../TESTING.md).
+
+**The gold set is not another test layer.** It never returns pass or fail — it
+returns numbers, read against a baseline rather than asserted. The one
+deterministic thing beside it is `npm run eval:lint`, which resolves every
+locator a gold question expects against ingested units: a gold set that points
+at a paragraph which does not exist is a *bug*, while a low `recall@k` is a
+*measurement*. An unverified gold set produces confident, meaningless numbers,
+which is why that check exists at all.
 
 Confusing the two is the most common failure in RAG codebases: teams write no
 tests because "it's AI, it's non-deterministic", when in fact most of the system
