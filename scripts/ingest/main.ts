@@ -23,7 +23,7 @@ import { upsertDocument } from "./upsert";
  *
  * The pipeline of ADR-004, in order:
  *
- *   fetch → parse → assert → chunk → cross-lingual → upsert → emit
+ *   fetch → parse → assert → chunk → hash → cross-lingual → upsert → emit
  *
  * It is a sequence of functions with a main(), not a distributed choreography,
  * and that is the point: the CLI form keeps the pipeline readable for a
