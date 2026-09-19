@@ -88,6 +88,12 @@ The unit suites run **before** the database boots, on purpose. A parser or
 metric regression then fails in seconds instead of after a stack boot and a
 build.
 
+`docs:lint` checks five things: every ADR has a TL;DR and an index row, every
+harness module has a walkthrough section, every relative link resolves, and
+every `#fragment` names a real heading. That last one makes **a heading an
+API** — rename one and the links into it break, which used to pass silently
+because the link still rendered. It checks presence, never truth.
+
 ## What deliberately isn't here
 
 No queue or workers (ADR-004), no dedicated vector DB (ADR-001), no cache

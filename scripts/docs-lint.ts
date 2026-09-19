@@ -8,8 +8,9 @@ import { checkDocs, type DocFile, type DocViolation } from "@/lib/docs/check";
  *
  * Checks that the documentation's layers still line up: every ADR has a
  * TL;DR and an index entry, every harness module has a walkthrough section,
- * every relative link resolves. The rules, and what they deliberately cannot
- * check, are in `lib/docs/check.ts`; this file only reads the tree and prints.
+ * every relative link resolves, every `#fragment` names a real heading. The
+ * rules, and what they deliberately cannot check, are in `lib/docs/check.ts`;
+ * this file only reads the tree and prints.
  *
  * `root` defaults to the working directory. Passing an empty directory is how
  * the vacuity check is exercised by hand: it must fail, not pass over nothing.
@@ -62,11 +63,15 @@ async function main(): Promise<void> {
     exists: (path) => existsSync(join(root, path)),
   });
 
-  const { adrs, modules, docs, links } = result.counts;
+  const { adrs, modules, docs, links, anchors, anchorsSkipped } = result.counts;
   console.log(`\n▶ docs:lint — ${root === "." ? "repository" : root}\n`);
   console.log(`  adrs         ${adrs} checked for a TL;DR and an index entry`);
   console.log(`  harness      ${modules} module(s) checked for a walkthrough section`);
   console.log(`  links        ${links} relative link(s) across ${docs} file(s)`);
+  console.log(
+    `  anchors      ${anchors} #fragment(s) resolved to a heading` +
+      (anchorsSkipped > 0 ? `, ${anchorsSkipped} skipped (target not markdown)` : "")
+  );
 
   if (!result.ok) {
     report(result.violations);
@@ -77,8 +82,9 @@ async function main(): Promise<void> {
   // The limits are part of the verdict, not a footnote: a green line that
   // implies more than was checked is the failure this repo keeps meeting.
   console.log(
-    `\n✓ structure intact. Not checked: link #anchors; whether any TL;DR or ` +
-      `status claim is TRUE — that is review's job.\n`
+    `\n✓ structure intact. An anchor resolves to a heading that EXISTS; ` +
+      `whether that heading, any TL;DR or any status claim still says what the ` +
+      `linking sentence claims is NOT checked — that is review's job.\n`
   );
 }
 

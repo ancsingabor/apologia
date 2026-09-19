@@ -338,11 +338,19 @@ See [ADR-014](adr/014-translation-and-quotation.md) and
 | `chunks` | text, strategy id, language | `0005` |
 | `chunk_units` | chunk ↔ unit, n:m — a chunk may span units, a unit may split | `0005` |
 | `chunk_embeddings` | one row per (chunk, model), so two candidates can be compared | `0005` |
-| `topics` | the editorial spine: slug, part, titles, blurbs (ADR-016) | `0006` *(planned)* |
-| `questions` | normalised text, hash, language, asked_at | `0006` *(planned)* |
-| `answers` | `draft` \| `published`, body, model, prompt version, corpus hash, `topic_id` | `0006` *(planned)* |
-| `answer_citations` | answer → unit, plus the verification result | `0006` *(planned)* |
-| `retrieval_traces` | what was retrieved, scores, timings | `0006` *(planned)* |
+| `topics` | the editorial spine: slug, part, a title and a blurb per language (ADR-016) | `0006` 📐 |
+| `questions` | normalised text, hash, language, asked_at | `0006` 📐 |
+| `answers` | `draft` \| `published`, body, model, prompt version, corpus hash, `topic_id` | `0006` 📐 |
+| `answer_citations` | answer → unit, plus the verification result | `0006` 📐 |
+| `retrieval_traces` | what was retrieved, scores, timings | `0006` 📐 |
+
+**The Migration column names the file in `supabase/migrations/` that creates
+the table** — `0005` is `0005_corpus.sql`. The number is here rather than a
+plain "built" because those files carry their reasoning in SQL comments and are
+the primary source for it; the row tells you which one to open. `0006` 📐 is a
+plan, not a file: nothing on disk is numbered `0006` yet, and the tables may
+well land split across more than one migration. What each will hold is settled;
+where it lands is not.
 
 Two things in `0005` are worth reading the migration for. **`chunk_embeddings` is
 deliberately undimensioned and unindexed**: pgvector needs a fixed dimension to
@@ -363,6 +371,17 @@ the only table that gets `grant select to anon`, paired with an RLS policy of
 
 `retrieval_traces` is not an afterthought: it is both the observability surface
 and the substrate the evaluation harness scores against.
+
+**A topic's `blurb` is a couple of paragraphs of our own framing**, written by
+a person, and ADR-016 makes it carry more weight than a column list suggests:
+it is the *only* prose on a topic page that is not a published answer. `part`
+is the grouping above a topic, so the spine is two levels deep and no deeper.
+The table is hand-written and about twenty rows — the point of it is
+findability, not content, and a topic page is **empty at launch by design**,
+filling as answers are reviewed. Note what is absent: there is no `unit_topics`
+table and no topic column on `units`. **The corpus is not topicked at all**,
+because retrieval already does that work semantically and a hand-labelled
+corpus is a year of domain work that would go stale.
 
 ### Privileges
 

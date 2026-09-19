@@ -35,9 +35,17 @@ an ADR, a war story's "245 tests still passed", the definition of gold set v0.
 The test is whether the number would have to change when the code does.
 
 `npm run docs:lint` (CI and pre-push) enforces the TL;DR, ADR-index,
-walkthrough and link parts. It checks **presence, not truth** — whether
-`status.md` is accurate is on the author of the change. It cannot see a stale
-count outside `status.md` at all.
+walkthrough, link and anchor parts. It checks **presence, not truth** —
+whether `status.md` is accurate is on the author of the change. It cannot see
+a stale count outside `status.md` at all, and an anchor check proves only that
+a heading of that name exists, never that it still means what the linking
+sentence says.
+
+**A heading is an API.** Anchors are derived from a heading's exact words, so
+renaming one breaks every `file.md#fragment` pointing at it — from files you
+never opened. `docs:lint` now fails on that instead of letting the link land
+silently at the top of the page. If you rename a heading, run it and fix what
+it names; do not delete the anchor from the link to make it pass.
 
 Guide pages follow one shape: TL;DR (≤ 5 bullets) · ≤ ~150 lines · ≤ 2
 diagrams · "Where this lives in code" · "Go deeper" · "Check yourself" with
