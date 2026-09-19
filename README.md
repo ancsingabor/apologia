@@ -204,17 +204,23 @@ ADR-004 on this).
 
 Scaffolded from a private Next.js + Supabase starter template, which supplied
 the admin auth (proxy guard + `requireAdmin()` double guard), the Supabase
-client factories, the deny-by-default privilege model, the theming and copy
-layers, and the Playwright + local-Supabase CI harness. The landing page and
-dashboard you see on `npm run dev` are still the template's.
+client factories, the deny-by-default privilege model, the copy layer, and the
+Playwright + local-Supabase CI harness. The landing page and dashboard you see
+on `npm run dev` are still the template's.
 
-What was changed and why is in
-[docs/architecture.md § Inherited from the template](docs/architecture.md#inherited-from-the-template).
-The most interesting change is `lib/rate-limit.ts`, which was inverted from
-fail-open to fail-closed — the template protects contact forms, where losing an
-enquiry is the expensive outcome; here the expensive outcome is an unbounded
-bill. Same code, opposite correct answer. See
-[ADR-009](docs/adr/009-fail-closed-rate-limiting.md).
+Three things diverged, and each has an ADR rather than a note:
+
+- **`lib/rate-limit.ts` was inverted from fail-open to fail-closed.** The
+  template protects contact forms, where losing an enquiry is the expensive
+  outcome; here the expensive outcome is an unbounded bill. Same code, opposite
+  correct answer — [ADR-009](docs/adr/009-fail-closed-rate-limiting.md).
+- **Locale became per-request.** The template picks one language at build time;
+  Apologia serves `/hu/…` and `/en/…` from one deployment —
+  [ADR-013](docs/adr/013-per-request-locale.md).
+- **The theme registry and the transactional email module were removed**, with
+  their dependencies, along with the confirmation-token, ICS and
+  example-validator modules. What each was replaced by is in
+  [CLAUDE.md](CLAUDE.md#what-the-template-left-that-this-project-does-not-have).
 
 ## Licence
 

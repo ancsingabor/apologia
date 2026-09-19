@@ -385,12 +385,42 @@ corpus is a year of domain work that would go stale.
 
 ### Privileges
 
-Inherited from the template and a good fit here. `anon` and `authenticated` are
-revoked by default, including for future tables, and granted back per table.
-The public read path is expressed twice over: `grant select on answers to anon`,
-with an RLS policy of `status = 'published'`. Two independent layers say *the
-public sees published answers and nothing else*. See
+`anon` and `authenticated` hold **nothing** by default. Both are revoked on
+every existing table and on future ones, so adding a table and forgetting it
+leaves that table unreachable rather than exposed — the failure lands on the
+safe side. Privileges are granted back one table at a time in
 `supabase/migrations/0004_schema_grants.sql`.
+
+**Grants and RLS are two layers and both are needed.** A grant says a role may
+touch a table at all; a policy says which rows. A grant with no policy exposes
+nothing once RLS is on — but a policy with no grant fails with `permission
+denied for table …`, which reads like an API-key problem and is not.
+
+| Role | Holds today | Why |
+|---|---|---|
+| `anon` | `select, insert on rate_limit_log` | the limiter runs on the anon client from a public route: count recent rows, insert one. No update, no delete |
+| `authenticated` | `select on admin_users` | the allowlist check in `proxy.ts` and `lib/auth.ts` |
+| `service_role` | everything, and bypasses RLS | server-only clients; never reaches a browser |
+| everything else | **nothing** | the corpus tables carry zero grants *and* RLS enabled with no policies — two independent layers, and the end state rather than an unfinished step |
+
+When `answers` lands (`0006` 📐) the public read path gets the same treatment
+twice over: `grant select on answers to anon`, paired with an RLS policy of
+`status = 'published'`, so two independent layers say *the public sees
+published answers and nothing else*.
+
+**A public endpoint is not a database privilege**, and the query path is where
+that distinction earns its keep. Anyone may post a question — the ask endpoint
+is anonymous (§2) — but `anon` will never hold `insert on questions`. The route
+handler runs server-side and writes the question, the draft, its citations and
+the retrieval trace with the **service client**. What an anonymous caller can
+reach over HTTP and what the `anon` role can reach in Postgres are two
+different questions, and the answer to the second is: one table, the rate
+limiter's own log.
+
+That is load-bearing rather than incidental. Because the grant does not exist,
+an abusive caller cannot skip the limiter by writing through PostgREST
+directly. The route handler is the only door, and it checks the limiter before
+it spends anything.
 
 ## Two kinds of correctness
 
@@ -418,30 +448,6 @@ particular is pure logic, and it is the single most important correctness
 property in the product.
 
 See `docs/evaluation.md` for the metric definitions and the release rule.
-
-## Inherited from the template
-
-Kept as-is: the `proxy.ts` admin guard plus the `requireAdmin()` double guard,
-the three Supabase client factories, the deny-by-default grants model, the
-Playwright + ephemeral local-Supabase harness, the CI gate, and the theming and
-copy layers.
-
-Changed on purpose:
-
-- **`lib/rate-limit.ts` now fails closed.** The template limits contact forms,
-  where losing a real enquiry costs more than accepting a duplicate. Here every
-  accepted request spends money, and an outage of the limiter is exactly when an
-  abusive caller is most likely to be the cause. ADR-009.
-- **Locale is becoming per-request.** The template picks one language at build
-  time; Apologia serves `/hu/...` and `/en/...` from one deployment. ADR-013.
-- **`.env.example` is committed.** The template's `.gitignore` matched `.env*`
-  with no exception, so its own example file was never actually in the repo — a
-  real problem for a project whose setup instructions are the product.
-
-Removed: the confirmation-token, ICS, and example-validator modules, and the
-email-boundary policy (which governs client-owned mailboxes — Apologia has no
-client). `lib/email/` is kept for one identified future use: notifying a
-reviewer that drafts are waiting.
 
 ## Decision records
 
