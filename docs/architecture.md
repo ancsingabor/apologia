@@ -146,8 +146,9 @@ that has been re-themed but not re-worded produces the same hash and the run
 stops at "unchanged". A single relabelled paragraph produces a different one.
 
 Three of those stage names are opaque unless you already know them, so plainly:
-**upsert** is `update` + `insert` — write the document, and if it is already
-there replace it rather than add a second copy. **assert** is the check that
+**upsert** is `update` + `insert` — write the document without adding a second
+copy of one that is already there. It does *not* mean overwrite, and what it
+does instead is worth its own paragraph, below. **assert** is the check that
 the parse is complete and correctly numbered; it is not a list of accepted
 defects, which is a separate file it reads. **emit** writes an artefact:
 `corpus/manifest.lock.yaml`, committed, carrying locators, hashes, counts and
@@ -156,6 +157,31 @@ only interpretable against the corpus it was measured over, so
 `docs/evaluation.md` requires every eval report to record the hash this step
 produces — which turns "my local run disagrees with CI" from an invisible
 problem into a visible one.
+
+**Re-ingesting never overwrites, and old documents are never deleted.** A
+`documents` row is one version of one source in one language, and a partial
+unique index permits exactly one **current** row per `(source_id, language)` —
+so the Catechism in Hungarian and the Catechism in English are separate
+documents, each with its own current version. A re-fetch whose units hash the
+same as the current row stops at "unchanged" and writes nothing to the
+database. Only a real textual change inserts a new document, which is built
+invisibly and then swapped in as the old one is demoted.
+
+The demoted row keeps its units, which looks like duplication and is the price
+of a guarantee: **a published citation keeps resolving to the exact text it was
+verified against.** The gate compares a quotation byte-for-byte against
+`units.text` (ADR-014, ADR-017). Overwrite that text and every answer already
+published becomes unverifiable — and possibly false — with nothing failing to
+announce it. Demoting rather than updating is what makes *which text was this
+citation checked against* answerable by construction instead of by convention.
+
+What this does **not** give you is a diff. The hash tells you *that* a source
+changed, never *what* changed; comparing two revisions is unbuilt. Each
+document's `revision` is recorded in the manifest (`1997+2018` for the
+Catechism, `leonina-1888` for the Summa) so that the comparison becomes
+possible later — ADR-019 is where that was argued, from a single paragraph
+rather than from a diff, because there is no diff. Today a changed hash is a
+prompt to go and look.
 
 **`normalise` is part of `parse`, not a stage after it**, and the distinction
 costs more than it looks. Normalisation operates on *characters* — footnote
