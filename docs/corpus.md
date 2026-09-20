@@ -4,11 +4,11 @@
 > counts and hashes are in `corpus/manifest.lock.yaml`. The Summa's shape — 512
 > questions, 2,669 articles — is argued in
 > [ADR-022](adr/022-asserting-a-source-with-no-sibling-edition.md).
-> `corpus/sources.yaml` holds the entries whose licence
-> status is settled. Everything else is a candidate, listed at the bottom of this
-> file with what still has to be established. The CCC additionally carries its
-> fetch locations and its revision, settled in
-> [ADR-019](adr/019-ccc-editions.md).
+> [`corpus/sources.yaml`](../corpus/sources.yaml) holds the entries whose
+> licence status is settled; everything else is a candidate. **Licensing has
+> its own page — [licensing.md](licensing.md)** — and this file does not repeat
+> it. The CCC additionally carries its fetch locations and its revision,
+> settled in [ADR-019](adr/019-ccc-editions.md).
 
 > **TL;DR**
 > - A **source** is a work (the Catechism), carrying its authority tier, licence,
@@ -33,15 +33,16 @@ that governs how it may be used and how much it is worth:
 
 | Field | Why it exists |
 |---|---|
-| `authority_tier` | how much weight a claim resting on it may be given (ADR-010) |
-| `source_kind` | what *kind* of claim it makes — doctrinal, philosophical, scientific, historical |
-| `license` | whether we may use it, and how (ADR-003) |
+| `title`, `author` | the work's own identity; `author` may be null |
+| `authority_tier` | how much weight a claim resting on it may be given (ADR-010). Null for `scientific` and `historical` works, deliberately |
+| `kind` | what *kind* of work it is — `church_document`, `theological_work`, `bible`, `scientific`, `historical`. (The Postgres enum *type* is named `source_kind`; the field is `kind`.) |
+| `license`, `license_note` | whether we may use it, and how (ADR-003); the note carries the posture in prose |
 | `locator_scheme` | how a citable unit inside it is addressed (ADR-002) |
 | `chunking` | which parsing strategy the pipeline applies |
 | `languages` | which translations we ingest |
 | `cross_lingual_key` | the unit identifier shared across translations, where one exists |
 | `revision` (per document) | which revision of the work this text descends from — see § Revision drift |
-| `license` (per document) | the licence of THIS TRANSCRIPTION, where it differs from the work's — see § Licensing the transcription ([ADR-021](adr/021-licence-belongs-to-the-transcription.md)) |
+| `license` (per document) | the licence of THIS TRANSCRIPTION, where it differs from the work's — see [licensing.md](licensing.md#a-work-and-its-transcription-are-different-facts) ([ADR-021](adr/021-licence-belongs-to-the-transcription.md)) |
 
 ## Why chunking is per-source
 
@@ -86,54 +87,26 @@ instead. This is deliberate. Ecclesial authority is not a scale a physics paper
 belongs on; placing it there would encode the exact category error the system
 exists to avoid.
 
-## Licensing: where the real asymmetry is
+## Licensing
 
-A natural assumption — and one this project initially made — is that English
-sources are broadly free and Hungarian ones broadly encumbered. That is true for
-some tiers and **false for the most important one**:
+The whole legal argument — what is ingested, what is displayed, why ingesting
+is not redistributing, and how the display posture is enforced in Postgres
+rather than by policy — is [licensing.md](licensing.md). It is one page on
+purpose: somebody asking "how is this lawful?" should not have to assemble the
+answer from three ADRs.
 
-| Tier | English | Hungarian | Asymmetry |
-|---|---|---|---|
-| Summa, Fathers, philosophy | public-domain translations (~1920) | mostly modern → copyrighted | **Yes — English wins decisively** |
-| Bible | KJV, Douay-Rheims, ASV | Káldi 1626 (Catholic, PD); Károli 1908 (Protestant, PD) | Minor — both have PD options |
-| **CCC, encyclicals, conciliar documents** | **LEV copyright** | **LEV copyright** | **None** |
+Two consequences land in this file rather than that one, because they shape the
+corpus itself:
 
-Libreria Editrice Vaticana holds the Catechism and the encyclicals and licenses
-national editions (USCCB in the United States, Szent István Társulat in Hungary).
-**English is not freer than Hungarian for magisterial texts.** Any plan that
-proposes going English-only to escape Hungarian copyright does not, in fact,
-escape anything for the sources that matter most.
-
-What resolves it is not choosing a different language's text but **not
-reproducing text at all**: ingest for retrieval, display a locator, a link to the
-official edition, and our own prose. See
-[ADR-014](adr/014-translation-and-quotation.md).
-
-## Licensing the transcription
-
-A work has one copyright status. **Its transcriptions do not**, and the two are
-recorded separately ([ADR-021](adr/021-licence-belongs-to-the-transcription.md)).
-
-The Catechism hid this, because LEV holds the work and licenses every edition of
-it: one statement covers both. The Summa separates them cleanly. Aquinas died in
-1274 and the Leonine edition was printed in 1888, so the work is public domain
-beyond argument — while corpusthomisticum.org, whose text the pipeline actually
-fetches, reserves rights *quoad hanc editionem* over Busa's transcription and
-Alarcón's recension.
-
-So `license` sits on the source (the work) **and** optionally on the document
-(the transcription). A null document licence means the work's licence governs.
-
-This is the same move [ADR-019](adr/019-ccc-editions.md) made for `revision`, for
-the same reason: which text you got is a property of the fetch, not of the work.
-It is also what makes the Church Fathers rule below enforceable rather than
-advisory — *resolve per translation, never per author* had been prose since
-Milestone 0 with nothing able to check it.
-
-The posture that follows: ingest for retrieval, **never persist the editorial
-apparatus** (the Index Thomisticus `[28299]` reference numbers are used at parse
-time as a check signal and discarded), display locator and link
-([ADR-014](adr/014-translation-and-quotation.md)).
+- **A work and its transcription carry separate licences**, recorded separately
+  ([ADR-021](adr/021-licence-belongs-to-the-transcription.md)). `license` sits
+  on the source and optionally on the document; a null document licence means
+  the work's licence governs. Which text you got is a property of the fetch,
+  not of the work — the same move [ADR-019](adr/019-ccc-editions.md) made for
+  `revision`.
+- **Editorial apparatus is never persisted.** The Index Thomisticus `[28299]`
+  reference numbers are used at parse time as a check signal and discarded:
+  they are the transcriber's work, not Aquinas's.
 
 ## Revision drift
 
@@ -178,6 +151,18 @@ The general shape, which will recur for every encyclical and conciliar document:
   edition has updated and the other has not. `revision` makes that a condition
   the pipeline can see; it does not prevent it.
 
+What the window costs is **availability, not correctness**. While two editions
+disagree, the source cannot be ingested in both languages at all —
+`assertRevisionsAgree` in `lib/corpus/manifest.ts` refuses the manifest before
+a single page is fetched. The way through is the first bullet: ingest whichever
+edition carries the current revision, and let an answer in the other language
+cite it labelled, which [ADR-014](adr/014-translation-and-quotation.md) already
+permits wherever no authoritative text exists in the reader's language. So a
+Hungarian answer may end up quoting the English §2267 during such a window.
+Serving the superseded Hungarian paragraph *because* it is Hungarian is the one
+option that is never right — it is the failure this whole section exists to
+prevent, arrived at by a different route.
+
 ### Source defects are declared, not tolerated
 
 The current Hungarian CCC is a real web edition with real defects: of its 2,865
@@ -187,7 +172,7 @@ defect kind and the signal the parser recovers from. Nothing is missing: the
 corpus is 2,865 of 2,865.
 
 The file exists less to record the defects than to keep them from eroding the
-checks. A parser that meets six known-bad anchors and responds by relaxing its
+checks. A parser that meets four known-bad anchors and responds by relaxing its
 assertions has thrown away the property the corpus is built on. Declared errata
 let the assertions stay strict, so an *undeclared* failure is a new defect and
 stops the ingest. The errata file holds locators and defect kinds only — no
@@ -223,50 +208,18 @@ more structural classes, and the misnumbering. See
 
 ## Pending licence resolution
 
-Wanted, not yet manifest entries. Each needs its status established first.
-
-| Candidate | Tier | What has to be resolved |
-|---|---|---|
-| *Fides et Ratio*, *Humani Generis*, *Providentissimus Deus*, *Dei Verbum*, *Gaudium et Spes* | 2 | Same LEV posture as the CCC. Needs a per-document note and a stable fetch location for both language editions. |
-| Church Fathers (Augustine, Athanasius, …) | 3 | Originals are public domain; **specific translations may not be**. Resolve per translation, never per author. |
-| Káldi 1626 (Hungarian Catholic Bible) | 1 | Translation dates to 1626 — the text is certainly public domain. Confirm the specific edition/typesetting taken (an 1865-or-earlier printing is safe); modern re-typesettings may carry their own rights. |
-| Káldi-Neovulgáta (1997) | 1 | Live copyright. The modern revision, not to be confused with Káldi 1626. Not ingestible without permission. |
-| Szent István Társulat Bible | 1 | Live copyright. Same posture — cite and link, do not reproduce. |
-| Contemporary Hungarian apologetics | 5 | Per work, per author. Some may be usable with permission; asking is cheap and the answer is durable. |
-
-### The Hungarian Bible question
-
-Narrower than it first appears, but not gone.
-
-An earlier draft of this document claimed the only public-domain Hungarian option
-was Károli — Protestant and archaic — and concluded that licensing would be
-making a theological choice. That was wrong: **Káldi György's 1626 translation is
-Catholic and out of copyright.** It is the Hungarian counterpart of the
-Douay-Rheims: archaic, but doctrinally unproblematic and free.
-
-So the real constraint is register, not licensing. Káldi's Hungarian is 17th
-century and will read as remote to a modern enquirer, in the way the
-Douay-Rheims does in English. Three postures, and they compose:
-
-1. **Káldi 1626 as the ingestible Hungarian Scripture text** — free, Catholic,
-   searchable. Archaic phrasing is a real cost to readability.
-2. **Cite modern translations without reproducing them** — locator plus a link
-   to an official online edition. Costs nothing legally, and lets a reader reach
-   the phrasing they actually use.
-3. **Scripture reached through the magisterial documents that quote it** — the
-   CCC and the encyclicals quote extensively, and those quotations arrive with
-   the document's own posture.
-
-Milestone 1 uses (2) and (3); (1) is added when Scripture retrieval in Hungarian
-proves necessary. Recorded here because it constrains what the product can be in
-Hungarian, and should not be settled by whichever file was easiest to download.
+Candidates wanted but not yet manifest entries, with what has to be established
+for each, are in [licensing.md § Not yet resolved](licensing.md#not-yet-resolved).
+A source whose licence is unresolved does not get an entry in
+`corpus/sources.yaml` — that is the rule the file enforces, and it is why there
+is no `unknown` value.
 
 ## Adding a source
 
 1. Resolve the licence — for the **work** and, where they differ, for the
-   **transcription** you intend to fetch (§ Licensing the transcription). No
+   **transcription** you intend to fetch ([licensing.md](licensing.md#a-work-and-its-transcription-are-different-facts)). No
    entry without it, at either level.
-2. Assign `authority_tier` (or `source_kind: scientific`) by hand.
+2. Assign `authority_tier` (or `kind: scientific`) by hand.
 3. Define the `locator_scheme` — the addressing the tradition already uses, not
    one we invent. If the work has none, use a synthetic scheme and mark it as
    such: synthetic locators carry none of the stability guarantees.
@@ -280,5 +233,15 @@ Hungarian, and should not be settled by whichever file was easiest to download.
    assertions later is how assertions get loosened.
 7. Add fixtures and unit tests for the parser before ingesting at scale — the
    errata are the fixture list.
-8. Grant the tables it touches in `supabase/migrations/` — deny-by-default means
-   an ungranted table is unreachable.
+8. **No migration, and no grant.** A source is data, not schema: the corpus
+   tables in `0005_corpus.sql` already hold every source, and the ingest writes
+   them with the service client (`scripts/ingest/client.ts`, built on
+   `SUPABASE_SERVICE_ROLE_KEY`), which holds `grant all` and bypasses RLS. The
+   deny-by-default rule is about `anon` and `authenticated`, and neither is
+   anywhere near this path. Reaching for a grant here would put a public role
+   on `units.text` and silently dismantle the posture
+   [licensing.md](licensing.md#this-is-enforced-in-postgres-not-by-policy)
+   rests on.
+9. Run the ingest, then update [guide/status.md](guide/status.md) in the same
+   PR. `emit` rewrites `corpus/manifest.lock.yaml` for you; status.md is the
+   part a human has to remember.

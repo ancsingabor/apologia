@@ -502,9 +502,13 @@ is perfectly deterministic and perfectly testable. Citation verification in
 particular is pure logic, and it is the single most important correctness
 property in the product.
 
-See `docs/evaluation.md` for the metric definitions and the release rule.
+See [docs/evaluation.md](evaluation.md) for the metric definitions and the
+release rule.
 
 ## Decision records
 
-Every meaningful decision is in `docs/adr/`. Start with
-[ADR-002](adr/002-citable-unit-model.md) — it is the one the rest hang off.
+Every meaningful decision is in [docs/adr/](adr/README.md), including the ones
+deliberately left open: 007, 008 and 012 are reserved numbers with no file, so
+that references to them stay stable while the decision waits on measurement.
+Start with [ADR-002](adr/002-citable-unit-model.md) — it is the one the rest
+hang off.
