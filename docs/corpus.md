@@ -151,6 +151,18 @@ The general shape, which will recur for every encyclical and conciliar document:
   edition has updated and the other has not. `revision` makes that a condition
   the pipeline can see; it does not prevent it.
 
+What the window costs is **availability, not correctness**. While two editions
+disagree, the source cannot be ingested in both languages at all —
+`assertRevisionsAgree` in `lib/corpus/manifest.ts` refuses the manifest before
+a single page is fetched. The way through is the first bullet: ingest whichever
+edition carries the current revision, and let an answer in the other language
+cite it labelled, which [ADR-014](adr/014-translation-and-quotation.md) already
+permits wherever no authoritative text exists in the reader's language. So a
+Hungarian answer may end up quoting the English §2267 during such a window.
+Serving the superseded Hungarian paragraph *because* it is Hungarian is the one
+option that is never right — it is the failure this whole section exists to
+prevent, arrived at by a different route.
+
 ### Source defects are declared, not tolerated
 
 The current Hungarian CCC is a real web edition with real defects: of its 2,865
@@ -160,7 +172,7 @@ defect kind and the signal the parser recovers from. Nothing is missing: the
 corpus is 2,865 of 2,865.
 
 The file exists less to record the defects than to keep them from eroding the
-checks. A parser that meets six known-bad anchors and responds by relaxing its
+checks. A parser that meets four known-bad anchors and responds by relaxing its
 assertions has thrown away the property the corpus is built on. Declared errata
 let the assertions stay strict, so an *undeclared* failure is a new defect and
 stops the ingest. The errata file holds locators and defect kinds only — no
