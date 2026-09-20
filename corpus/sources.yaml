@@ -7,7 +7,7 @@
 # RULES
 #   * `license` is required and must be resolved. There is no `unknown`.
 #     A source whose status has not been established does not go in this file —
-#     it goes in docs/corpus.md § Pending licence resolution until it has been.
+#     it goes in docs/licensing.md § Not yet resolved until it has been.
 #   * `authority_tier` is assigned by a human, never inferred (ADR-010).
 #     Scientific/historical works take `kind: scientific` and NO tier. (The
 #     Postgres enum type is called `source_kind`; the field here is `kind`.)
@@ -90,7 +90,7 @@ sources:
         # anchor-agreement assertion cannot run over it — ADR-020 says what pays
         # for that.
     notes: >
-      The Milestone 1 source, ingested in BOTH languages. Paragraph numbering is
+      The Milestone 1 source, declared in both languages. Paragraph numbering is
       identical across translations, so the same citable unit exists in Hungarian
       and English under one identifier — the alignment key the cross-lingual
       evaluation is built on (ADR-002, ADR-007). Ingesting both costs nothing
@@ -192,4 +192,4 @@ sources:
 # ── Not yet in the manifest ─────────────────────────────────────────────────
 # Encyclicals, the conciliar documents, the Church Fathers, Káldi 1626, and
 # contemporary Hungarian apologetics are CANDIDATES, not entries. Each needs its
-# licence resolved first. See docs/corpus.md § Pending licence resolution.
+# licence resolved first. See docs/licensing.md § Not yet resolved.

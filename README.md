@@ -224,5 +224,11 @@ Three things diverged, and each has an ADR rather than a note:
 
 ## Licence
 
-MIT for the code. The corpus is not covered — each source carries its own terms,
-recorded in `corpus/sources.yaml`.
+MIT for the code, in [LICENSE](LICENSE). The corpus is **not** covered — it is
+not ours to license. Each source carries its own terms, resolved before
+ingestion and recorded in [`corpus/sources.yaml`](corpus/sources.yaml).
+
+**How this is lawful is [docs/licensing.md](docs/licensing.md)** — one page,
+not three ADRs: what is ingested, what is displayed, why ingesting is not
+redistributing, how the display posture is enforced in Postgres rather than by
+policy, and what the argument does *not* claim.

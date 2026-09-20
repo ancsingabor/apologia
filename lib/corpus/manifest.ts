@@ -107,8 +107,8 @@ const sourceSchema = z.object({
     .refine((value) => !UNRESOLVED_LICENCE.has(value.trim().toLowerCase()), {
       message:
         "license must be resolved — ADR-003 has no `unknown`. A source whose " +
-        "status is not established belongs in docs/corpus.md § Pending " +
-        "licence resolution, not in the manifest.",
+        "status is not established belongs in docs/licensing.md " +
+        "§ Not yet resolved, not in the manifest.",
     }),
   license_note: z.string().nullable().default(null),
   locator_scheme: z.string().min(1),
