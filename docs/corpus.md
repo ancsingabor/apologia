@@ -233,5 +233,15 @@ is no `unknown` value.
    assertions later is how assertions get loosened.
 7. Add fixtures and unit tests for the parser before ingesting at scale — the
    errata are the fixture list.
-8. Grant the tables it touches in `supabase/migrations/` — deny-by-default means
-   an ungranted table is unreachable.
+8. **No migration, and no grant.** A source is data, not schema: the corpus
+   tables in `0005_corpus.sql` already hold every source, and the ingest writes
+   them with the service client (`scripts/ingest/client.ts`, built on
+   `SUPABASE_SERVICE_ROLE_KEY`), which holds `grant all` and bypasses RLS. The
+   deny-by-default rule is about `anon` and `authenticated`, and neither is
+   anywhere near this path. Reaching for a grant here would put a public role
+   on `units.text` and silently dismantle the posture
+   [licensing.md](licensing.md#this-is-enforced-in-postgres-not-by-policy)
+   rests on.
+9. Run the ingest, then update [guide/status.md](guide/status.md) in the same
+   PR. `emit` rewrites `corpus/manifest.lock.yaml` for you; status.md is the
+   part a human has to remember.
