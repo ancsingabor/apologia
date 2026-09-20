@@ -33,9 +33,10 @@ that governs how it may be used and how much it is worth:
 
 | Field | Why it exists |
 |---|---|
-| `authority_tier` | how much weight a claim resting on it may be given (ADR-010) |
-| `source_kind` | what *kind* of claim it makes — doctrinal, philosophical, scientific, historical |
-| `license` | whether we may use it, and how (ADR-003) |
+| `title`, `author` | the work's own identity; `author` may be null |
+| `authority_tier` | how much weight a claim resting on it may be given (ADR-010). Null for `scientific` and `historical` works, deliberately |
+| `kind` | what *kind* of work it is — `church_document`, `theological_work`, `bible`, `scientific`, `historical`. (The Postgres enum *type* is named `source_kind`; the field is `kind`.) |
+| `license`, `license_note` | whether we may use it, and how (ADR-003); the note carries the posture in prose |
 | `locator_scheme` | how a citable unit inside it is addressed (ADR-002) |
 | `chunking` | which parsing strategy the pipeline applies |
 | `languages` | which translations we ingest |

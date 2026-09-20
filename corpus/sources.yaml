@@ -9,18 +9,20 @@
 #     A source whose status has not been established does not go in this file —
 #     it goes in docs/corpus.md § Pending licence resolution until it has been.
 #   * `authority_tier` is assigned by a human, never inferred (ADR-010).
-#     Scientific/historical works take `source_kind: scientific` and NO tier.
+#     Scientific/historical works take `kind: scientific` and NO tier. (The
+#     Postgres enum type is called `source_kind`; the field here is `kind`.)
 #   * `chunking` names a strategy; there is deliberately no default (ADR-002).
 #   * `locator_scheme` defines how a citable unit in this work is addressed.
 #
-# STATUS: Milestone 1. These are the entries whose licence status is settled.
-# `ccc` carries its fetch locations and revision (ADR-019) and is INGESTED IN
-# BOTH LANGUAGES — 2,865 units each, the same 2,865 locators, which is ADR-002's
-# cross-lingual identity claim discharged rather than asserted. `summa` and
-# `kjv` are licensed but not yet located.
+# These are the entries whose licence status is settled. An entry here is a
+# DECLARATION, not a report: it says what the work is and how it may be used,
+# never whether it has been fetched. What has actually been ingested, with
+# counts, is docs/guide/status.md, re-derived from a run; what a run produced is
+# `corpus/manifest.lock.yaml` — generated, committed, carrying hashes and counts
+# and no corpus text. Do not restate either here; both drift within days.
 #
-# What a run produced is recorded in `corpus/manifest.lock.yaml` — generated,
-# committed, and carrying hashes and counts but no corpus text.
+# A source with no `documents:` block has not reached the fetch stage. That is a
+# legitimate state — asking to ingest such a source is what fails, in `select`.
 
 version: 0
 

@@ -118,8 +118,9 @@ const sourceSchema = z.object({
   notes: z.string().nullable().default(null),
   cross_lingual_key: z.string().nullable().default(null),
   // A source that has not reached the fetch stage carries no `documents:` block
-  // yet — `summa` and `kjv` are licensed but not located. That is a legitimate
-  // manifest state; asking to ingest such a source is what fails, in `select`.
+  // yet. That is a legitimate manifest state, not an error; asking to ingest
+  // such a source is what fails, in `select`. Which sources are in that state
+  // is docs/guide/status.md's job — naming them here dates the comment.
   documents: z.array(documentSchema).default([]),
 });
 
