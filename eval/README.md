@@ -6,7 +6,7 @@ Metric definitions, the gold-set format, and the release rule live in
 ```
 eval/
   questions/    the gold set — one YAML file per question, frozen in git
-  reports/      npm run eval output (gitignored except committed baselines)
+  reports/      eval output (gitignored except committed baselines)
 ```
 
 ```bash
@@ -22,8 +22,9 @@ npm run eval:lint   # resolve every expected_units locator against ingested text
 >   database.
 > - **Pending is not a pass.** Four Summa locators sat unchecked for a
 >   milestone and were wrong the whole time.
-> - Two questions have no expected units, because they test refusal and are
->   scored separately.
+> - Two questions have no expected units, because they test behaviour, not
+>   retrieval: one must be refused, one answered while declining its premise.
+>   Both are scored separately.
 
 ## The gold set
 

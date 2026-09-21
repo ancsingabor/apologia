@@ -124,6 +124,14 @@ judgements made without data. If they turn out to be wrong-sized, that is
 recorded in the write-up rather than silently adjusted afterwards — an adjusted
 threshold is no threshold.
 
+*Note, 2026-09-21 (added, not revised):* one mis-sizing is already visible
+without data. On a gold set of 40–60 questions, one question is worth 1.7–2.5pp
+of `full-recall@10`, so ≥5pp means "two or three more questions pass" — and the
+full-recall slice counts only multi-source questions, which makes each one worth
+more. The threshold stands as registered. The write-up must also report the
+per-question pass/fail changes behind it, which is how `docs/evaluation.md`'s
+release rule is now written, so that a reader can see how few questions moved.
+
 **It constrains exploration.** Real cost: the interesting finding may not be one
 of the three hypotheses. Handled by reporting incidental findings separately and
 labelling them as exploratory rather than folding them into the registered result.

@@ -4,7 +4,8 @@
 
 - **"Better" must mean a number that moved on a frozen gold set.** Any change
   to retrieval, chunking, embeddings or the prompt must attach an eval report
-  diff, and a regression blocks the merge.
+  diff. Every question that stops passing is named and justified in review;
+  CI does not run the eval.
 - **The gold set came first**: 10 hand-written questions (v0), frozen in git
   *before* any retriever existed, so the benchmark can't be fitted to the system
   it judges.

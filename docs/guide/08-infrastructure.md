@@ -82,7 +82,7 @@ committed.
 | CI `harness` lane | every PR | ruff, format check, mypy `--strict`, pytest | under a minute |
 | — its extras | — | installs `db` (psycopg) and `stats` (numpy/scipy/pandas) so `mypy` really typechecks that code instead of skipping it as an unresolved import — and so the lane matches the environment mypy passes in on an operator's machine. **Never** `local-models` or `export`: torch is gigabytes and this lane has a one-minute budget | — |
 | CI `verify` lane | every PR | lint, types, unit, docs structure, **local Supabase** + integration, build, E2E | a few minutes |
-| Release rule | any retrieval, chunking, embedding or prompt change | an eval report diff attached to the PR | human review |
+| Release rule | any retrieval, chunking, embedding or prompt change | an eval report diff attached to the PR; every question that stops passing `recall@10` named and justified | human review — not in CI |
 
 The unit suites run **before** the database boots, on purpose. A parser or
 metric regression then fails in seconds instead of after a stack boot and a
