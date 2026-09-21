@@ -15,8 +15,9 @@
 >   quote fidelity must read 100%, and authority correctness is the domain
 >   metric.
 > - **Release rule:** a retrieval, chunking, embedding or prompt change attaches
->   an eval diff. More than 2pp off `recall@10`, or any drop in citation validity
->   or quote fidelity, blocks the merge.
+>   an eval diff. Every question that stops passing `recall@10` is named and
+>   justified; any drop in citation validity or quote fidelity blocks the merge.
+>   It is enforced in review — CI does not run the eval.
 > - Every report records corpus hash, models and prompt version, because a
 >   number without provenance is not evidence.
 
@@ -47,25 +48,45 @@ number to beat. That is the difference between a benchmark and a target.
 
 ## Gold set
 
-Format, one file per question, in `eval/questions/`:
+Format, one file per question, in `eval/questions/`. This is `q-0001` as
+committed; the schema that enforces it is `harness/apologia_eval/gold.py`,
+which rejects unknown keys.
 
 ```yaml
-id: q-0007
+id: q-0001
 question: "Mit tanít a Katolikus Egyház az evolúcióról?"
 language: hu
-category: doctrine          # doctrine | philosophy | history | science | adversarial | out-of-scope
-expected_units:             # the units a correct answer must draw on
+category: doctrine      # doctrine | philosophy | history | science | adversarial
+                        # | out-of-scope | in-scope-looks-out
+cross_lingual: true     # its best sources are in the other language; picks the metric slice
+expected_units:         # the units a correct answer must draw on
   - ccc:283
   - ccc:284
-  - humani-generis:36
-expects_refusal: false
+expects_refusal: false  # true only where declining IS the correct answer
 notes: >
-  Tests the science/faith boundary. A correct answer distinguishes the Church's
-  position on evolution as a biological account from materialist metaphysics.
+  The canonical test of the faith/science boundary. A correct answer separates
+  evolution as a biological account (which the Church does not oppose) from
+  materialist metaphysics (which it does). Humani Generis §36 is the strongest
+  source and is not yet in the manifest — this question is also a coverage probe.
 ```
 
-**Size:** 40–60 questions. Big enough to move a percentage point meaningfully,
-small enough that one person can author them honestly. v0 is 10.
+Adversarial questions also carry `adversarial_target` (e.g. `category-error`),
+naming the conflation they are scored for.
+
+`expects_refusal` and "no `expected_units`" are different things. An
+adversarial question such as *"does quantum mechanics prove God?"* may have no
+units to retrieve and still expect an answer — one that declines the
+*inference*, not the question. In v0 only the out-of-scope question expects a
+refusal. Either way, a question without `expected_units` is excluded from the retrieval
+metrics rather than scored as a zero.
+
+**Size:** 40–60 questions, and not more. The limit is authorship, not cost:
+small enough that the domain authors can write every question honestly and know
+what a good answer draws on. v0 is 10. At this size one question is worth about
+2 percentage points of any retrieval metric, and the release rule below is
+written in questions for that reason. A larger set cannot be grown from real
+traffic either: user questions carry no `expected_units`, and labelling them
+from the system's own answers would fit the benchmark to what it judges.
 
 **Composition matters as much as size.** The set must include, deliberately:
 
@@ -101,7 +122,7 @@ most likely to be weak.
 | **`authority correctness`** | % of answers where a magisterial claim ("the Church teaches…") is backed by a tier-1/2 source | judge model + human spot-check |
 | `refusal correctness` | on out-of-scope/adversarial: % correctly refused. **On in-scope: % *not* wrongly refused** | deterministic |
 
-Two of these deserve emphasis:
+Four of these deserve emphasis:
 
 **`citation validity` is the flagship, and it is not a tuning dial.** It is
 deterministic and it should read 100%. Any value below that is a *bug* in the
@@ -124,23 +145,43 @@ system that scores well by refusing everything.
 
 ### Operational
 
-p50 / p95 end-to-end latency, cost per answer, cache hit rate.
+Median (p50) and 95th-percentile (p95) end-to-end latency, cost per answer,
+cache hit rate. Recorded in every report and never gated. They are here so that
+a change which buys recall by doubling cost or latency shows both in the same
+diff; like every other metric, they have no target until a baseline exists.
 
 ## Release rule
 
 > Any change to retrieval, chunking, embeddings, or the prompt must attach an
 > eval report diff to its PR.
 >
-> A regression of **>2pp in `recall@10`**, or **any** drop in
-> `citation validity` or `quote fidelity`, blocks the merge.
+> **Every question that passed `recall@10` before the change and fails after it
+> is named in the PR and justified**, or the change does not merge. **Any** drop
+> in `citation validity` or `quote fidelity` blocks the merge outright.
 
 This is what converts the harness from a demo into a gate. Without it, the eval
 becomes a thing that gets run once, screenshotted, and never looked at again.
 
+**Why questions and not percentage points.** Both runs answer the same
+questions, so the natural diff is per question: which went from pass to fail,
+which from fail to pass. A threshold on the aggregate cannot work at this size.
+With the 8 scorable v0 questions one question is 12.5pp; at 50 it is 2pp, so a
+"no more than 2pp" rule would let a single lost question through while
+presenting the figure as precise. "q-0001 no longer finds `ccc:283` in the top
+10" is also something a reviewer can judge; "−2.1pp" is not. The aggregate change is still
+reported, for information.
+
+**Who enforces it.** Review does. CI deliberately does not run the eval: it
+needs a database and model weights, costs money, and is operator-initiated
+(`.github/workflows/ci.yml`, the `harness` lane's header). What CI does gate is
+the deterministic half — metric functions and gold-set parsing — so the numbers
+in a diff are at least computed correctly.
+
 ## Report format
 
-`npm run eval` writes `eval/reports/<timestamp>.json` plus a human-readable
-summary. Each report records the corpus manifest hash, the embedding model, the
+`npm run eval` will write `eval/reports/<timestamp>.json` plus a human-readable
+summary; whether it exists yet is in [guide/status.md](guide/status.md). Each
+report records the corpus manifest hash, the embedding model, the
 generation model, and the prompt version — so a number can always be traced back
 to the exact system that produced it. A metric without that provenance is not
 reproducible and therefore not evidence.

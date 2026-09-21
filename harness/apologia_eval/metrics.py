@@ -45,9 +45,9 @@ def recall_at_k(retrieved: RankedUnits, expected: Sequence[str], k: int) -> floa
     """1.0 if at least one expected unit appears in the top *k*, else 0.0.
 
     Binary per question; the reported figure is the mean over questions. A
-    question with no expected units is not a retrieval question at all (the
-    refusal cases, q-0007 and q-0009) and must be excluded by the caller rather
-    than scored — see `is_scorable`.
+    question with no expected units is not a retrieval question at all (q-0007,
+    adversarial, and q-0009, out-of-scope) and must be excluded by the caller
+    rather than scored — see `is_scorable`.
     """
     if not expected:
         raise ValueError("recall is undefined for a question with no expected units")
@@ -89,9 +89,10 @@ def is_scorable(expected: Sequence[str]) -> bool:
     """Whether a gold question participates in retrieval metrics at all.
 
     Two of the ten v0 questions have no `expected_units` — q-0007 (adversarial)
-    and q-0009 (out-of-scope). They test refusal behaviour, which is measured
-    separately. Averaging them in as zeros would report a retriever as worse
-    than it is; averaging them in as ones would report it as better. Neither is
-    a retrieval result, so they are excluded and counted.
+    and q-0009 (out-of-scope). They test answer behaviour — declining an
+    inference, declining a question — which is measured separately. Averaging
+    them in as zeros would report a retriever as worse than it is; averaging
+    them in as ones would report it as better. Neither is a retrieval result, so
+    they are excluded and counted.
     """
     return len(expected) > 0
