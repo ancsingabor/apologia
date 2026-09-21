@@ -5,13 +5,14 @@
 - Apologia is a **Q&A research aid** for Catholic apologetics, theology and
   philosophy. It is Hungarian-first, bilingual (hu/en) and open source.
 - It answers **from a curated corpus**, never from a model's memory, and every
-  claim carries a mechanically checked citation.
+  claim carries a mechanically checked citation. That is the design; what runs
+  today is in [status](status.md).
 - It is designed for **the sceptical reader**. Someone testing the system sets a
   higher bar than someone seeking reassurance, and meeting that bar serves both.
 - Seven **non-negotiables** constrain every change. They're listed below, one
   line each.
-- Several fashionable components are **absent on purpose**: vector DB, queue,
-  streaming, agents, reranking. Each absence has an ADR.
+- Several fashionable components are **absent on purpose**: a dedicated vector
+  database, queues, streaming, agents, reranking. Each absence is recorded.
 
 ## The problem
 
@@ -20,6 +21,12 @@ and you get a fluent answer. It may be based on the 1997 text or the 2018 one.
 It may quote the Catechism in words the Catechism never used. It may cite a
 paragraph that says something else. Nothing in the output tells you which of
 these happened.
+
+This is not hypothetical, and not only a chatbot's problem. The Hungarian
+Catechism that was easiest to scrape turned out to be the 1997 text, so the same
+locator, `ccc:2267`, would have taught opposite doctrine depending on the
+reader's language — with every check passing
+([war story 2](10-war-stories.md#2--the-same-paragraph-opposite-doctrine)).
 
 For this domain, that failure is the norm, not a rare edge case. Misattributed
 authority is the characteristic error of religious argument. So the product's
@@ -72,14 +79,16 @@ one has a record.
 
 ## Where this lives in code
 
-This chapter describes intent, so there is no code to point at yet. The
-non-negotiables are enforced in these places:
+The chapter is about intent. Where each non-negotiable is (or will be) enforced
+— which of these are wired in yet is [status](status.md)'s job, not this page's:
 
-| Rule | Enforced in |
+| Rule | Where |
 |---|---|
 | 1 | `lib/corpus/parsers/*`, `lib/corpus/chunk.ts` |
-| 2, 4 | `lib/citation/verify.ts` |
+| 2, 4 | `lib/citation/verify.ts`, the gate the query path will call |
 | 3 | `.gitignore` (`.corpus-cache/`), `lib/corpus/manifest.ts` (licence must be resolved) |
+| 5 | the answers table and the admin publish step |
+| 6 | review, by design not CI ([evaluation.md § Release rule](../evaluation.md#release-rule)) |
 | 7 | `supabase/migrations/0004_schema_grants.sql` |
 
 ## Go deeper
@@ -90,11 +99,11 @@ non-negotiables are enforced in these places:
 
 ## Check yourself
 
-<details><summary>Why design for the sceptic rather than the believer?</summary>
+<details><summary>The TL;DR says every claim carries a checked citation. Where would you check whether that is true today, and why not on this page?</summary>
 
-Rigour that survives a hostile reader also serves a friendly one. The reverse
-doesn't hold: an answer that merely reassures fails the first time someone
-checks a citation.
+[status.md](status.md). This page describes the design, which changes rarely;
+what is built changes with every PR, and a copy of it here would drift. Status
+is written in one place so that there is only one place for it to be wrong.
 </details>
 
 <details><summary>Why no streaming, when every chat product streams?</summary>
@@ -106,7 +115,7 @@ shown at all. Streaming would show text that might then fail verification
 
 <details><summary>Name one non-negotiable and the "quiet failure" it prevents.</summary>
 
-For example, rule 4. A machine-translated quotation would be attributed to a
-real locator while the gate certified the untranslated original. The result is
-a fabricated quote with a green check.
+For example, rule 4. If the model translated an English Catechism passage into
+Hungarian inside quotation marks, the citation would point at a real paragraph
+and look verified, yet those words appear in no authoritative text.
 </details>
