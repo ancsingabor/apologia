@@ -14,11 +14,19 @@ import type { ParsedChunk, ParsedUnit } from "@/types/domain";
  *
  * ── Why 1:1, when the schema models n:m ─────────────────────────────────────
  *
- * `chunk_units` is n:m because a short CCC paragraph may share a chunk with its
- * neighbour while a long Summa article splits across several, and a plain
- * foreign key breaks in one direction or the other. That relation is modelled
- * honestly and exercised here at 1:1 — which is not the same as simplifying it
- * away, and leaves packing implementable without a migration.
+ * `chunk_units` is a join table, and this function exercises it at 1:1 — which
+ * is not the same as simplifying it away, and leaves packing implementable
+ * without a migration.
+ *
+ * Note what the join table is actually for, because it is easy to state the
+ * weaker reason. Packing neighbours together, and splitting a long Summa
+ * article, both produce MANY UNITS PER CHUNK with each unit still in exactly
+ * one chunk — a shape `units.chunk_id` would model perfectly well. What no
+ * foreign key can express is one unit in SEVERAL chunks, and that is what the
+ * version suffix below makes routine: `numbered-paragraph@2` populates the same
+ * corpus beside `@1`, so every unit gains a second chunk. The join table buys
+ * the side-by-side comparison, exactly as `chunk_embeddings`'s (chunk, model)
+ * key does for embedding models.
  *
  * Packing short neighbours to a token budget is very likely an improvement: a
  * one-sentence paragraph embeds poorly on its own. It is also a tuning
@@ -75,11 +83,14 @@ export function chunkNumberedParagraph(units: ParsedUnit[]): ParsedChunk[] {
  * model a document several times its context and get back a vector describing
  * whichever part survived truncation.
  *
- * `chunk_units` is n:m for exactly this, and this file said so before the Summa
- * existed: "a long Summa article splits across several". A split article yields
- * consecutive chunks, each labelled, each naming the article it came from — so
- * role survives the split even where the respondeo does not travel with every
- * objection. Roughly 95% of articles fit whole.
+ * A split article yields consecutive chunks, each labelled, each naming the
+ * article it came from — so role survives the split even where the respondeo
+ * does not travel with every objection.
+ *
+ * Measured against the ingested corpus on 2026-09-26: 23,326 units over 3,179
+ * articles produce 3,453 chunks. 2,951 articles (92.8%) fit whole; 228 split,
+ * the longest into nine. Those counts move with the budget, so the live ones
+ * live in docs/guide/status.md.
  */
 export const SCHOLASTIC_ARTICLE_V1 = "scholastic-article@1";
 

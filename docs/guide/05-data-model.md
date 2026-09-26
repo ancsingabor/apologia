@@ -5,9 +5,9 @@
 - **Source → document → unit.** A *source* is a work (the Catechism). A
   *document* is one fetched text of it in one language. A *unit* is a citable
   passage in that document.
-- **Chunks are separate from units** and linked n:m through `chunk_units`.
-  Embeddings are keyed by **(chunk, model)**, so several candidate models can
-  coexist.
+- **Chunks are separate from units** and joined through `chunk_units`, so two
+  chunking strategies can coexist over one corpus. Embeddings are keyed by
+  **(chunk, model)**, so several candidate models can too.
 - **Superseded documents are kept, not deleted.** Every read must filter
   `documents.is_current = true`.
 - **The corpus tables have no grants to `anon` or `authenticated`**, on purpose.
@@ -76,7 +76,7 @@ and `rate_limit_log` (hashed IPs for the fail-closed limiter).
 
 | Choice | Why |
 |---|---|
-| **`chunk_units` is n:m** | A short CCC paragraph may share a chunk with its neighbour, while a Summa article is one chunk holding many units. A plain foreign key breaks in one direction or the other, and that break is what pushes projects back to fixed-window chunking. |
+| **`chunk_units` is a join table** | Not for the reason it looks like. Packing CCC neighbours together, and splitting a long Summa article, both give *many units per chunk* with each unit in exactly one chunk — `units.chunk_id` would do. What needs the join table is one unit in *several* chunks, which is what `chunks.strategy` makes routine: `numbered-paragraph@2` populates the corpus beside `@1` and is scored over the same gold set. In the corpus as ingested today no unit is in more than one chunk; the table is bought for the comparison. |
 | **`chunk_embeddings` has no fixed dimension and no index** | pgvector needs a fixed dimension to build an index, and the dimension belongs to a model ADR-008 hasn't chosen. Fixing it in the schema would decide that question by accident. At ~9k current chunks, an exact scan takes milliseconds anyway. |
 | **Documents are demoted, not deleted** | A published answer cites a unit that was verified against a specific text. Keeping superseded documents means that citation still resolves to what was verified. The cost is that **every corpus read joins `documents` on `is_current`**. |
 | **At most one current document per (source, language)** | A partial unique index enforces it, so "which text was this verified against?" has one answer by construction. |

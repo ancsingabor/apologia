@@ -47,7 +47,8 @@ The roadmap is reconstructed from where the ADRs refer to it:
 | Ingestion CLI: fetch → parse → assert → chunk → cross-lingual → upsert → emit | `scripts/ingest/`, `lib/corpus/` | `npm run ingest -- --source=ccc --language=hu --dry-run` |
 | CCC, Hungarian: **2,865** units, 2,865 chunks | `corpus/manifest.lock.yaml` | same file, `unit_count` |
 | CCC, English: **2,865** units, 2,865 chunks | 〃 | 〃 |
-| Summa Theologiae, Latin: **23,326** units, **3,453** chunks (one chunk per article) | 〃 | 〃 |
+| Summa Theologiae, Latin: **23,326** units, **3,453** chunks | `corpus/manifest.lock.yaml` | same file, `unit_count` |
+| …over **3,179** articles: **2,951** fit one chunk, **228** split at the chunker's 6,000-character budget, the longest into **9** | the ingested corpus | the query below (needs the local stack) |
 | Gold set v0: **10 questions**, all **17** expected-unit references (14 distinct locators across 8 questions) resolve against the database | `eval/questions/` | `npm run eval:lint` (needs the local stack) |
 | Citation gate, pure and unit tested, not yet wired to anything | `lib/citation/verify.ts` | `npm test` |
 | Fail-closed rate limiter (ADR-009) | `lib/rate-limit.ts` | `npm test` |
@@ -61,6 +62,30 @@ The roadmap is reconstructed from where the ADRs refer to it:
 
 Test counts on 2026-09-14: **339** Vitest cases in 20 files, **49** pytest
 cases.
+
+How many Summa articles survive chunking whole — the lock file records chunks,
+not articles, so this is re-derived from the rows (`docker exec
+supabase_db_apologia psql -U postgres -d postgres`):
+
+```sql
+with per_article as (
+  select case when position('.' in u.locator) = 0 then u.locator
+              else left(u.locator, length(u.locator)
+                                   - position('.' in reverse(u.locator))) end as article,
+         count(distinct cu.chunk_id) as chunks
+  from units u
+  join chunk_units cu on cu.unit_id = u.id
+  join documents d on d.id = u.document_id
+  join sources s on s.id = d.source_id
+  where s.id = 'summa' and d.is_current
+  group by 1
+)
+select count(*) as articles, sum(chunks) as chunks,
+       count(*) filter (where chunks = 1) as whole,
+       count(*) filter (where chunks > 1) as split,
+       max(chunks) as worst
+from per_article;
+```
 
 ## In progress 🚧
 
@@ -117,7 +142,10 @@ The **measurement harness**, in this order, each step blocking the next:
 - **The query path.** Validate, rate limit, cache, retrieve, generate, run the
   citation gate, then persist the result as a draft. See guide chapter 06.
 - **Migration `0006`:** `topics`, `questions`, `answers`, `answer_citations`,
-  `retrieval_traces`.
+  `retrieval_traces` — and, while it is open, a `comment on table chunk_units`
+  correcting `0005`'s rationale for that table, which argues from cases a plain
+  foreign key would in fact handle (guide chapter 05). `0005` is applied, so it
+  is corrected forward, not edited.
 - **The review queue** and the public `/hu/kerdes/<slug>` pages (ADR-006,
   ADR-016).
 - **Per-request locale** via `app/[lang]/` (ADR-013). The app still renders the

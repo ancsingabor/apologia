@@ -54,9 +54,17 @@ centuries and will outlive it:
 | Source | Locator | Example |
 |---|---|---|
 | Catechism of the Catholic Church | paragraph § | `ccc:1730` |
-| Summa Theologiae | part / question / article | `summa:I.q2.a3` |
+| Summa Theologiae | part / question / article / **role** | `summa:I.q2.a3.co` |
 | Encyclicals & conciliar documents | section § | `fides-et-ratio:43` |
 | Scripture | book chapter:verse | `bible:jn:1:1-14` |
+
+The Summa's row is the one that had to be learned rather than assumed. An
+article is a *container*, so `summa:I.q2.a3` is not a unit; the units are the
+role-bearing passages inside it (`.arg1`, `.sc`, `.co`, `.ad1`), because an
+objection states what Aquinas is about to reject and an article-level address
+cannot tell that from what he teaches. ADR-002 wrote the article form as its
+example before anyone had read the text, and three gold questions carried the
+mistake for a milestone.
 
 Because those addresses exist, a citation is a **verifiable fact**, not a
 plausible-looking string. The system can check that a cited locator resolves to

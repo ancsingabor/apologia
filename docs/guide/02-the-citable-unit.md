@@ -7,8 +7,9 @@
 - Because the address is real, a citation is **a fact that can be checked**
   (does the unit exist, and was it in the model's context?). It stops being a
   string that merely looks plausible.
-- **Units are what you cite. Chunks are what you embed.** They are linked n:m,
-  so re-chunking never breaks a stored citation.
+- **Units are what you cite. Chunks are what you embed.** A chunk is a set of
+  *whole* units, joined through `chunk_units`, so re-chunking never breaks a
+  stored citation.
 - Chunking is therefore **per source**, following the source's own structure.
 - The same address in two languages is a **cross-lingual alignment key**, but
   only if both texts come from the same revision (the §2267 lesson).
@@ -28,6 +29,22 @@ exist, so we use them instead of inventing chunk IDs.
 
 ## Units vs chunks
 
+Two jobs on two clocks. A **unit** must stay valid for years — somebody checks
+it against a printed book. A **chunk** is a tuning parameter you expect to move
+repeatedly. Fuse them and every tuning experiment invalidates every citation
+already published. Two rules keep them composable:
+
+- **A chunk is a set of *whole* units.** Boundaries fall on unit boundaries,
+  and even a passage far over the chunker's budget is never cut in half:
+  "splitting mid passage would cut a citable unit across two chunks, and a unit
+  is the atom" (`lib/corpus/chunk.ts`).
+- **A chunk may carry text no unit contains.** `scholastic-article@1` writes
+  the article's address and a label per passage — `[Obiectio 2]`, `[Sed
+  contra]`, `[Respondeo]` — into the chunk, because the role has to be *in what
+  the embedding model reads*. Those labels are forbidden in `units.text`, which
+  is byte-compared by the quotation gate
+  ([ADR-017](../adr/017-quotation-as-verified-invariant.md)).
+
 ```mermaid
 flowchart LR
   subgraph CCC["Catechism: numbered-paragraph@1"]
@@ -35,7 +52,7 @@ flowchart LR
     u2["unit ccc:1731"] --- c2["chunk"]
   end
   subgraph SUMMA["Summa: scholastic-article@1"]
-    a1["unit summa:I.q2.a3.arg1<br/>(objection)"] --- c3["one chunk<br/>= the whole article"]
+    a1["unit summa:I.q2.a3.arg1<br/>(objection)"] --- c3["one chunk<br/>= the article, labelled<br/>(split if over budget)"]
     a2["unit …a3.sc<br/>(sed contra)"] --- c3
     a3["unit …a3.co<br/>(respondeo)"] --- c3
     a4["unit …a3.ad1<br/>(reply)"] --- c3
@@ -45,9 +62,14 @@ flowchart LR
 - **Catechism: one unit per chunk.** This is the baseline. Packing short
   neighbours together would probably help retrieval, but that is a tuning
   change, and tuning changes need an eval diff.
-- **Summa: one chunk per article, several units per chunk.** An article's
-  objections, *sed contra*, *respondeo* and replies only make sense together, so
-  they are embedded together. Each one is still cited separately.
+- **Summa: one chunk per article — usually.** An article's objections, *sed
+  contra*, *respondeo* and replies only make sense together, so they are
+  embedded together, and each is still cited separately. Articles are not
+  uniform, though: the ones over a character budget split into consecutive
+  labelled chunks, and a split article is the one case where a chunk is *not*
+  self-contained, because the *respondeo* did not travel with every objection.
+  How many split is a property of the corpus, so it is in
+  [status.md](status.md).
 - **The unit carries a `role`.** An objection states what Aquinas is about to
   *reject*. Citing `summa:I.q2.a3` (the whole article) couldn't tell "he teaches
   X" from "he rejects X". Citing `…arg1` can. That is why Summa locators are
@@ -58,7 +80,7 @@ flowchart LR
 | Consequence | Where it lands |
 |---|---|
 | Parsers are per source, and they must get the numbering *exactly* right | [chapter 04: ingestion](04-ingestion.md) |
-| `chunk_units` is an n:m table, not a foreign key | [chapter 05: data model](05-data-model.md) |
+| `chunk_units` is a join table, so the same unit can sit in chunks built by two strategies at once | [chapter 05: data model](05-data-model.md) |
 | The citation gate can be a pure function | [chapter 06: query path](06-query-path.md) |
 | The gold set names expected **units**, and metrics score sets of units per retrieved chunk | [chapter 07: measurement](07-measurement.md) |
 
@@ -96,6 +118,17 @@ fetching ([ADR-019](../adr/019-ccc-editions.md)).
 
 Citations point at units, and chunks only reference units through `chunk_units`.
 A new chunking strategy produces new chunks linked to the same unit rows.
+</details>
+
+<details><summary>Why a join table, when today every unit is in exactly one chunk?</summary>
+
+Because the *versions* are the point. `chunks.strategy` is plain text, so
+`numbered-paragraph@2` can populate the corpus beside `@1` and be scored over
+the same gold set — at which point one unit belongs to one chunk *per strategy*,
+which no foreign key expresses. In the corpus as ingested today no unit is in
+more than one chunk, so `chunk_units` is a many-to-one relation being stored in
+a table that can do more. That is the capability being bought, and it is the
+same trick `chunk_embeddings` plays with its `(chunk, model)` key.
 </details>
 
 <details><summary>Why is `summa:I.q2.a3` not a valid unit locator?</summary>
