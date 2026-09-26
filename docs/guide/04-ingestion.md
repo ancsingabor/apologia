@@ -85,23 +85,27 @@ sequenceDiagram
   CLI->>DB: 6b. promote new one (is_current=true, unit_count=N)
 ```
 
-**Nothing finished is ever deleted.** The one `delete` in the file is step 1,
-and it matches only `is_current=false AND unit_count=0` — the state step 4
-creates and step 6 clears, so no completed run can wear it. That is a crash
-signature, not a cleanup: a document that has units is never a candidate. So
-the table grows, on purpose, and a published citation keeps resolving to the
-exact text it was verified against.
+**Nothing finished is deleted — and not because old editions are useful.** They
+are never read: only the current document is retrieved, embedded or shown. The
+superseded row is kept because the gate compares a published answer's quotation
+byte-for-byte against `units.text`. Overwrite that text when a source changes
+and every answer already published becomes unverifiable — possibly false — with
+nothing failing to announce it
+([ADR-017](../adr/017-quotation-as-verified-invariant.md)). Staying up to date
+is the *new* row's job. Keeping the old one is a different guarantee, and a
+full copy of `units` per ingest is its price.
 
-**Exactly one document per (source, language) is current.** A partial unique
-index makes a second one unrepresentable, which is why 6a must precede 6b —
-and it makes "which text was this citation verified against?" answerable by
-construction.
+The only `delete` is step 1, matching `is_current=false AND unit_count=0` — the
+state step 4 creates and step 6 clears, so no completed run can wear it. A
+crash signature, not a cleanup.
 
-**But nothing stops a query reading a superseded one.** `is_current` is a
-filter every read has to remember, not a view or a policy. Forget it and the
-query does not error and does not look wrong; it silently returns every edition
-the corpus has ever had. `harness/apologia_eval/db.py` repeats the join on each
-statement rather than hiding it behind a helper, for exactly that reason.
+**Exactly one document per (source, language) is current**, enforced by a
+partial unique index, which is why 6a must precede 6b. **But nothing stops a
+query reading a superseded one.** `is_current` is a filter every read must
+remember, not a view or a policy; forget it and the query does not error and
+does not look wrong — it silently returns every edition the corpus has ever
+had. `harness/apologia_eval/db.py` repeats the join on every statement rather
+than hiding it behind a helper, for exactly that reason.
 
 ## Where this lives in code
 
@@ -163,4 +167,14 @@ the source site says today.
 
 What that costs: `units` grows by a full copy per ingest, and any query that
 forgets `is_current` reads all three at once.
+</details>
+
+<details><summary>Does the hash check stop a text that was ingested and later superseded from coming back a second time?</summary>
+
+No. Step 3 compares the new hash against the **current** document only. Ingest
+A, then B, then A again, and the third run compares A against B, finds them
+different, and inserts a second row carrying A's content — so `documents` is a
+log of what each run produced, not a set of distinct texts. Nothing has hit
+this (every row carries a distinct hash) and no test covers it; it is read from
+step 3, and it would matter the day a bad edition has to be rolled back.
 </details>
