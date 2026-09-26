@@ -56,7 +56,8 @@ Two rules shape the product.
 | — | [status.md](status.md) | What exists today, what's next, what's blocked | 3 |
 | 01 | [What and why](01-what-and-why.md) | What problem, for whom, and what it deliberately is not | 3 |
 | 02 | [The citable unit](02-the-citable-unit.md) | The one idea everything follows from | 3 |
-| 03 | [System map](03-system-map.md) | The boxes, the arrows, and which file is which box | 4 |
+| 03 | [System map](03-system-map.md) | The boxes and the arrows: who talks to what, and what runs where | 4 |
+| — | [Code map](code-map.md) | Which folder is which box, and what to read first inside it | 3 |
 | 04 | [Ingestion](04-ingestion.md) ✅ | How a web page becomes verified citable units | 4 |
 | 05 | [Data model](05-data-model.md) | The tables, and the four choices worth defending | 3 |
 | 06 | [Query path](06-query-path.md) 📐 | One question end to end, and the citation gate | 4 |

@@ -51,6 +51,19 @@ Guide pages follow one shape: TL;DR (≤ 5 bullets) · ≤ ~150 lines · ≤ 2
 diagrams · "Where this lives in code" · "Go deeper" · "Check yourself" with
 answers in `<details>`.
 
+**The line budget counts prose, not fenced blocks.** It is a proxy for reading
+time, and 40 lines of Mermaid source is about ten seconds of it — so counting
+them made the budget punish the diagrams the same sentence asks for. Chapter 03
+hit the rule at 200 lines with 68 of them Mermaid; the real problem was that it
+was doing two jobs, which is why the code map became its own page. Measure it:
+
+~~~bash
+awk '!/^```/ && !f; /^```/{f=!f}' docs/guide/03-system-map.md | wc -l
+~~~
+
+The fix for a page that is genuinely too long is still to split it, never to
+thin the prose until it fits.
+
 ## Stack
 
 **TypeScript** — everything that ships: Next.js 16.2 (App Router; middleware is

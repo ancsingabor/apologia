@@ -20,7 +20,7 @@ at [the guide](../guide/README.md).
 | [005](005-verify-then-display.md) | Verify citations before display; no streaming in v1 | Accepted |
 | [006](006-draft-review-publish.md) | Answers are drafts until a human publishes them | Accepted |
 | 007 | Cross-lingual retrieval strategy | Deferred — constrained by [014](014-translation-and-quotation.md), decided by measurement |
-| 008 | Provider boundary (embeddings + generation) | Deferred — Milestone 1 |
+| 008 | Embedding model and provider | Deferred — Milestone 1, decided by the bake-off |
 | [009](009-fail-closed-rate-limiting.md) | Cost and abuse containment; the limiter fails closed | Accepted |
 | [010](010-authority-tiers.md) | Authority tiers as first-class metadata | Accepted |
 | [011](011-semantic-layer-preregistration.md) | Pre-registration of the semantic-layer experiment | Accepted |
@@ -42,3 +42,12 @@ model cards, before the gold set can measure it on Hungarian queries over a
 mixed-language corpus, would be choosing on marketing copy. They get written
 when there is a number behind them. [023](023-python-at-the-measurement-boundary.md)
 builds the harness that produces it.
+
+**008 covers embeddings only.** It used to be titled "provider boundary
+(embeddings + generation)", which promised a decision the bake-off cannot
+deliver: the harness embeds chunks and scores retrieval, and measures no
+generation model at any point. Meanwhile Claude is already assumed by
+`.env.example`, `CLAUDE.md`, guide 06 and guide 08. So the generation provider
+is *chosen, not measured*, and it has no ADR — which `docs/guide/status.md`
+lists as owed. Leaving it inside 008 meant a deferral nothing was going to
+lift.
