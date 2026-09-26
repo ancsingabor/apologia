@@ -28,10 +28,11 @@ flowchart TB
 
   sources[("Source sites<br/>katolikus.hu · vatican.va<br/>corpusthomisticum.org")]
   claude["Claude API<br/>answer generation"]
-  embed["Embedding model<br/><i>? chosen by ADR-008</i>"]
+  embed["Embedding model<br/><i>? ADR-008, by measurement</i>"]
 
-  reader -.->|question / published answer| apologia
-  reviewer -->|reviews| apologia
+  reader -.->|submits a question| apologia
+  apologia -.->|serves a published page| reader
+  reviewer -->|reviews the queue| apologia
   operator -->|runs CLI + harness| apologia
   apologia -->|fetch, operator-run| sources
   apologia -.->|generate| claude
@@ -41,8 +42,27 @@ flowchart TB
   class claude,embed planned
 ```
 
-The reader's arrow is dashed because nobody can ask a question yet. The reviewer
-can log in to the admin dashboard today, but there are no drafts to review.
+**The reader has two arrows because asking and reading are not one exchange.**
+Submitting a question returns no answer: it drafts one for a human to review,
+and the reader sees it only once somebody publishes it. `architecture.md` puts
+it as **a write path anyone can trigger and nobody can read, and a read path
+anyone can read and nobody can trigger.** One round-trip arrow would promise
+the request/response shape this design refuses. (A question matching an
+already-published answer is served at once — that is the cache, and it is a
+*cost* control.)
+
+**Dashes and `?` mean different things.** Dashed is *not built*: nobody can ask
+a question, so nothing generates or embeds. `?` is stronger — the embedding
+model is **undecided**, and ADR-008 waits on a number from the bake-off. Claude
+carries no `?` because generation is settled, though by assumption rather than
+measurement, which [status.md](status.md) records as an ADR still owed.
+
+The reviewer can log in to the admin dashboard today, but there are no drafts
+to review. The operator's is the only solid arrow from a person, because both
+its tools run now: the **CLI** fetches a source and writes units and chunks to
+Postgres; the **harness** scores retrieval — it embeds every chunk with a
+candidate model, asks the gold set's questions, and reports whether the
+expected units came back. Neither ever runs in a request.
 
 ## Level 2: containers
 

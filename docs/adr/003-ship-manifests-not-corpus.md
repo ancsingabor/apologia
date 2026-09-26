@@ -160,3 +160,28 @@ project resolves licensing per artefact rather than by general impression.
 
 Carried into [ADR-023](023-python-at-the-measurement-boundary.md), which
 introduces the bake-off.
+
+### Extended — 2026-09-26: it is not a question about embedding only
+
+Everything above is written about the embedding pass, because that is what
+prompted it. The scope is too narrow, and the narrowness is the dangerous part:
+**the generation call transmits corpus text too.** Composing a prompt means
+putting the retrieved units — the actual LEV-copyright sentences, not a
+vectorising pass over them — into a request to Anthropic. That happens in
+production, on every novel question, for as long as the system runs, where the
+embedding pass at issue above is an offline pass an operator chooses to make.
+
+This does not change the answer, and it may well be the easier half: the volume
+is a handful of units per request rather than the whole corpus, and zero-retention
+terms are a checkable fact here exactly as they are for an embedding provider.
+It changes the *stakes*. The reasoning above concluded that ruling out
+transmission would exclude hosted models from production, "because a model that
+cannot embed the corpus cannot be the model that embeds the question either."
+The same sentence applies one layer up, and harder: a generator that may not be
+sent the corpus cannot ground an answer in it, and there is no local fallback
+anywhere in the design. An answer of "not permitted" would not narrow the
+bake-off; it would invalidate the query path.
+
+Found while reviewing guide chapter 03, whose context diagram drew the Claude
+API as a settled choice and the embedding model as an open one — true of the
+*model*, but the licence exposure is the same act in both boxes.
