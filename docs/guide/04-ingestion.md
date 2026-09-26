@@ -11,9 +11,9 @@
 - **`assert` is the heart of it.** Real web editions contain typesetting
   errors. The rules stay strict, and every *known* defect is declared in
   `corpus/errata/`. An **undeclared** defect stops the run.
-- **The upsert has no transactions**, because PostgREST offers none. Ordering
-  does the job instead: build the new document invisibly, then demote the old
-  one and promote the new one.
+- **The `upsert` stage never updates a document** — it inserts a new one
+  invisibly, then demotes the old and promotes the new. PostgREST offers no
+  transactions, so ordering does that job. Superseded documents are kept.
 - It is **idempotent** (same text, same hash, nothing written), **cached**
   (pages are fetched once) and **resumable** (a crashed run leaves a recognisable
   residue that the next run sweeps).
@@ -62,25 +62,46 @@ unit's text is purely its own text.
 
 ## Upsert without transactions
 
+**"Upsert" means insert-or-update:** write this row, and if one with the same
+key is already there, update that instead of failing. It is one PostgREST call,
+and the pipeline makes exactly one of them — on the `sources` row, step 2
+below, because the manifest is the truth and that table is its projection.
+
+**The document path is not an upsert, despite the stage's name.** It never
+updates a document row in place. It inserts a *new* one and then changes which
+one counts as current. The stage is named after its smallest operation, which
+is the main reason this step reads as confusing.
+
 ```mermaid
 sequenceDiagram
   participant CLI as upsert.ts
   participant DB as Postgres (PostgREST)
-  CLI->>DB: 1. sweep: delete docs where is_current=false AND unit_count=0
-  CLI->>DB: 2. upsert the source row
+  CLI->>DB: 1. sweep: delete only crash residue (is_current=false, unit_count=0)
+  CLI->>DB: 2. upsert the source row (insert-or-update)
   CLI->>DB: 3. current doc has this hash? → stop, "unchanged"
-  CLI->>DB: 4. insert new document (is_current=false, unit_count=0)
+  CLI->>DB: 4. insert a NEW document (is_current=false, unit_count=0)
   CLI->>DB: 5. insert units, chunks, chunk_units (batched)
   CLI->>DB: 6a. demote old current document
   CLI->>DB: 6b. promote new one (is_current=true, unit_count=N)
 ```
 
-A crash in steps 4–5 leaves `is_current=false, unit_count=0`, a state that no
-successful run can produce, so step 1 can safely delete it. Readers only ever
-see documents where `is_current = true`. A partial unique index makes two
-current documents per (source, language) impossible, which is why 6a has to
-come before 6b. **Old documents are demoted, never deleted**, so a published
-citation keeps resolving to the exact text it was verified against.
+**Nothing finished is ever deleted.** The one `delete` in the file is step 1,
+and it matches only `is_current=false AND unit_count=0` — the state step 4
+creates and step 6 clears, so no completed run can wear it. That is a crash
+signature, not a cleanup: a document that has units is never a candidate. So
+the table grows, on purpose, and a published citation keeps resolving to the
+exact text it was verified against.
+
+**Exactly one document per (source, language) is current.** A partial unique
+index makes a second one unrepresentable, which is why 6a must precede 6b —
+and it makes "which text was this citation verified against?" answerable by
+construction.
+
+**But nothing stops a query reading a superseded one.** `is_current` is a
+filter every read has to remember, not a view or a policy. Forget it and the
+query does not error and does not look wrong; it silently returns every edition
+the corpus has ever had. `harness/apologia_eval/db.py` repeats the join on each
+statement rather than hiding it behind a helper, for exactly that reason.
 
 ## Where this lives in code
 
@@ -127,5 +148,19 @@ Only "strictly increasing" catches it, because 210 appears twice.
 
 It builds the new document while it is invisible (`is_current=false`), then
 demotes the old one and promotes the new one. A crash leaves a signature that
-the next run sweeps, and readers never see a partial document.
+the next run sweeps, and no reader filtering on `is_current` sees a partial
+document.
+</details>
+
+<details><summary>I ingested one source three times and now `documents` has three rows for it. Bug?</summary>
+
+No — that is the design, as long as the three texts differ. Re-running with
+*identical* text stops at step 3 and writes nothing, so three rows means three
+different content hashes: three editions of that document, of which one is
+current and two are history. They are kept because a citation published against
+the second must keep resolving to the text that was verified, not to whatever
+the source site says today.
+
+What that costs: `units` grows by a full copy per ingest, and any query that
+forgets `is_current` reads all three at once.
 </details>
