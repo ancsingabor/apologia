@@ -98,3 +98,30 @@ and presenting it as one would be a mistake.
 ours, not the tradition's, so it carries none of the stability guarantees. Those
 units are flagged, and citation display must not imply an authority the locator
 does not have.
+
+## Amendment — 2026-09-26: the Summa example above is wrong
+
+Status of this amendment: **Accepted**. The Decision's example block lists
+
+```
+summa:I.q2.a3           Summa Theologiae, Part I, Question 2, Article 3
+```
+
+as a citable unit. It is not one. An **article is a container**; the units are
+the role-bearing passages inside it — `summa:I.q2.a3.arg1`, `.sc`, `.co`,
+`.ad1`, `.adarg` — and `summa:I.q2.a3` is not a row in `units` at all. It is
+what `scholastic-article@1` produces as a *chunk*.
+
+The reason is this ADR's own: an objection states a position Aquinas is about
+to **reject**, so an article-level address cannot distinguish "he teaches X"
+from "he rejects X", and the verification this ADR buys would pass on a
+citation that inverts the author's meaning. The leaf scheme makes the gold set
+sharper, not merely different.
+
+This was written in Milestone 0, before anyone had parsed the text. Three gold
+questions inherited it and were corrected in PR #11; `corpus/sources.yaml`
+records the real scheme as
+`summa:<part>.q<question>.a<article>.<role><n>`. The block is left standing
+because it is accurate history — it is *why* the gold set was wrong for a
+milestone — and `docs/guide/11-questions-a-reviewer-asks.md` keeps the lesson:
+do not write example locators before reading the text.
