@@ -130,10 +130,11 @@ The **measurement harness**, in this order, each step blocking the next:
 3. `harness/score.py` scores against the gold set, with bootstrap confidence
    intervals, because n is small — and reports, per slice, the sample size that
    *would* separate the top two candidates.
-4. **ADR-008**, the embedding and generation provider, is then written from
-   the numbers — or deferred again, with the required n recorded here. A run
-   that does not separate the candidates has succeeded; a point estimate that
-   looks decisive at this n would not have.
+4. **ADR-008**, the embedding model and provider, is then written from the
+   numbers — or deferred again, with the required n recorded here. A run that
+   does not separate the candidates has succeeded; a point estimate that looks
+   decisive at this n would not have. (ADR-008 covers embeddings only; the
+   generation provider is a separate ADR still owed, under Planned below.)
 
 `npm run eval` is not a script yet.
 
