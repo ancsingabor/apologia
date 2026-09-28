@@ -137,7 +137,7 @@ source manifest (checked in)
   → chunk          per-strategy, aligned to unit boundaries
   → hash           over the normalised units, not the fetched HTML
   → cross-lingual  a sibling language's locators must match, before any write
-  → upsert         write-or-replace (update + insert); idempotent, resumable
+  → upsert         insert a new version, then switch which is current; resumable
   → emit           corpus manifest + hashes, committed
 
   embed            ✗ not a stage here, deliberately — see below
@@ -154,9 +154,12 @@ that has been re-themed but not re-worded produces the same hash and the run
 stops at "unchanged". A single relabelled paragraph produces a different one.
 
 Three of those stage names are opaque unless you already know them, so plainly:
-**upsert** is `update` + `insert` — write the document without adding a second
-copy of one that is already there. It does *not* mean overwrite, and what it
-does instead is worth its own paragraph, below. **assert** is the check that
+**upsert** is the database word for *insert-or-update*: write this row, and if
+one with the same key is already there, update that instead of failing. Here
+only the `sources` row is written that way. A **document** never is — an
+unchanged one is skipped on its hash, and a changed one is inserted as a new
+version and swapped in. So the stage is named after the smaller of the two
+things it does, and the larger one is worth its own paragraph, below. **assert** is the check that
 the parse is complete and correctly numbered; it is not a list of accepted
 defects, which is a separate file it reads. **emit** writes an artefact:
 `corpus/manifest.lock.yaml`, committed, carrying locators, hashes, counts and
