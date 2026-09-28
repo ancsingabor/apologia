@@ -30,10 +30,13 @@ flowchart LR
   db[("current chunks<br/>is_current = true")] --> bake
 
   subgraph harness["harness/ (Python)"]
+    pre["preflight.py ✅<br/>can this candidate<br/>be served at all?"]
     bake["bakeoff.py 📐<br/>embed every chunk<br/>once per candidate"]
     score["score.py 📐<br/>recall@k · full-recall@k · MRR<br/>+ bootstrap CIs"]
-    lib["gold.py ✅ · metrics.py ✅<br/>hashing.py ✅ · db.py ✅"]
+    lib["gold.py ✅ · metrics.py ✅ · db.py ✅<br/>hashing.py ✅ · candidates.py ✅"]
   end
+
+  pre -->|admits a candidate| bake
 
   bake -.->|"(chunk, model) rows"| emb[("chunk_embeddings")]
   emb -.-> score
@@ -77,8 +80,10 @@ seven hits and would inflate every score (`harness/apologia_eval/metrics.py`).
 
 Every report records the **corpus hash**, the embedding model, the generation
 model and the prompt version. For the bake-off it also records **max sequence
-length and a truncation count** per candidate. About 80% of Summa chunks exceed
-2,048 characters, against about 0% of Catechism chunks, so a 512-token model
+length and a truncation count** per candidate. Measured on 2026-09-10
+([ADR-023](../adr/023-python-at-the-measurement-boundary.md)): about 80% of
+Summa chunks exceed 2,048 characters against about 0% of Catechism chunks, so
+a 512-token model
 truncates most of the Summa, and comparing it with an 8k-token model would
 mostly measure window size.
 
@@ -87,12 +92,19 @@ byte-for-byte in Python** (`hashing.py`), and a test pins the two together.
 
 ## The honest outcome table (from ADR-023, written before the result)
 
+**What is open here is only which row the numbers select.** Every branch is
+already decided, and so is the machinery each one needs: ADR-023 is accepted,
+the query-embedding service's shape is settled, and Vercel's Python runtime is
+a checked fact. Writing the interpretations down *before* the result is the
+point — it is what stops "local won" being reported when a licence, not a
+score, made the choice.
+
 | If… | Then |
 |---|---|
 | an open-weights model wins **and can be served** | the Python query-embedding service runs it |
 | a hosted API wins and its licence permits sending the corpus | a thin API call; Python was only needed offline |
 | a hosted API wins but the licence forbids it | a local model is used, and ADR-008 must say *"X scored highest; Y is chosen because X is not licensable"*, not that local won on merit |
-| an open-weights model wins but **cannot be served** | there is no query path with it at all. Added 2026-09-15 — the row the table did not have |
+| ~~an open-weights model wins but **cannot be served**~~ | **prevented, not awaited.** Added 2026-09-15 as the row the table did not have — and then designed out, because a candidate with no serving route is admitted to nothing. `Serving.NONE` in `candidates.py` exists to record such a model rather than silently drop it |
 
 That last row is why servability is measured **before** a candidate competes,
 not after. Retrieval lives in one embedding space, so the model that embedded
@@ -108,15 +120,21 @@ has to be measured.
 
 ## Where this lives in code
 
-| File | What | State |
-|---|---|---|
-| `eval/questions/q-*.yaml` | the gold set | ✅ v0 (10) |
-| `scripts/eval-lint.ts` | every expected locator exists in the DB | ✅ |
-| `harness/apologia_eval/gold.py` | reads and validates the gold set (pydantic) | ✅ |
-| `harness/apologia_eval/metrics.py` | the three retrieval metrics, hand-verified tests | ✅ |
-| `harness/apologia_eval/hashing.py` | corpus-hash port, pinned to TS output | ✅ |
-| `harness/apologia_eval/db.py` | reads current chunks, writes vectors, cosine search | ✅ |
-| `bakeoff.py`, `score.py` | embed, score | 📐 |
+| File | What |
+|---|---|
+| `eval/questions/q-*.yaml` | the gold set |
+| `eval/reports/` | where a run's output lands; `preflight.json` is the first |
+| `scripts/eval-lint.ts` | every expected locator exists in the DB |
+| `harness/apologia_eval/gold.py` | reads and validates the gold set (pydantic) |
+| `harness/apologia_eval/metrics.py` | the three retrieval metrics, hand-verified tests |
+| `harness/apologia_eval/hashing.py` | corpus-hash port, pinned to TS output |
+| `harness/apologia_eval/db.py` | reads current chunks, writes vectors, cosine search |
+| `harness/apologia_eval/candidates.py` | the slate: each model's id, pretraining family, prefix convention and `Serving` |
+| `harness/apologia_eval/preflight.py` | `npm run eval:preflight` — export, size, and rank agreement |
+| `bakeoff.py`, `score.py` | not written yet |
+
+How far each has got is [status.md](status.md); the diagram above marks what
+does not exist.
 
 ## Go deeper
 
