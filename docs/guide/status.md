@@ -155,6 +155,14 @@ The **measurement harness**, in this order, each step blocking the next:
   template's landing page and admin dashboard.
 - **A query-time embedding service**, only if an open-weights model wins the
   bake-off (ADR-023).
+- **Finish the Supabase API-key rename, before the end of 2026.** Supabase
+  replaced the legacy `anon` and `service_role` keys with publishable
+  (`sb_publishable_…`) and secret (`sb_secret_…`) keys, which rotate
+  independently; **the legacy pair stops working at the end of 2026.** The
+  public half is already renamed. `SUPABASE_SERVICE_ROLE_KEY` is not, although
+  `scripts/e2e.sh` and CI already fill it from `SECRET_KEY` — so the name is
+  behind the value. Renaming it touches `.env.example`, `lib/supabase/`, both
+  runner scripts, CI and the Vercel project env.
 - **An ADR for the generation provider.** Claude is assumed by `.env.example`,
   `CLAUDE.md`, guide 06 and guide 08, but was never compared against anything
   and has no ADR. It used to sit inside ADR-008, which the bake-off cannot

@@ -144,8 +144,6 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=${SECRET_KEY:-${SERVICE_ROLE_KEY:-}}"
             echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"
             echo "E2E_BASE_URL=http://localhost:3000"
-            echo "RESEND_API_KEY=e2e-dummy"
-            echo "CRON_SECRET=e2e-dummy"
           } >> "$GITHUB_ENV"
 
       # Ordered before the build: these need the stack that is already up, and
