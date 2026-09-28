@@ -8,8 +8,9 @@
 - **Chunks are separate from units** and joined through `chunk_units`, so two
   chunking strategies can coexist over one corpus. Embeddings are keyed by
   **(chunk, model)**, so several candidate models can too.
-- **Superseded documents are kept, not deleted.** Every read must filter
-  `documents.is_current = true`.
+- **Superseded documents are kept, not deleted** — so a citation published
+  against an older text still resolves to the text it was verified against.
+  The cost: every read must filter `documents.is_current = true`.
 - **The corpus tables have no grants to `anon` or `authenticated`**, on purpose.
   Restricted magisterial text must never reach a browser.
 - The answer-side tables (`answers`, `questions`, …) are 📐 planned in
@@ -77,7 +78,7 @@ and `rate_limit_log` (hashed IPs for the fail-closed limiter).
 | Choice | Why |
 |---|---|
 | **`chunk_units` is a join table** | Not for the reason it looks like. Packing CCC neighbours together, and splitting a long Summa article, both give *many units per chunk* with each unit in exactly one chunk — `units.chunk_id` would do. What needs the join table is one unit in *several* chunks, which is what `chunks.strategy` makes routine: `numbered-paragraph@2` populates the corpus beside `@1` and is scored over the same gold set. In the corpus as ingested today no unit is in more than one chunk; the table is bought for the comparison. |
-| **`chunk_embeddings` has no fixed dimension and no index** | pgvector needs a fixed dimension to build an index, and the dimension belongs to a model ADR-008 hasn't chosen. Fixing it in the schema would decide that question by accident. At ~9k current chunks, an exact scan takes milliseconds anyway. |
+| **`chunk_embeddings` has no fixed dimension and no index** | pgvector needs a fixed dimension to build an index, and the dimension belongs to a model ADR-008 hasn't chosen. Fixing it in the schema would decide that question by accident. At ~9k current chunks, an exact scan takes milliseconds anyway. The dimensioned column and its index land in the migration that accompanies ADR-008. |
 | **Documents are demoted, not deleted** | A published answer cites a unit that was verified against a specific text. Keeping superseded documents means that citation still resolves to what was verified. The cost is that **every corpus read joins `documents` on `is_current`**. |
 | **At most one current document per (source, language)** | A partial unique index enforces it, so "which text was this verified against?" has one answer by construction. |
 

@@ -25,7 +25,8 @@ export interface AdminUser {
  * the model never saw it.
  */
 export interface ContextUnit {
-  /** Canonical address: 'ccc:309', 'summa:I.q2.a3'. */
+  /** Canonical address of a UNIT: 'ccc:309', 'summa:I.q2.a3.co'. An article
+   *  ('summa:I.q2.a3') is a chunk, not a unit, and never appears here. */
   locator: string;
   language: CorpusLanguage;
   /** Verbatim unit text, exactly as ingested. The comparison is byte-exact. */

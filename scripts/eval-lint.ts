@@ -21,9 +21,15 @@ import { connect } from "./ingest/client";
  *
  * ── The distinction that makes it runnable today ────────────────────────────
  *
- * The gold set names sources the corpus does not have yet: `summa:I.q2.a3`,
- * `humani-generis:36`. Failing on those would make this command useless until
- * the whole corpus exists, and a check nobody can run is a check nobody runs.
+ * The gold set may name a source the corpus does not have yet — `kjv` sits in
+ * `sources.yaml` with no `documents:` block, which is a legitimate state.
+ * Failing on those would make this command useless until the whole corpus
+ * exists, and a check nobody can run is a check nobody runs.
+ *
+ * (Nothing is pending today: every gold-set locator names `ccc` or `summa`,
+ * and both are ingested. The branch below is still the right shape — it is what
+ * lets a question be written against a source before that source is fetched —
+ * but nothing exercises it, so do not read a green run as proof it works.)
  *
  * So a locator is judged against whether its SOURCE is ingested:
  *
