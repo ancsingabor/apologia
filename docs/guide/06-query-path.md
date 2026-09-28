@@ -48,24 +48,66 @@ sequenceDiagram
   API-->>R: received. Answered once a reviewer publishes it
 ```
 
+**What a question costs.** Two paid calls, in this order: one to *embed the
+question*, one to *generate the answer*. Both sit after the limiter and after
+the cache, so a repeated question costs neither — that is what makes `cache` a
+cost control rather than a latency trick. The model is called **once**: it
+returns the whole segmented answer in one response, because there is no chat
+and no agent loop. If an open-weights model wins ADR-008 the embedding becomes
+our own compute rather than a bill, but it is still work an attacker can make
+us do.
+
+## What comes back
+
+```json
+{
+  "language": "hu",
+  "segments": [
+    { "kind": "claim",
+      "text": "A Katekizmus szerint Isten gondot visel minden teremtményére.",
+      "citations": ["ccc:309"] },
+    { "kind": "connective",
+      "text": "A kérdés éppen ezért éles:" },
+    { "kind": "quotation",
+      "locator": "ccc:309",
+      "text": "miért van mégis a rossz?" }
+  ]
+}
+```
+
+- **`claim`** — an assertion the reader is asked to believe. It must carry at
+  least one citation, and every citation must name a unit that was in the
+  context.
+- **`connective`** — glue. Asserts nothing, so it needs no citation. Whether a
+  sentence is really glue is the model's judgement, which is the one soft spot
+  in an otherwise deterministic gate.
+- **`quotation`** — a locator plus a span, compared byte for byte against that
+  unit's stored text. Never translated ([ADR-014](../adr/014-translation-and-quotation.md)).
+
+> ⚠️ The Hungarian above is invented, exactly as the gate's own fixtures are.
+> The repo ships no corpus text ([ADR-003](../adr/003-ship-manifests-not-corpus.md)),
+> and an example using the real wording would be an example that shipped it.
+
 ## The gate, rule by rule
 
 | Rule | Violation | Outcome |
 |---|---|---|
-| A cited locator must be **in the supplied context**, not merely in the corpus | `citation_not_in_context` | citation dropped |
+| A cited locator must be **in the supplied context**, not merely in the corpus | `citation_not_in_context` | that citation dropped |
 | Every `claim` must keep **≥ 1 citation** after drops | `claim_without_citation` | **answer fails** |
-| A quotation must appear **verbatim** in its unit's text | `quotation_not_exact` | **answer fails** (fabrication) |
-| Quotations must stay proportionate (length and ratios) and be attributed | `quotation_too_long`, `…_ratio`, `…_missing_attribution` | per ADR-017 |
+| A quotation's locator must be in the context too | `quotation_unknown_locator` | **answer fails** |
+| The span must appear **byte for byte** in its unit | `quotation_not_exact` | **answer fails** |
+| Quotations stay proportionate and name their source | `quotation_too_long`, `…_exceeds_unit_ratio`, `…_exceeds_answer_ratio`, `…_missing_attribution` | that quotation dropped |
 
-Two things matter when you reason about the gate:
+**Fabrication is fatal; disproportion is repaired.** A span the source never
+wrote cannot be fixed by deleting it — it means the model invented text, and
+nothing else it said is trustworthy either. A quotation that is merely too long
+*can* be dropped, because "the answer's own prose carries the claim regardless"
+(`verify.ts`). That asymmetry is the whole design of `repaired`.
 
-1. **The context is the whole universe.** A real locator that the model wasn't
-   shown counts as fabricated. The model can't have been reading it, and a
-   database lookup would turn a lucky guess into a pass.
-2. **The comparison is deliberately unforgiving.** A curly apostrophe against a
-   straight one fails. Normalisation happens once, at ingestion, and never in
-   the gate. A lenient comparison could be talked into accepting a quotation
-   the source never wrote.
+**The comparison is deliberately unforgiving.** A curly apostrophe against a
+straight one fails. All normalisation happens once, at ingestion, and never in
+the gate — a lenient comparison is one that can be talked into accepting a
+quotation the source never wrote.
 
 ## Draft to published
 
@@ -83,7 +125,10 @@ enforce that ([chapter 05](05-data-model.md)). Every automated check here
 establishes that an answer is *grounded*, and only a reviewer can judge whether
 it is *right*. The side effects are large:
 
-- there is no anonymous LLM endpoint to abuse
+- there is no anonymous LLM endpoint to abuse — nobody can use this as a free
+  proxy, because the caller never sees the text. That removes the abuse of
+  *consuming* output and does nothing about the cost of *producing* it, which
+  is why the limiter is still load-bearing
 - published answers are static, cacheable and indexable
 - reviewed Q&A pairs accumulate as evaluation data
 
@@ -101,13 +146,16 @@ translated quote cannot match its unit
 
 ## Where this lives in code
 
-| Part | File | State |
-|---|---|---|
-| Citation gate | `lib/citation/verify.ts` (+ `verify.test.ts`) | ✅ built, unwired |
-| Quotation limits | `lib/citation/limits.ts` | ✅ |
-| Segment and result types | `types/domain.ts` (`AnswerSegment`, `VerificationResult`) | ✅ |
-| Rate limiter + budget constants | `lib/rate-limit.ts`, `lib/constants.ts` | ✅ unwired |
-| Route handler, prompt, persistence, review UI | — | 📐 |
+| Part | File |
+|---|---|
+| Citation gate | `lib/citation/verify.ts` (+ `verify.test.ts`, where the fixtures above come from) |
+| Quotation limits, and the legal judgement behind the numbers | `lib/citation/limits.ts` |
+| Segment and result types | `types/domain.ts` (`AnswerSegment`, `VerificationResult`) |
+| Rate limiter + budget constants | `lib/rate-limit.ts`, `lib/constants.ts` |
+| Route handler, prompt, persistence, review UI | not written yet |
+
+Which of these exist today is the banner at the top of this chapter, and
+[status.md](status.md) in full.
 
 ## Go deeper
 
@@ -126,11 +174,14 @@ Drop. The gate's universe is the context the model was given. If the model
 wasn't shown the unit, the citation is a guess, even if it happens to be right.
 </details>
 
-<details><summary>Why does the rate limiter fail closed here, when the template's failed open?</summary>
+<details><summary>The limiter's backing store is down. Does the next question go through?</summary>
 
-The template protects contact forms, where losing a real enquiry is the costly
-outcome. Here every accepted request spends money, and a limiter outage is when
-abuse is most likely (ADR-009).
+No — it fails closed, which is the opposite of what a contact form should do.
+The asymmetry decides it: rejecting a genuine question costs a reader one
+retry, while accepting a flood spends an embedding call and a generation call
+each time. And an outage is exactly when abuse is most likely, because a
+limiter is disproportionately likely to be down *because* someone is hammering
+it (ADR-009).
 </details>
 
 <details><summary>Why does the model mark its own claims instead of the gate detecting them?</summary>
