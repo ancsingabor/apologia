@@ -13,7 +13,8 @@ open source. Scaffolded from a private Next.js 16 + Supabase starter template.
 ## Non-negotiables
 
 1. **The citable unit is the atom.** Chunks align to canonical locators
-   (`ccc:1730`, `summa:I.q2.a3`). Never propose fixed-window chunking as a
+   (`ccc:1730`, `summa:I.q2.a3.co` — an article is a chunk, its role-bearing
+   passages are the units). Never propose fixed-window chunking as a
    simplification — it destroys the property the product is built on (ADR-002).
 2. **Citation verification is a hard gate**, deterministic, before display.
    Not a score, not a judge model, not after streaming (ADR-005).

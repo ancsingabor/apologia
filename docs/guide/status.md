@@ -142,10 +142,12 @@ The **measurement harness**, in this order, each step blocking the next:
 - **The query path.** Validate, rate limit, cache, retrieve, generate, run the
   citation gate, then persist the result as a draft. See guide chapter 06.
 - **Migration `0006`:** `topics`, `questions`, `answers`, `answer_citations`,
-  `retrieval_traces` — and, while it is open, a `comment on table chunk_units`
-  correcting `0005`'s rationale for that table, which argues from cases a plain
-  foreign key would in fact handle (guide chapter 05). `0005` is applied, so it
-  is corrected forward, not edited.
+  `retrieval_traces` — and, while it is open, two corrections to `0005`, which
+  is applied and so is corrected forward rather than edited: a
+  `comment on table chunk_units` replacing its rationale, which argues from
+  cases a plain foreign key would in fact handle (guide chapter 05), and a
+  `comment on column units.locator` replacing its example `summa:I.q2.a3`,
+  which names an article and so is not a unit locator at all.
 - **The review queue** and the public `/hu/kerdes/<slug>` pages (ADR-006,
   ADR-016).
 - **Per-request locale** via `app/[lang]/` (ADR-013). The app still renders the

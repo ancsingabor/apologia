@@ -12,6 +12,11 @@
 - **The embedding model (ADR-008) will be chosen by a bake-off, not by model
   cards.** Every candidate embeds the same chunks. Each is scored on the same
   questions, and the report includes confidence intervals, because n is small.
+- **The pre-flight is not the bake-off.** `eval:preflight` asks only *can this
+  model be served* — does it export, and does the export still rank like the
+  original. It has run; the bake-off, which is what scores retrieval and
+  decides ADR-008, has not. Passing the pre-flight is how a candidate gets
+  admitted, never how one wins.
 - **Retrieval uses one embedding space.** The query and the corpus must be
   embedded by *the same* model, so whatever wins must also run at request time.
 - **The harness is Python.** The deliverable is a measurement, and Python has
