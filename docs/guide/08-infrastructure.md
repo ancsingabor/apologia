@@ -54,11 +54,19 @@ flowchart TB
   class pyfn,emb,llm planned
 ```
 
-Only one of the two `?` boxes will exist. The query must be embedded by the
-model that embedded the corpus
-([ADR-023](../adr/023-python-at-the-measurement-boundary.md)). CI (GitHub
-Actions) isn't drawn because it never touches any of these: it boots its own
-local stack on the runner (see the gates table below).
+**The shape is decided; only which box survives is not.** Both `?` boxes are
+drawn because ADR-008 has not been measured, but the rule that picks between
+them is settled: the query must be embedded by the model that embedded the
+corpus ([ADR-023](../adr/023-python-at-the-measurement-boundary.md)), so an
+open-weights winner gives the Python function and a hosted winner gives the
+API call. Exactly one will exist. The Anthropic box carries
+no `?` for a different reason, and a weaker one — generation was never
+compared against anything. It is the assumption `.env.example` was written
+around, and the ADR recording it is still owed
+([status.md](status.md)).
+
+CI (GitHub Actions) isn't drawn because it never touches any of these: it
+boots its own local stack on the runner (see the gates below).
 
 ## Where each secret lives
 
@@ -67,11 +75,22 @@ local stack on the runner (see the gates table below).
 | `NEXT_PUBLIC_SUPABASE_URL`, `…_PUBLISHABLE_KEY` | ✅ | ✅ | local demo values | safe to expose; RLS and grants protect the data |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | **never** | local demo value | bypasses RLS; only operator tools (the ingest CLI, `eval:lint`) use it (ADR-004) |
 | `DB_URL` (Postgres connection string) | ✅ for the harness | **never** | local | `harness/apologia_eval/db.py` reads through psycopg, which is just as privileged as the service-role key. It refuses a non-local target without `--remote`, the same guard the ingest CLI uses |
-| `ANTHROPIC_API_KEY` | — | 📐 yes | — | generation happens in the query route |
+| `ANTHROPIC_API_KEY` | — | 📐 yes | — | generation happens in the query route. The *provider* is an assumption this variable's name has already encoded; no ADR argues it |
 | `EMBEDDING_API_KEY` | ✅ if a hosted candidate is measured | ❓ only if a hosted API wins | — | queries are embedded at request time (ADR-023) |
 
 The documented list is [`.env.example`](../../.env.example). No real values are
 committed.
+
+**Supabase renamed these keys, and one of our names is behind.** The legacy
+`anon` and `service_role` keys derive from the project's JWT secret, so they
+cannot be rotated without downtime; the replacements — publishable
+(`sb_publishable_…`) and secret (`sb_secret_…`) — are created, named and
+revoked independently. `anon` → publishable, `service_role` → secret. We
+already renamed the public one, and `SUPABASE_SERVICE_ROLE_KEY` is the
+straggler: the local stack and CI both fill it from `SECRET_KEY` and fall back
+to the legacy value, so the variable is named for a key type it no longer
+necessarily holds. **The legacy keys stop working at the end of 2026**, which
+makes this a dated obligation rather than tidying.
 
 ## The gates between a change and `main`
 
@@ -79,14 +98,22 @@ committed.
 |---|---|---|---|
 | `lefthook` pre-commit | `git commit` | ESLint on staged files | seconds |
 | `lefthook` pre-push | `git push` | `tsc --noEmit`, `npm test`, `npm run docs:lint` | seconds |
-| CI `harness` lane | every PR | ruff, format check, mypy `--strict`, pytest | under a minute |
-| — its extras | — | installs `db` (psycopg) and `stats` (numpy/scipy/pandas) so `mypy` really typechecks that code instead of skipping it as an unresolved import — and so the lane matches the environment mypy passes in on an operator's machine. **Never** `local-models` or `export`: torch is gigabytes and this lane has a one-minute budget | — |
-| CI `verify` lane | every PR | lint, types, unit, docs structure, **local Supabase** + integration, build, E2E | a few minutes |
+| CI `harness` lane | every PR, and pushes to `main` | ruff, format check, mypy `--strict`, pytest | ~15 s |
+| CI `verify` lane | 〃 | lint, types, unit, docs structure, **local Supabase** + integration, build, E2E | ~3 min |
 | Release rule | any retrieval, chunking, embedding or prompt change | an eval report diff attached to the PR; every question that stops passing `recall@10` named and justified | human review — not in CI |
 
 The unit suites run **before** the database boots, on purpose. A parser or
 metric regression then fails in seconds instead of after a stack boot and a
 build.
+
+**What the `harness` lane installs is itself a decision.** It syncs the `db`
+(psycopg) and `stats` (numpy/scipy/pandas) extras so that `mypy` really
+typechecks the code using them rather than skipping it as an unresolved
+import — and so the lane matches the environment mypy passes in on an
+operator's machine, which has already caused one green-locally-red-in-CI
+failure. It never installs `local-models` or `export`: torch is gigabytes, and
+a lane meant to fail in fifteen seconds cannot carry it. The modules that need
+torch import it lazily and are exercised through their pure halves.
 
 `docs:lint` checks five things: every ADR has a TL;DR and an index row, every
 harness module has a walkthrough section, every relative link resolves, and

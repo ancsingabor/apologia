@@ -39,11 +39,6 @@ fi
 export NEXT_PUBLIC_APP_URL="http://localhost:3000"
 export E2E_BASE_URL="http://localhost:3000"
 
-# Harmless placeholders so any eager module init doesn't fail (the E2E path
-# does not actually send email).
-export RESEND_API_KEY="${RESEND_API_KEY:-e2e-dummy}"
-export CRON_SECRET="${CRON_SECRET:-e2e-dummy}"
-
 case "${NEXT_PUBLIC_SUPABASE_URL}" in
   http://127.0.0.1:*|http://localhost:*) ;;
   *)
