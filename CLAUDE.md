@@ -47,19 +47,31 @@ never opened. `docs:lint` now fails on that instead of letting the link land
 silently at the top of the page. If you rename a heading, run it and fix what
 it names; do not delete the anchor from the link to make it pass.
 
-Guide pages follow one shape: TL;DR (≤ 5 bullets) · ≤ ~150 lines · ≤ 2
+Guide pages follow one shape: TL;DR (≤ 5 bullets) · **≤ ~1,400 words** · ≤ 2
 diagrams · "Where this lives in code" · "Go deeper" · "Check yourself" with
 answers in `<details>`.
 
-**The line budget counts prose, not fenced blocks.** It is a proxy for reading
-time, and 40 lines of Mermaid source is about ten seconds of it — so counting
-them made the budget punish the diagrams the same sentence asks for. Chapter 03
-hit the rule at 200 lines with 68 of them Mermaid; the real problem was that it
-was doing two jobs, which is why the code map became its own page. Measure it:
-
 ~~~bash
-awk '!/^```/ && !f; /^```/{f=!f}' docs/guide/03-system-map.md | wc -l
+wc -w < docs/guide/09-quality.md
 ~~~
+
+**The budget is words, because it counts lines twice got the answer wrong — in
+both directions.** It is a proxy for reading time, and lines are a proxy for
+*that*, sensitive to formatting rather than to content. Counting fenced blocks
+made it punish the diagrams the same sentence asks for: chapter 03 hit 200
+lines with 68 of them Mermaid, and the real fault was that it was doing two
+jobs, which is why the code map became its own page. Excluding them then let
+chapter 10 pass at 183 lines while being **the longest page in the guide by
+65%** — its content sat in wide table cells at ~13 words a line where prose
+runs ~9. Rewriting it as prose cut 500 words and *added* 30 lines. A word count
+is blind to all of that.
+
+Every chapter lands in 900–1,400 words. **Chapter 10 is the one exception, and
+is budgeted per item instead**, because it is a collection whose unit is the
+story, not the page: **~150 words a story** plus the shared sections. It is 8
+stories and 1,734 words today. A ninth story buys 150 words, not a free page;
+if it outgrows that, split it at the seam between the corpus bugs that shipped
+(1–5) and the measurement bugs a refusal caught (6–8).
 
 The fix for a page that is genuinely too long is still to split it, never to
 thin the prose until it fits.
