@@ -4,9 +4,9 @@ Source-grounded answers to questions of Catholic apologetics, theology and
 philosophy — in Hungarian and English.
 
 The design commitment: every claim will be traced to a specific, canonically
-addressable passage (CCC §1730, *Summa* I q.2 a.3, Jn 1:1–14), every citation
-**checked mechanically** before anyone sees it, and every answer **published by
-a human**.
+addressable passage (CCC §1730, *Summa* I q.2 a.3 *co.*, Jn 1:1–14), every
+citation **checked mechanically** before anyone sees it, and every answer
+**published by a human**.
 
 It is a research aid that shows its work. It is not catechesis, not spiritual
 direction, and not the Magisterium.

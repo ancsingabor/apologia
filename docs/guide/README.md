@@ -12,36 +12,62 @@ the case.
 Apologia answers questions about Catholic theology and philosophy in Hungarian
 and English. It answers only from a curated set of real sources, never from a
 language model's memory. Every claim carries a citation to a canonical passage,
-such as *Catechism §1730* or *Summa I q.2 a.3*. Code checks each citation before
-anyone sees it: the passage must exist, the model must actually have been given
-it, and any quotation must match the source exactly. A human then publishes the
-answer. It is a research aid that shows its work.
+such as *Catechism* §1730. Code checks each citation before anyone sees it: the
+passage must exist, the model must actually have been given it, and any
+quotation must match the source exactly. A human then publishes the answer. It
+is a research aid that shows its work.
 
 **In 2 minutes.**
 Most RAG systems cut their sources into arbitrary text windows. Their citations
 are therefore chunk IDs, which mean nothing outside the system, and the best
 they can do is ask another model whether a citation *looks* right. Catholic
 sources already have stable addresses that are centuries old: paragraph numbers
-and question/article numbers. Apologia makes those addresses the atom of the
-corpus. We call it the **citable unit**. This single choice turns "is this
-citation real?" from a judgement call into a lookup, and the rest of the design
-follows from it:
+and question/article numbers. Apologia makes those addresses the **atom of
+citation** — the **citable unit** — which turns "is this citation real?" from
+a judgement call into a lookup.
 
-- Chunking follows each source's own structure.
+We still chunk, though, and a chunk is not a unit. **Keeping the two apart is
+the idea to hold on to:**
+
+- **A unit is what we cite.** `ccc:1730` is one. So is a single *role* inside a
+  Summa article — an objection, or the body that answers it — but never the
+  article as a whole.
+- **A chunk is what we embed.** It is a whole number of adjacent units from one
+  container, never a window cut mid-sentence. Retrieval finds chunks; the
+  answer cites the units inside them.
+
+*Summa* I q.2 a.3 shows why the line is drawn there rather than at the article.
+It asks whether God exists, so its objections argue that he does not. Embedded
+whole, the model sees the full argument; cited whole, *"videtur quod Deus non
+sit"* resolves to a real address, quotes byte-exactly, passes every check, and
+attributes atheism to Aquinas. So the chunk is the article and the unit is the
+role. The separation pays a second time: re-tuning the chunker cannot
+invalidate a stored citation, which makes chunking a variable the eval harness
+can move instead of a decision that has to be right first time.
+
+The rest of the design follows:
+
+- Chunking follows each source's own structure, not a character count.
 - The citation check is a deterministic gate, not a score.
 - The same paragraph can be matched across Hungarian and English.
 
 The system has two halves.
 
-- **Offline ingestion CLI.** It fetches each source and parses it into citable
-  units. It asserts that nothing is missing or misnumbered, then writes the
-  result to Postgres with pgvector. That half is **built** — which documents,
-  and how many units each, is in [status.md](status.md).
-- **Query path.** It retrieves units, has Claude draft an answer, runs the
-  citation gate, and queues the draft for human review. That half is designed
-  but not built. It waits on one open decision: which embedding model to use.
-  That decision is being made by measurement against a gold set of questions
-  written before any retriever existed, not by reading model cards.
+- **Offline ingestion CLI.** It fetches each source, parses it into citable
+  units, asserts that nothing is missing or misnumbered, groups the units into
+  chunks, and writes all of it to Postgres. That half is **built** — which
+  documents, and how many units and chunks each, is in
+  [status.md](status.md). **Nothing is embedded yet:** the pgvector column
+  exists and the embedding pass is deliberately unwritten, for the reason the
+  next bullet gives.
+- **Query path.** It embeds the question, retrieves the nearest chunks, has
+  Claude draft an answer from the units inside them, runs the citation gate,
+  and queues the draft for human review. That half is designed but not built.
+  It waits on one open decision — **which embedding model to use**, which is
+  also what the ingestion half is waiting on, because a query and the corpus
+  can only be compared if the same model embedded both. That decision is being
+  made by measurement against a gold set of questions written before any
+  retriever existed, not by reading model cards.
 
 Two rules shape the product.
 
@@ -95,6 +121,7 @@ the diagrams.
 - ✅ built · 🚧 in progress · 📐 planned, in text.
 - In diagrams, **solid** boxes and arrows are built and **dashed** ones are
   planned.
-- `ccc:1730`-style strings are locators: `source:address`.
+- `ccc:1730`-style strings are locators: `source:address`. **A locator always
+  names a unit** — the thing a citation may point at — never a chunk.
 - "ADR-NNN" means [`docs/adr/NNN-*.md`](../adr/README.md). Each ADR opens with a
   three-line TL;DR.
