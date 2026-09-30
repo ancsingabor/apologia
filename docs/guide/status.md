@@ -60,7 +60,7 @@ The roadmap is reconstructed from where the ADRs refer to it:
 | CI: a `harness` lane (Python) and a `verify` lane (lint, types, unit, docs structure, integration, build, E2E) | `.github/workflows/ci.yml` | any PR |
 | Docs structure check: ADR TL;DRs, ADR index, Python walkthrough, relative links | `lib/docs/check.ts`, `scripts/docs-lint.ts` | `npm run docs:lint` |
 
-Test counts on 2026-09-14: **339** Vitest cases in 20 files, **49** pytest
+Test counts on 2026-09-30: **350** Vitest cases in 20 files, **97** pytest
 cases.
 
 How many Summa articles survive chunking whole — the lock file records chunks,

@@ -64,7 +64,7 @@ Two rules shape the product.
 | 07 | [Measurement](07-measurement.md) 🚧 | What "better" is allowed to mean; the bake-off | 4 |
 | 08 | [Infrastructure](08-infrastructure.md) | Where things run, where secrets live, which gates a change passes | 3 |
 | 09 | [Quality](09-quality.md) | Two kinds of correctness; test layers; "silent green" | 3 |
-| 10 | [War stories](10-war-stories.md) | Five bugs that never crashed, and what each one changed | 4 |
+| 10 | [War stories](10-war-stories.md) | Eight bugs that never crashed, and what each one changed | 4 |
 | 11 | [Questions a reviewer asks](11-questions-a-reviewer-asks.md) | Practice answers, known weaknesses, what I'd do differently | 5 |
 
 Chapters 01–03 plus status take about 15 minutes. After that you can explain
