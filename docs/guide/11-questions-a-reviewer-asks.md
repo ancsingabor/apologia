@@ -4,14 +4,14 @@
 
 - These are the questions a senior technical reviewer is likely to ask. Each has
   a short answer and a link to where the full argument lives.
-- Practise answering **before** opening the collapsed answer. The first five
+- Practise answering **before** opening the collapsed answer. The six below
   are the ones that come up first.
 - **Known weaknesses are listed on purpose.** A design explained without its
   costs is not credible.
 - Everything here is a summary. If an answer and its linked ADR disagree, the
   ADR is right.
 
-## The first five
+## The six that come up first
 
 <details><summary><b>1. Introduce the project.</b></summary>
 
@@ -32,9 +32,13 @@ answer fails. After that, a human publishes (ADR-005, ADR-006, ADR-017).
 <details><summary><b>3. How do you know retrieval is any good?</b></summary>
 
 A gold set was written before any retriever existed, and the metrics were fixed
-in advance. Each report carries provenance (corpus hash, model) and confidence
-intervals. There is also a merge rule: a retrieval or prompt change must attach
-an eval diff, and a regression blocks it ([07](07-measurement.md)).
+in advance. Each report carries provenance (corpus hash, model, prompt version)
+and confidence intervals. A **retrieval, chunking, embedding or prompt** change
+must attach an eval diff. A question that then stops passing `recall@10` is
+**named and justified, not vetoed** — at n=40–60 one question is ~2pp, so a
+percentage threshold would be false precision. What *does* block a merge is any
+drop in citation validity or quote fidelity. **Enforced in review; CI does not
+run the eval** ([07](07-measurement.md)).
 </details>
 
 <details><summary><b>4. Why not a vector database, LangChain, or an agent framework?</b></summary>
@@ -53,6 +57,16 @@ that produced it. The reasons are provenance (exporting a model is Python
 tooling) and statistics (bootstrap CIs), not capability. Nothing working was
 ported, and the one shared contract, the corpus hash, is pinned by a test
 across languages (ADR-023).
+</details>
+
+<details><summary><b>6. Why Claude for generation, and not a measured choice?</b></summary>
+
+Honestly: it was assumed rather than chosen. `.env.example`, `CLAUDE.md` and
+guides 06 and 08 all name Anthropic, and no ADR argues for it. Nor can it be
+settled the way the embedding model is — the harness measures *retrieval* and
+scores no generation model at all, which is why ADR-008 was narrowed to
+embeddings. What is owed is a **recorded choice with its reasons**, not a
+bake-off ([status.md](status.md)).
 </details>
 
 ## Architecture
@@ -126,18 +140,34 @@ explained without reading the code.
 | Nothing runs end to end yet; the query path is unbuilt | Its gate and limiter are built and tested; the rest waits on ADR-008 |
 | Revision alignment is argued from one paragraph (§2267), not proved | `revision` is recorded, so it becomes checkable once a diff exists (ADR-019) |
 | A claim mislabelled as a `connective` passes the gate | It becomes a measurable generator behaviour, not a hidden hole (ADR-018) |
-| May corpus text be sent to a hosted embedding API? Unresolved | The bake-off starts with local models, which don't raise the question (ADR-003) |
+| May corpus text be sent to a hosted API — for embedding *or* generation? Unresolved | Local models keep it off the bake-off's critical path. Nothing keeps it off generation's — see below (ADR-003) |
+| The generation provider was never compared against anything and has no ADR | Owed as a recorded choice, not a measurement; question 6 above, and [status.md](status.md) |
 | The Python hash port matches TS sort order only for lowercase-ASCII keys | Documented in `hashing.py` and pinned by a test |
 | A null document licence can mean "inherited" or "nobody looked" | Recorded in ADR-021; a larger corpus would need an explicit `inherited` |
 | Two toolchains double the contributor barrier | Accepted in ADR-023; one `npm run eval` entry point is planned |
+
+**One of those is not like the others.** The licence question is the only open
+item that can invalidate a design rather than narrow a choice. ADR-003 asked it
+about the offline embedding pass, but composing a prompt puts the retrieved
+units themselves into a request to Anthropic, in production, per question.
+Local candidates keep it off the bake-off's path, which makes it easy to file
+as handled — it is not. There is **no local fallback anywhere in the design**,
+so "not permitted" removes the query path rather than shortening a shortlist
+([ADR-003 § Extended](../adr/003-ship-manifests-not-corpus.md)).
 
 ## What I would do differently
 
 - **Inventory a source by parsing it from day one.** The first ADR-019
   inventory counted anchors and misdiagnosed the most serious defect.
 - **Don't write example locators before reading the text.** ADR-002 used
-  `summa:I.q2.a3`, which turned out to be an article, not a unit, and three gold
-  questions carried that mistake for a milestone.
+  `summa:I.q2.a3`, which turned out to be an article, not a unit, and three
+  gold questions carried that mistake for a milestone. Correcting it took six
+  passes: the last two copies were prose — *Summa* I q.2 a.3 — so every grep
+  for the locator form missed them, in the two files a reader opens first.
+- **Treat a counted claim as a tripwire.** "Seven silent greens", "five war
+  stories", "three pytest modules" — each drifted while the prose around it
+  stayed true, because a page that summarises another stops being updated while
+  its source grows.
 - **Give status one home from the start.** It drifted in five places before
   [status.md](status.md) existed.
 - **Challenge "only the operator needs this key" earlier.** ADR-004 said that
