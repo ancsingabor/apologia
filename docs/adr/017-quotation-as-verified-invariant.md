@@ -1,7 +1,7 @@
 # ADR-017 — Quotation is a verified invariant, not a policy note
 
-Status: **Accepted** · Milestone 1
-Supersedes part of [ADR-014](014-translation-and-quotation.md) — display posture only.
+Status: **Accepted** · Milestone 1 · **supersedes part of
+[ADR-014](014-translation-and-quotation.md) — display posture only**
 
 > **TL;DR**
 > - **Decision:** Quotation is permitted, and each legal condition — faithful, attributed, proportionate — is a deterministic check in the citation gate, with limits in one config object.

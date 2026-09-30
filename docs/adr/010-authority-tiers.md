@@ -1,6 +1,8 @@
 # ADR-010 — Authority tiers as first-class metadata
 
-Status: **Accepted** · Milestone 0
+Status: **Accepted** · Milestone 0 · **amended 2026-09-30 — `source_kind` is a
+type not a column, and the tier is not required where it matters;
+§ Amendment at the foot**
 
 > **TL;DR**
 > - **Decision:** Every source carries a human-assigned authority tier (1 Scripture and dogma … 5 contemporary apologetics); scientific sources get no tier, only a separate `source_kind`.
@@ -91,8 +93,9 @@ which is the whole posture of the product.
 
 ## Consequences
 
-- `sources.authority_tier` and `sources.source_kind` are required columns; the
-  manifest cannot omit them.
+- `sources.kind` (typed by the `source_kind` enum) and `sources.authority_tier`
+  are columns on `sources`; the manifest carries both. **See § Amendment for
+  what "required" turned out to mean.**
 - Context assembly labels every block with its tier.
 - The UI needs a way to show tiers without turning every answer into a
   bibliography.
@@ -117,3 +120,42 @@ buried in a prompt.
 document quoting a lower-authority source inside a higher-authority text is
 mis-tiered for that passage. A known limitation; per-unit overrides are the
 escape hatch if it proves to matter.
+
+## Amendment — 2026-09-30: `source_kind` is a type, and the tier is not required
+
+Status of this amendment: **Accepted**. Two corrections, found by reading
+`0005_corpus.sql` and `lib/corpus/manifest.ts` against the Consequences above.
+
+**`sources.source_kind` is not a column.** `source_kind` is the Postgres *enum
+type*; the column it types is `sources.kind`. The same slip was found and fixed
+in `docs/architecture.md` during the guide review, and it survived here — which
+is the ordinary way of these things: the layer nobody re-reads keeps the copy.
+
+**The tier is nullable, and nothing requires it where it matters.** This ADR
+said the two columns are "required" and that "the manifest cannot omit them".
+Neither holds for the tier:
+
+| | what it actually enforces |
+|---|---|
+| `constraint scientific_sources_carry_no_tier` | a `scientific` or `historical` source **must** have `authority_tier is null` |
+| the same constraint, other direction | nothing — a `church_document` with a null tier satisfies it |
+| `sourceSchema.authority_tier` (Zod) | `.nullable().default(null)` — the manifest may omit the key entirely |
+
+So the schema makes the category error this ADR exists to prevent
+*unrepresentable in one direction only*. Ranking a physics paper by ecclesial
+authority cannot be expressed. **Ingesting an encyclical with no tier at all
+can**, and it would pass the manifest schema, the database, and every assertion
+in `assert.ts` — then reach context assembly as a block labelled with no tier,
+which is the state the prompt was designed never to see.
+
+The correction is deliberately *not* made here, because it is a code change and
+this is a record: what is owed is a check that a tierable kind carries a tier,
+and the honest place for it is the manifest schema rather than a second SQL
+constraint — the manifest is where ADR-003 already requires a resolved
+`license`, and a tier is the same kind of fact, resolved by a human before a
+source enters. Recorded in [status.md](../guide/status.md) as owed.
+
+It has not bitten yet only because both ingested sources are tiered by hand and
+there are two of them. That is the shape of every defect in
+[10 · War stories](../guide/10-war-stories.md): a check that reads as complete
+because the corpus is too small to have met its gap.

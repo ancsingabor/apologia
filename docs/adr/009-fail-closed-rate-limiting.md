@@ -48,8 +48,11 @@ per-IP threshold.
   is visible to anyone reading it.
 - A global daily spend ceiling gates the ask path independently of any per-IP
   count. Exceeded, the endpoint stops drafting and says so plainly.
-- The honeypot field is retained from the template — it is free and it removes
-  naive bots.
+- The honeypot **helper** is retained from the template — `isHoneypotTripped()`
+  in `lib/rate-limit.ts`, unit tested. It is free and it removes naive bots.
+  Note what that does and does not mean: no form in this repo renders the hidden
+  field yet, because there is no question box (ADR-006's draft path is unbuilt).
+  The helper is ready; the control is not in force.
 
 ADR-006 does most of the real work here: because answers are drafts and the
 public reads pre-rendered pages, the expensive path is not what casual visitors

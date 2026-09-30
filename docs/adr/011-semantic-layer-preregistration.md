@@ -1,6 +1,7 @@
 # ADR-011 — Pre-registration of the semantic-layer experiment
 
-Status: **Accepted** · written Milestone 0, executed Phase 4
+Status: **Accepted** · decided Milestone 0, to be executed Phase 4 · **note added
+2026-09-21 in § Trade-offs — one threshold is visibly mis-sized already**
 
 > **TL;DR**
 > - **Decision:** The Phase 4 semantic layer (OWL/RDF) is pre-registered — three hypotheses, fixed metrics and thresholds, and a kill criterion — before any of it is built.

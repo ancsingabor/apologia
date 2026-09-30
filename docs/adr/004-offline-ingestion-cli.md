@@ -1,6 +1,8 @@
 # ADR-004 — Ingestion is an offline CLI
 
-Status: **Accepted** · Milestone 0
+Status: **Accepted** · Milestone 0 · **one consequence corrected by
+[ADR-023](023-python-at-the-measurement-boundary.md) — the embedding key is not
+operator-only**
 
 > **TL;DR**
 > - **Decision:** Ingestion is a standalone `tsx` CLI — idempotent, content-hashed, resumable — never a route, a cron or a queue.
@@ -9,7 +11,11 @@ Status: **Accepted** · Milestone 0
 
 ## Context
 
-Ingestion fetches, parses, chunks, embeds and upserts the corpus. For the full
+Ingestion fetches, parses, chunks, embeds and upserts the corpus — the **embed**
+stage being the one that was never written, deliberately: it is a separate pass
+per candidate model, because [ADR-008](README.md) is decided by measurement and
+[ADR-023](023-python-at-the-measurement-boundary.md) puts that pass in the
+Python harness. Everything else in that list runs today. For the full
 corpus it is a long job: minutes to hours, thousands of embedding calls, and
 network I/O against sources of varying reliability. It runs when a source is
 added or a chunking strategy changes — not on a schedule and never in response

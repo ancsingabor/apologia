@@ -1,6 +1,7 @@
 # ADR-013 — Locale is resolved per request from the URL
 
-Status: **Accepted** · Milestone 0 (implemented Milestone 1)
+Status: **Accepted** · Milestone 0 · **not implemented — see § Amendment at the
+foot; this line said "implemented Milestone 1" and was wrong**
 
 > **TL;DR**
 > - **Decision:** The locale is a route segment (`app/[lang]/`) resolved per request; `getCopy(locale)` replaces the build-time `copy` constant.
@@ -94,3 +95,34 @@ translation would be worse — but it complicates the page metadata.
 **More routing surface to get wrong**, particularly the interaction between
 locale redirection and the admin guard in `proxy.ts`. Mitigated by E2E coverage
 of both, which the inherited harness already makes cheap.
+
+## Amendment — 2026-09-30: the status line claimed an implementation that does not exist
+
+Status of this amendment: **Accepted**. The header said *"(implemented
+Milestone 1)"*. It is not implemented, and the claim is the plainest instance
+in this directory of the defect the guide review kept finding: **a document
+asserting that something exists because the decision to build it was sound.**
+
+What actually landed is the *configuration* half — the part that costs one file
+each:
+
+| | state |
+|---|---|
+| `brand.locale` → `brand.defaultLocale` + `brand.locales` | ✅ `config/brand.ts` |
+| `getCopy(locale)` as the primary accessor | ✅ `config/copy/index.ts` — whose own comment still says "once `app/[lang]/` routing lands", in the future tense this line should have used |
+| `app/[lang]/` route segments | ❌ `app/` holds `(admin)`, `(public)`, `auth`, `login` and a root `page.tsx`. No `[lang]` |
+| locale redirection in `proxy.ts` | ❌ `proxy.ts` contains no locale logic at all — only the admin guard |
+| `answers.language`, `hreflang`, per-request `<html lang>` | ❌ waits on `0006` and the query path |
+
+So the decision is accepted and the groundwork is real; the routing is not
+written. The module-level `copy` constant is therefore **not** retired — it
+cannot be until there is a localised route to migrate the inherited pages to.
+
+Two things worth keeping from how this survived. The status line is the one
+part of an ADR nobody re-reads, because the interesting content is below it —
+so it is where a stale claim lives longest. And "implemented Milestone 1" is
+*status*, which by this project's own rule
+([CLAUDE.md](../../CLAUDE.md#human-layer--keeping-docsguide-current-is-part-of-done))
+belongs only in [status.md](../guide/status.md). A milestone label on an ADR
+should say when the decision was **taken**; whether it has been built is a
+question for the one file whose job that is.

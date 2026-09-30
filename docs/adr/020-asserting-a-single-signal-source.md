@@ -1,6 +1,7 @@
 # ADR-020 — Asserting a source that carries one signal
 
-Status: **Accepted** · Milestone 1
+Status: **Accepted** · Milestone 1 · **corrected 2026-09-08 in § What ingesting
+a second language made visible — `role` was being read off typography**
 Constrains [ADR-019](019-ccc-editions.md) (the assert step) and discharges the
 cross-lingual identity claim in [ADR-002](002-citable-unit-model.md).
 
