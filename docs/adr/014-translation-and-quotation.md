@@ -1,7 +1,8 @@
 # ADR-014 — Translate the explanation, never the quotation
 
-Status: **Accepted** · Milestone 0
-Amended by [ADR-017](017-quotation-as-verified-invariant.md) — display posture only.
+Status: **Accepted** · Milestone 0 · **amended by
+[ADR-017](017-quotation-as-verified-invariant.md) — display posture only; the
+translation rule is unchanged**
 
 > **TL;DR**
 > - **Decision:** Answer prose is generated in the reader's language; quotations appear only in a language with an authoritative text, never machine-translated.

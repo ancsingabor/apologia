@@ -163,6 +163,15 @@ The **measurement harness**, in this order, each step blocking the next:
   `scripts/e2e.sh` and CI already fill it from `SECRET_KEY` — so the name is
   behind the value. Renaming it touches `.env.example`, `lib/supabase/`, both
   runner scripts, CI and the Vercel project env.
+- **A check that a tierable source carries an authority tier.** ADR-010 says
+  every source has one, assigned by hand and never inferred. Nothing enforces
+  it in that direction: `0005`'s constraint only forbids a tier on `scientific`
+  and `historical` sources, and `sourceSchema.authority_tier` is
+  `.nullable().default(null)`, so an encyclical with no tier at all would pass
+  the manifest, the database and every assertion — and reach context assembly
+  as an unlabelled block. The manifest schema is the place for it, beside the
+  resolved `license` ADR-003 already demands. Recorded in
+  [ADR-010 § Amendment](../adr/010-authority-tiers.md).
 - **An ADR for the generation provider.** Claude is assumed by `.env.example`,
   `CLAUDE.md`, guide 06 and guide 08, but was never compared against anything
   and has no ADR. It used to sit inside ADR-008, which the bake-off cannot

@@ -1,7 +1,9 @@
 # ADR-019 — The CCC editions: revision alignment over file convenience
 
-Status: **Accepted** · Milestone 1 · **amended twice on 2026-09-07 — see the two § Amendment sections at the foot**
-· the English side is settled in [ADR-020](020-asserting-a-single-signal-source.md)
+Status: **Accepted** · Milestone 1 · **amended twice on 2026-09-07 — the two
+§ Amendment sections at the foot, with a further correction dated 2026-09-08;
+the English side is settled in
+[ADR-020](020-asserting-a-single-signal-source.md)**
 Constrains [ADR-004](004-offline-ingestion-cli.md) (the fetch step) and depends on
 the cross-lingual alignment claim in [ADR-002](002-citable-unit-model.md).
 

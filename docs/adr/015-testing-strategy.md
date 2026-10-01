@@ -1,6 +1,8 @@
 # ADR-015 — Tests are chosen by determinism, not by stack layer
 
-Status: **Accepted** · Milestone 1
+Status: **Accepted** · Milestone 1 · **amended 2026-09-07 — the integration
+runner is decided (Vitest); with a correction of its own dated 2026-09-08.
+§ Amendment at the foot**
 
 > **TL;DR**
 > - **Decision:** A test's layer is chosen by whether its output is deterministic, not by where the code sits; components and route handlers get no unit tests.
@@ -53,7 +55,7 @@ the stack.**
 | Output | Gate | Runner |
 |---|---|---|
 | Deterministic, no I/O — chunkers, locator parsing, the citation gate, the honeypot, the fail-closed branch of the limiter | Unit tests. A failure is a **bug**. | Vitest (`npm test`) |
-| Deterministic, but crosses a real Postgres — unit upsert, locator resolution, pgvector top-*k* over a fixture corpus | Integration tests against the ephemeral local stack. | Vitest or Playwright, decided when the first one is written |
+| Deterministic, but crosses a real Postgres — unit upsert, locator resolution, pgvector top-*k* over a fixture corpus | Integration tests against the ephemeral local stack. | ~~Vitest or Playwright, decided when the first one is written~~ → **Vitest** (`npm run test:integration`), settled in § Amendment below |
 | A user-visible flow — locale routing, the admin guard, the review queue, an unpublished answer being unreachable | E2E. | Playwright (`npm run test:e2e`) |
 | Probabilistic — ranking, prose, groundedness, refusal | **Never asserted.** A change is a number that moved. | The eval harness (`npm run eval`), `docs/evaluation.md` |
 
@@ -100,7 +102,8 @@ has to be judged rather than looked up. The table above is the judgement, and
 the fallback rule is: if the assertion needs a browser to be meaningful, it is
 an E2E test.
 
-**The integration row is deliberately unresolved.** Whether unit-upsert and
+**The integration row is deliberately unresolved** *(resolved 2026-09-07 — see
+§ Amendment)*. Whether unit-upsert and
 pgvector tests run under Vitest against the local stack, or as Playwright
 fixtures reusing `scripts/e2e.sh`, is a decision with real arguments on both
 sides and no data yet. It gets made when the first such test is written, not

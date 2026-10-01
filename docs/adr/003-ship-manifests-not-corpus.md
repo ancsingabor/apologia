@@ -1,6 +1,8 @@
 # ADR-003 — The repo ships manifests and a pipeline, not the corpus
 
-Status: **Accepted** · Milestone 0
+Status: **Accepted** · Milestone 0 · **carries the repo's one open question —
+§ Open question (2026-09-10), widened by § Extended (2026-09-26), both at the
+foot. "Not permitted" would invalidate the query path, not narrow a choice.**
 
 > **TL;DR**
 > - **Decision:** The repo ships source manifests and the pipeline, never corpus text; no source enters without a resolved licence.

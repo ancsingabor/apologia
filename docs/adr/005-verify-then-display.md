@@ -1,6 +1,7 @@
 # ADR-005 — Verify citations before display; no streaming in v1
 
-Status: **Accepted** · Milestone 0
+Status: **Accepted** · Milestone 0 · **the gate's third check is replaced by
+[ADR-018](018-segmented-answers.md) — see the note in § Decision**
 
 > **TL;DR**
 > - **Decision:** Generate the complete answer, run the deterministic citation gate, then display — no streaming in v1.
@@ -50,6 +51,17 @@ every claim-bearing sentence retains ≥1 citation — else the answer fails
 ```
 
 An answer that cannot satisfy this does not become a draft.
+
+> **The third line is not implementable as written, and
+> [ADR-018](018-segmented-answers.md) replaces it.** Deciding which sentences
+> make claims is a judgement about meaning — exactly the probabilistic reasoning
+> this gate exists not to depend on. ADR-018 has the model *mark* its own
+> segments, and the gate checks the decidable version: every segment marked
+> `claim` carries at least one citation that was in the context. The guarantee
+> is correspondingly narrower, and ADR-018 says so in terms. The first two lines
+> are unchanged and are what `lib/citation/verify.ts` implements today, together
+> with the quotation checks [ADR-017](017-quotation-as-verified-invariant.md)
+> added.
 
 ## Reasoning
 

@@ -214,9 +214,12 @@ Three things diverged, and each has an ADR rather than a note:
   template protects contact forms, where losing an enquiry is the expensive
   outcome; here the expensive outcome is an unbounded bill. Same code, opposite
   correct answer — [ADR-009](docs/adr/009-fail-closed-rate-limiting.md).
-- **Locale became per-request.** The template picks one language at build time;
-  Apologia serves `/hu/…` and `/en/…` from one deployment —
-  [ADR-013](docs/adr/013-per-request-locale.md).
+- **Locale became per-request** — as a decision. The template picks one language
+  at build time; Apologia is designed to serve `/hu/…` and `/en/…` from one
+  deployment, and `brand.defaultLocale`, `brand.locales` and `getCopy(locale)`
+  are in place. The `app/[lang]/` routing that uses them is **not written yet**
+  ([ADR-013 § Amendment](docs/adr/013-per-request-locale.md),
+  [status.md](docs/guide/status.md)).
 - **The theme registry and the transactional email module were removed**, with
   their dependencies, along with the confirmation-token, ICS and
   example-validator modules. What each was replaced by is in

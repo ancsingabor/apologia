@@ -1,6 +1,7 @@
 # ADR-023 — Python at the measurement boundary
 
-Status: **Accepted** · Milestone 1
+Status: **Accepted** · Milestone 1 · **a fourth outcome added 2026-09-15, and
+one figure restated — both in § Trade-offs at the foot**
 Enables [ADR-008](README.md) (deferred: the embedding provider boundary) and
 amends one consequence of [ADR-004](004-offline-ingestion-cli.md).
 
@@ -116,8 +117,10 @@ cross-lingual split are `pandas` one-liners.
 
 **Alternative 1 rejected** on provenance, above — not on capability.
 
-**Alternative 2 rejected** because `lib/corpus/` is 234 unit-test cases over
-~1,550 lines of pure functions, and that suite is not decoration: it is what
+**Alternative 2 rejected** because `lib/corpus/` was, when this was written,
+234 unit-test cases over ~1,550 lines of pure functions — 252 cases over ~3,450
+lines by 2026-09-30, since the Summa's parser landed after — and that suite is
+not decoration: it is what
 caught the §146/147/148 misnumbering (ADR-019) and the unordered-paging false
 positive in `siblings.ts`. A port trades a tested implementation for an untested
 one and buys a language exercise. ADR-004's own reasoning applies unchanged —
@@ -234,6 +237,19 @@ number presented as evidence for something it never tested.
 The offline half is unaffected in all three cases: running the open candidates is
 what would have *produced* the finding.
 
+**Ten questions is a thin basis for a permanent decision.** Confidence intervals
+make the thinness visible rather than fixing it. Expanding the gold set toward
+the 40–60 that `docs/evaluation.md` specifies matters more to ADR-008's quality
+than the language its harness is written in.
+
+## Amendment — 2026-09-15: a fourth outcome, and a figure that moved
+
+Status of this amendment: **Accepted**. Both items below were appended after
+this ADR was accepted, and both correct it rather than elaborate it: the
+outcome table was missing a row, and one figure the reasoning leaned on has
+since changed. They sat inside § Trade-offs until 2026-09-30, which made a
+post-acceptance correction read as part of the original argument.
+
 ### Outcome 4, added 2026-09-15: the row this table did not have
 
 The table above was written claiming three outcomes, having originally had two.
@@ -289,7 +305,3 @@ that no candidate on the current slate is excluded on size alone — the binding
 constraint is function **memory** on a cold start, which is why the pre-flight
 measures load time and artifact size rather than asserting a limit.
 
-**Ten questions is a thin basis for a permanent decision.** Confidence intervals
-make the thinness visible rather than fixing it. Expanding the gold set toward
-the 40–60 that `docs/evaluation.md` specifies matters more to ADR-008's quality
-than the language its harness is written in.

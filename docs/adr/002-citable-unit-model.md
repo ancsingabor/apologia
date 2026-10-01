@@ -1,6 +1,7 @@
 # ADR-002 — The citable unit is the atom of the corpus
 
-Status: **Accepted** · Milestone 0
+Status: **Accepted** · Milestone 0 · **amended 2026-09-26 — the Summa example
+in the Decision is wrong; § Amendment at the foot**
 
 > **TL;DR**
 > - **Decision:** The corpus atom is the *citable unit* — a passage with a canonical address (`ccc:1730`) — and chunking aligns to unit boundaries, per source.
@@ -78,7 +79,10 @@ Two further properties fall out for free:
 ## Consequences
 
 - The ingestion pipeline needs a real parser per source type, not one splitter.
-- `units` is a first-class table; `chunks` references it.
+- `units` is a first-class table, and `chunks` is joined to it through
+  `chunk_units` rather than by a foreign key in either direction — because a
+  unit can belong to more than one chunk (`…@1` and `…@2` side by side), which
+  is the case a `units.chunk_id` column could not represent.
 - Citation verification becomes a deterministic gate rather than a judge model.
 - The eval harness can express `expected_units` in canonical locators, so the
   gold set is readable by a human and stable across re-indexing.
