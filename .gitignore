@@ -76,3 +76,6 @@ __pycache__/
 # reproducible from the slate in `harness/apologia_eval/candidates.py` — what is
 # worth keeping is the REPORT, which is force-added like an eval baseline.
 /.preflight
+
+# Vitest reporter output (json/html reporters write here)
+.vitest/
