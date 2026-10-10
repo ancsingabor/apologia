@@ -1,0 +1,1346 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-10T05:47:09.521056+00:00",
+  "corpus_hash": "42a33a159bfef11abeeec05ecdbdf942ebdbf89c0bde79148f6a5fe826f09597",
+  "gold_hash": "32b4d4565e2426dcb816c58281f174ce845a630211b1ed05b06fa863a6c802c6",
+  "embedding_identity": "Qwen/Qwen3-Embedding-0.6B@onnx:8c4f59b70600c4a61b8e2c793f51601f4dbb866072ce70cc4be862454ba84475",
+  "model_id": "Qwen/Qwen3-Embedding-0.6B",
+  "base_family": "qwen3",
+  "artifact_hash": "852b75b23aa54978cbb8cf67164f2a3a6f40213de3a6d9f902816200358ae6f0",
+  "pooling": "lasttoken",
+  "max_sequence_tokens": 32768,
+  "dimensions": 1024,
+  "query_prefix": "Instruct: Given a question, retrieve passages that answer it\nQuery:",
+  "passage_prefix": "",
+  "generation_model": null,
+  "prompt_version": null,
+  "seed": 0,
+  "resamples": 9999,
+  "packages": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "onnxruntime": "1.30.0",
+    "transformers": "4.57.6"
+  },
+  "excluded_question_ids": [
+    "q-0007",
+    "q-0009"
+  ],
+  "truncation_by_source": {
+    "ccc": {
+      "total": 5730,
+      "truncated": 0
+    },
+    "summa": {
+      "total": 3453,
+      "truncated": 0
+    }
+  },
+  "questions": [
+    {
+      "id": "q-0001",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "ccc:283",
+        "ccc:284"
+      ],
+      "retrieved": [
+        [
+          "summa:III.q2.a6.arg1",
+          "summa:III.q2.a6.arg2",
+          "summa:III.q2.a6.arg3",
+          "summa:III.q2.a6.arg4",
+          "summa:III.q2.a6.co",
+          "summa:III.q2.a6.sc"
+        ],
+        [
+          "summa:III.q39.a6.ad4"
+        ],
+        [
+          "ccc:2105"
+        ],
+        [
+          "summa:III.q19.a1.co"
+        ],
+        [
+          "ccc:282"
+        ],
+        [
+          "summa:I-II.q102.a5.ad1",
+          "summa:I-II.q102.a5.co"
+        ],
+        [
+          "summa:III.q31.a3.ad3",
+          "summa:III.q31.a3.ad4"
+        ],
+        [
+          "summa:III.q27.pr"
+        ],
+        [
+          "ccc:18"
+        ],
+        [
+          "summa:III.q75.a8.arg1",
+          "summa:III.q75.a8.arg2",
+          "summa:III.q75.a8.arg3",
+          "summa:III.q75.a8.arg4",
+          "summa:III.q75.a8.co",
+          "summa:III.q75.a8.sc"
+        ],
+        [
+          "summa:II-II.q171.pr"
+        ],
+        [
+          "ccc:831"
+        ],
+        [
+          "summa:I.q23.a5.ad3"
+        ],
+        [
+          "summa:II-II.q188.a7.co"
+        ],
+        [
+          "summa:I.q36.a2.arg1",
+          "summa:I.q36.a2.arg2",
+          "summa:I.q36.a2.arg3",
+          "summa:I.q36.a2.arg4",
+          "summa:I.q36.a2.arg5",
+          "summa:I.q36.a2.arg6",
+          "summa:I.q36.a2.arg7",
+          "summa:I.q36.a2.co",
+          "summa:I.q36.a2.sc"
+        ],
+        [
+          "ccc:2226"
+        ],
+        [
+          "ccc:6"
+        ],
+        [
+          "ccc:917"
+        ],
+        [
+          "summa:I-II.q102.a5.ad4"
+        ],
+        [
+          "summa:III.q16.pr"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 4568.261959007941,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0002",
+      "slice": "same-language",
+      "expected_units": [
+        "ccc:159"
+      ],
+      "retrieved": [
+        [
+          "ccc:1113"
+        ],
+        [
+          "ccc:846"
+        ],
+        [
+          "ccc:1118"
+        ],
+        [
+          "ccc:2032"
+        ],
+        [
+          "ccc:773"
+        ],
+        [
+          "ccc:2040"
+        ],
+        [
+          "ccc:171"
+        ],
+        [
+          "ccc:814"
+        ],
+        [
+          "ccc:752"
+        ],
+        [
+          "ccc:972"
+        ],
+        [
+          "ccc:1368"
+        ],
+        [
+          "ccc:1476"
+        ],
+        [
+          "ccc:775"
+        ],
+        [
+          "ccc:168"
+        ],
+        [
+          "ccc:866"
+        ],
+        [
+          "ccc:193"
+        ],
+        [
+          "ccc:769"
+        ],
+        [
+          "ccc:771"
+        ],
+        [
+          "ccc:779"
+        ],
+        [
+          "ccc:1942"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 593.674874980934,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0003",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "ccc:309",
+        "ccc:310",
+        "ccc:311",
+        "summa:I.q2.a3.arg1",
+        "summa:I.q2.a3.ad1"
+      ],
+      "retrieved": [
+        [
+          "summa:I.q23.a5.ad3"
+        ],
+        [
+          "summa:I.q48.a4.ad1",
+          "summa:I.q48.a4.ad2",
+          "summa:I.q48.a4.ad3",
+          "summa:I.q48.a4.arg1",
+          "summa:I.q48.a4.arg2",
+          "summa:I.q48.a4.arg3",
+          "summa:I.q48.a4.co",
+          "summa:I.q48.a4.sc"
+        ],
+        [
+          "summa:I-II.q85.a2.ad1",
+          "summa:I-II.q85.a2.ad2",
+          "summa:I-II.q85.a2.ad3",
+          "summa:I-II.q85.a2.arg1",
+          "summa:I-II.q85.a2.arg2",
+          "summa:I-II.q85.a2.arg3",
+          "summa:I-II.q85.a2.co",
+          "summa:I-II.q85.a2.sc"
+        ],
+        [
+          "summa:I.q22.a2.ad1",
+          "summa:I.q22.a2.ad2",
+          "summa:I.q22.a2.arg1",
+          "summa:I.q22.a2.arg2",
+          "summa:I.q22.a2.arg3",
+          "summa:I.q22.a2.arg4",
+          "summa:I.q22.a2.arg5",
+          "summa:I.q22.a2.co",
+          "summa:I.q22.a2.sc"
+        ],
+        [
+          "summa:I.q48.a2.ad1",
+          "summa:I.q48.a2.ad2",
+          "summa:I.q48.a2.ad3",
+          "summa:I.q48.a2.arg1",
+          "summa:I.q48.a2.arg2",
+          "summa:I.q48.a2.arg3",
+          "summa:I.q48.a2.co",
+          "summa:I.q48.a2.sc"
+        ],
+        [
+          "summa:II-II.q188.a7.co"
+        ],
+        [
+          "ccc:312"
+        ],
+        [
+          "summa:I-II.q52.a1.co"
+        ],
+        [
+          "summa:III.q19.a1.co"
+        ],
+        [
+          "summa:I-II.q109.pr"
+        ],
+        [
+          "summa:I.q25.a6.ad1",
+          "summa:I.q25.a6.ad2",
+          "summa:I.q25.a6.ad3",
+          "summa:I.q25.a6.ad4",
+          "summa:I.q25.a6.arg1",
+          "summa:I.q25.a6.arg2",
+          "summa:I.q25.a6.arg3",
+          "summa:I.q25.a6.arg4",
+          "summa:I.q25.a6.co",
+          "summa:I.q25.a6.sc"
+        ],
+        [
+          "summa:I-II.q78.a1.ad1",
+          "summa:I-II.q78.a1.ad2",
+          "summa:I-II.q78.a1.ad3",
+          "summa:I-II.q78.a1.arg1",
+          "summa:I-II.q78.a1.arg2",
+          "summa:I-II.q78.a1.arg3",
+          "summa:I-II.q78.a1.co",
+          "summa:I-II.q78.a1.sc"
+        ],
+        [
+          "ccc:1837"
+        ],
+        [
+          "summa:I.q25.a5.ad1",
+          "summa:I.q25.a5.ad2",
+          "summa:I.q25.a5.ad3",
+          "summa:I.q25.a5.arg1",
+          "summa:I.q25.a5.arg2",
+          "summa:I.q25.a5.arg3",
+          "summa:I.q25.a5.co",
+          "summa:I.q25.a5.sc"
+        ],
+        [
+          "summa:II-II.pr"
+        ],
+        [
+          "summa:I.q63.a1.ad1",
+          "summa:I.q63.a1.ad2",
+          "summa:I.q63.a1.ad3",
+          "summa:I.q63.a1.ad4",
+          "summa:I.q63.a1.arg1",
+          "summa:I.q63.a1.arg2",
+          "summa:I.q63.a1.arg3",
+          "summa:I.q63.a1.arg4",
+          "summa:I.q63.a1.co",
+          "summa:I.q63.a1.sc"
+        ],
+        [
+          "summa:I-II.q78.a3.ad1",
+          "summa:I-II.q78.a3.ad2",
+          "summa:I-II.q78.a3.ad3",
+          "summa:I-II.q78.a3.ad4",
+          "summa:I-II.q78.a3.arg1",
+          "summa:I-II.q78.a3.arg2",
+          "summa:I-II.q78.a3.arg3",
+          "summa:I-II.q78.a3.co",
+          "summa:I-II.q78.a3.sc"
+        ],
+        [
+          "ccc:324"
+        ],
+        [
+          "summa:I.q49.a2.ad1",
+          "summa:I.q49.a2.ad2",
+          "summa:I.q49.a2.ad3",
+          "summa:I.q49.a2.arg1",
+          "summa:I.q49.a2.arg2",
+          "summa:I.q49.a2.arg3",
+          "summa:I.q49.a2.co",
+          "summa:I.q49.a2.sc"
+        ],
+        [
+          "summa:I-II.q18.pr"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 151.01858298294246,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0004",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "summa:I.q2.a3.co"
+      ],
+      "retrieved": [
+        [
+          "summa:I-II.q52.a1.co"
+        ],
+        [
+          "summa:III.q44.a2.ad2"
+        ],
+        [
+          "summa:I.q68.a1.arg1",
+          "summa:I.q68.a1.arg2",
+          "summa:I.q68.a1.arg3",
+          "summa:I.q68.a1.co",
+          "summa:I.q68.a1.sc"
+        ],
+        [
+          "summa:I.q14.a13.ad3"
+        ],
+        [
+          "summa:I.q76.a1.co"
+        ],
+        [
+          "summa:I.q119.a1.co"
+        ],
+        [
+          "summa:I.q70.a3.arg1",
+          "summa:I.q70.a3.arg2",
+          "summa:I.q70.a3.arg3",
+          "summa:I.q70.a3.arg4",
+          "summa:I.q70.a3.arg5",
+          "summa:I.q70.a3.co",
+          "summa:I.q70.a3.sc"
+        ],
+        [
+          "summa:I.q76.a4.ad4"
+        ],
+        [
+          "summa:II-II.q180.a6.ad2",
+          "summa:II-II.q180.a6.ad3"
+        ],
+        [
+          "summa:I-II.q102.a4.ad6"
+        ],
+        [
+          "summa:I.q3.pr"
+        ],
+        [
+          "summa:II-II.q95.a5.ad1",
+          "summa:II-II.q95.a5.arg1",
+          "summa:II-II.q95.a5.arg2",
+          "summa:II-II.q95.a5.arg3",
+          "summa:II-II.q95.a5.co",
+          "summa:II-II.q95.a5.sc"
+        ],
+        [
+          "summa:I.q76.a2.ad1",
+          "summa:I.q76.a2.ad2",
+          "summa:I.q76.a2.ad3",
+          "summa:I.q76.a2.co"
+        ],
+        [
+          "summa:I.q88.a1.co"
+        ],
+        [
+          "summa:I-II.q14.a6.ad1",
+          "summa:I-II.q14.a6.ad2",
+          "summa:I-II.q14.a6.ad3",
+          "summa:I-II.q14.a6.arg1",
+          "summa:I-II.q14.a6.arg2",
+          "summa:I-II.q14.a6.arg3",
+          "summa:I-II.q14.a6.co",
+          "summa:I-II.q14.a6.sc"
+        ],
+        [
+          "summa:III.q19.a1.co"
+        ],
+        [
+          "summa:I.q85.a3.ad1",
+          "summa:I.q85.a3.arg1",
+          "summa:I.q85.a3.arg2",
+          "summa:I.q85.a3.arg3",
+          "summa:I.q85.a3.arg4",
+          "summa:I.q85.a3.co",
+          "summa:I.q85.a3.sc"
+        ],
+        [
+          "summa:III.q75.a8.arg1",
+          "summa:III.q75.a8.arg2",
+          "summa:III.q75.a8.arg3",
+          "summa:III.q75.a8.arg4",
+          "summa:III.q75.a8.co",
+          "summa:III.q75.a8.sc"
+        ],
+        [
+          "summa:I-II.q102.a5.ad10"
+        ],
+        [
+          "summa:I.q14.pr"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 156.3726250315085,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0005",
+      "slice": "same-language",
+      "expected_units": [
+        "summa:I.q3.a4.co"
+      ],
+      "retrieved": [
+        [
+          "summa:I.q88.a1.co"
+        ],
+        [
+          "summa:I.q76.a1.co"
+        ],
+        [
+          "summa:I.q28.a2.ad1",
+          "summa:I.q28.a2.ad2",
+          "summa:I.q28.a2.ad3",
+          "summa:I.q28.a2.arg1",
+          "summa:I.q28.a2.arg2",
+          "summa:I.q28.a2.arg3",
+          "summa:I.q28.a2.co",
+          "summa:I.q28.a2.sc"
+        ],
+        [
+          "summa:I.q119.a1.co"
+        ],
+        [
+          "summa:I-II.q52.a1.co"
+        ],
+        [
+          "summa:I.q39.a8.co"
+        ],
+        [
+          "summa:I.q77.a6.ad1",
+          "summa:I.q77.a6.ad2",
+          "summa:I.q77.a6.ad3",
+          "summa:I.q77.a6.arg1",
+          "summa:I.q77.a6.arg2",
+          "summa:I.q77.a6.arg3",
+          "summa:I.q77.a6.co",
+          "summa:I.q77.a6.sc"
+        ],
+        [
+          "summa:I.q76.a2.ad1",
+          "summa:I.q76.a2.ad2",
+          "summa:I.q76.a2.ad3",
+          "summa:I.q76.a2.co"
+        ],
+        [
+          "summa:I.q14.a6.arg1",
+          "summa:I.q14.a6.arg2",
+          "summa:I.q14.a6.arg3",
+          "summa:I.q14.a6.co",
+          "summa:I.q14.a6.sc"
+        ],
+        [
+          "summa:I.q87.a1.ad1",
+          "summa:I.q87.a1.ad2",
+          "summa:I.q87.a1.arg1",
+          "summa:I.q87.a1.arg2",
+          "summa:I.q87.a1.arg3",
+          "summa:I.q87.a1.co",
+          "summa:I.q87.a1.sc"
+        ],
+        [
+          "summa:I.q44.a1.ad1",
+          "summa:I.q44.a1.ad2",
+          "summa:I.q44.a1.ad3",
+          "summa:I.q44.a1.arg1",
+          "summa:I.q44.a1.arg2",
+          "summa:I.q44.a1.arg3",
+          "summa:I.q44.a1.co",
+          "summa:I.q44.a1.sc"
+        ],
+        [
+          "summa:I.q39.a5.ad1",
+          "summa:I.q39.a5.ad2",
+          "summa:I.q39.a5.ad3",
+          "summa:I.q39.a5.ad4",
+          "summa:I.q39.a5.ad5",
+          "summa:I.q39.a5.ad6",
+          "summa:I.q39.a5.arg1",
+          "summa:I.q39.a5.arg2",
+          "summa:I.q39.a5.arg3",
+          "summa:I.q39.a5.arg4",
+          "summa:I.q39.a5.arg5",
+          "summa:I.q39.a5.arg6",
+          "summa:I.q39.a5.co",
+          "summa:I.q39.a5.sc"
+        ],
+        [
+          "summa:I.q3.a4.ad1",
+          "summa:I.q3.a4.ad2",
+          "summa:I.q3.a4.arg1",
+          "summa:I.q3.a4.arg2",
+          "summa:I.q3.a4.co",
+          "summa:I.q3.a4.sc"
+        ],
+        [
+          "summa:I.q44.a3.ad1",
+          "summa:I.q44.a3.ad2",
+          "summa:I.q44.a3.ad3",
+          "summa:I.q44.a3.ad4",
+          "summa:I.q44.a3.arg1",
+          "summa:I.q44.a3.arg2",
+          "summa:I.q44.a3.arg3",
+          "summa:I.q44.a3.arg4",
+          "summa:I.q44.a3.co",
+          "summa:I.q44.a3.sc"
+        ],
+        [
+          "summa:I.q90.a2.ad1",
+          "summa:I.q90.a2.ad2",
+          "summa:I.q90.a2.ad3",
+          "summa:I.q90.a2.arg1",
+          "summa:I.q90.a2.arg2",
+          "summa:I.q90.a2.arg3",
+          "summa:I.q90.a2.co",
+          "summa:I.q90.a2.sc"
+        ],
+        [
+          "summa:I.q14.a13.ad3"
+        ],
+        [
+          "summa:I.q85.a3.ad2",
+          "summa:I.q85.a3.ad3",
+          "summa:I.q85.a3.ad4"
+        ],
+        [
+          "summa:I.q54.a2.ad1",
+          "summa:I.q54.a2.ad2",
+          "summa:I.q54.a2.arg1",
+          "summa:I.q54.a2.arg2",
+          "summa:I.q54.a2.co",
+          "summa:I.q54.a2.sc"
+        ],
+        [
+          "summa:I.q77.a1.ad1",
+          "summa:I.q77.a1.ad2",
+          "summa:I.q77.a1.ad3",
+          "summa:I.q77.a1.ad4",
+          "summa:I.q77.a1.arg1",
+          "summa:I.q77.a1.arg2",
+          "summa:I.q77.a1.arg3",
+          "summa:I.q77.a1.arg4",
+          "summa:I.q77.a1.arg5",
+          "summa:I.q77.a1.arg6",
+          "summa:I.q77.a1.arg7",
+          "summa:I.q77.a1.co",
+          "summa:I.q77.a1.sc"
+        ],
+        [
+          "summa:I.q84.a3.ad1",
+          "summa:I.q84.a3.ad2",
+          "summa:I.q84.a3.ad3",
+          "summa:I.q84.a3.arg1",
+          "summa:I.q84.a3.arg2",
+          "summa:I.q84.a3.arg3",
+          "summa:I.q84.a3.co",
+          "summa:I.q84.a3.sc"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 1.0,
+        "full-recall@20": 1.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 125.12850004713982,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0006",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "ccc:284",
+        "ccc:338"
+      ],
+      "retrieved": [
+        [
+          "summa:III.q19.a1.co"
+        ],
+        [
+          "summa:I.q119.a1.co"
+        ],
+        [
+          "summa:III.q75.a8.arg1",
+          "summa:III.q75.a8.arg2",
+          "summa:III.q75.a8.arg3",
+          "summa:III.q75.a8.arg4",
+          "summa:III.q75.a8.co",
+          "summa:III.q75.a8.sc"
+        ],
+        [
+          "summa:I.q45.a5.ad1",
+          "summa:I.q45.a5.arg1",
+          "summa:I.q45.a5.arg2",
+          "summa:I.q45.a5.arg3",
+          "summa:I.q45.a5.co",
+          "summa:I.q45.a5.sc"
+        ],
+        [
+          "summa:I.q68.a1.arg1",
+          "summa:I.q68.a1.arg2",
+          "summa:I.q68.a1.arg3",
+          "summa:I.q68.a1.co",
+          "summa:I.q68.a1.sc"
+        ],
+        [
+          "summa:I.q22.a2.ad1",
+          "summa:I.q22.a2.ad2",
+          "summa:I.q22.a2.arg1",
+          "summa:I.q22.a2.arg2",
+          "summa:I.q22.a2.arg3",
+          "summa:I.q22.a2.arg4",
+          "summa:I.q22.a2.arg5",
+          "summa:I.q22.a2.co",
+          "summa:I.q22.a2.sc"
+        ],
+        [
+          "summa:I.q69.a2.ad1",
+          "summa:I.q69.a2.ad2",
+          "summa:I.q69.a2.ad3",
+          "summa:I.q69.a2.arg1",
+          "summa:I.q69.a2.arg2",
+          "summa:I.q69.a2.arg3",
+          "summa:I.q69.a2.co",
+          "summa:I.q69.a2.sc"
+        ],
+        [
+          "summa:I.q23.a5.ad3"
+        ],
+        [
+          "summa:I.q76.a1.co"
+        ],
+        [
+          "summa:I.q46.a1.arg1",
+          "summa:I.q46.a1.arg10",
+          "summa:I.q46.a1.arg2",
+          "summa:I.q46.a1.arg3",
+          "summa:I.q46.a1.arg4",
+          "summa:I.q46.a1.arg5",
+          "summa:I.q46.a1.arg6",
+          "summa:I.q46.a1.arg7",
+          "summa:I.q46.a1.arg8",
+          "summa:I.q46.a1.arg9",
+          "summa:I.q46.a1.co",
+          "summa:I.q46.a1.sc"
+        ],
+        [
+          "summa:I.q45.a1.ad1",
+          "summa:I.q45.a1.ad2",
+          "summa:I.q45.a1.ad3",
+          "summa:I.q45.a1.arg1",
+          "summa:I.q45.a1.arg2",
+          "summa:I.q45.a1.arg3",
+          "summa:I.q45.a1.co",
+          "summa:I.q45.a1.sc"
+        ],
+        [
+          "summa:I.q105.pr"
+        ],
+        [
+          "summa:III.q44.a2.ad2"
+        ],
+        [
+          "summa:I.q76.a2.ad1",
+          "summa:I.q76.a2.ad2",
+          "summa:I.q76.a2.ad3",
+          "summa:I.q76.a2.co"
+        ],
+        [
+          "summa:I.q118.a2.ad1",
+          "summa:I.q118.a2.ad2",
+          "summa:I.q118.a2.arg1",
+          "summa:I.q118.a2.arg2",
+          "summa:I.q118.a2.arg3",
+          "summa:I.q118.a2.arg4",
+          "summa:I.q118.a2.arg5",
+          "summa:I.q118.a2.co",
+          "summa:I.q118.a2.sc"
+        ],
+        [
+          "summa:I-II.q102.a6.ad1"
+        ],
+        [
+          "summa:I.q74.a1.ad1",
+          "summa:I.q74.a1.ad2",
+          "summa:I.q74.a1.ad3",
+          "summa:I.q74.a1.ad4",
+          "summa:I.q74.a1.ad5",
+          "summa:I.q74.a1.arg1",
+          "summa:I.q74.a1.arg2",
+          "summa:I.q74.a1.arg3",
+          "summa:I.q74.a1.co",
+          "summa:I.q74.a1.sc1",
+          "summa:I.q74.a1.sc2"
+        ],
+        [
+          "summa:I.q44.pr"
+        ],
+        [
+          "summa:I.q14.a13.ad3"
+        ],
+        [
+          "summa:I.q3.pr"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 162.62670792639256,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0008",
+      "slice": "same-language",
+      "expected_units": [
+        "ccc:283",
+        "ccc:284"
+      ],
+      "retrieved": [
+        [
+          "summa:I.q119.a1.co"
+        ],
+        [
+          "summa:I.q88.a1.co"
+        ],
+        [
+          "summa:I.q85.a1.ad1",
+          "summa:I.q85.a1.arg1",
+          "summa:I.q85.a1.arg2",
+          "summa:I.q85.a1.arg3",
+          "summa:I.q85.a1.arg4",
+          "summa:I.q85.a1.arg5",
+          "summa:I.q85.a1.co",
+          "summa:I.q85.a1.sc"
+        ],
+        [
+          "summa:I.q84.a3.ad1",
+          "summa:I.q84.a3.ad2",
+          "summa:I.q84.a3.ad3",
+          "summa:I.q84.a3.arg1",
+          "summa:I.q84.a3.arg2",
+          "summa:I.q84.a3.arg3",
+          "summa:I.q84.a3.co",
+          "summa:I.q84.a3.sc"
+        ],
+        [
+          "summa:I.q76.a1.co"
+        ],
+        [
+          "summa:I.q90.a2.ad1",
+          "summa:I.q90.a2.ad2",
+          "summa:I.q90.a2.ad3",
+          "summa:I.q90.a2.arg1",
+          "summa:I.q90.a2.arg2",
+          "summa:I.q90.a2.arg3",
+          "summa:I.q90.a2.co",
+          "summa:I.q90.a2.sc"
+        ],
+        [
+          "summa:I.q44.a2.ad1",
+          "summa:I.q44.a2.ad2",
+          "summa:I.q44.a2.ad3",
+          "summa:I.q44.a2.arg1",
+          "summa:I.q44.a2.arg2",
+          "summa:I.q44.a2.arg3",
+          "summa:I.q44.a2.co",
+          "summa:I.q44.a2.sc"
+        ],
+        [
+          "summa:I.q75.a5.ad1",
+          "summa:I.q75.a5.ad2",
+          "summa:I.q75.a5.ad3",
+          "summa:I.q75.a5.ad4",
+          "summa:I.q75.a5.arg1",
+          "summa:I.q75.a5.arg2",
+          "summa:I.q75.a5.arg3",
+          "summa:I.q75.a5.arg4",
+          "summa:I.q75.a5.co",
+          "summa:I.q75.a5.sc"
+        ],
+        [
+          "summa:I.q118.a2.ad1",
+          "summa:I.q118.a2.ad2",
+          "summa:I.q118.a2.arg1",
+          "summa:I.q118.a2.arg2",
+          "summa:I.q118.a2.arg3",
+          "summa:I.q118.a2.arg4",
+          "summa:I.q118.a2.arg5",
+          "summa:I.q118.a2.co",
+          "summa:I.q118.a2.sc"
+        ],
+        [
+          "summa:I.q50.a2.ad1",
+          "summa:I.q50.a2.ad2",
+          "summa:I.q50.a2.arg1",
+          "summa:I.q50.a2.arg2",
+          "summa:I.q50.a2.arg3",
+          "summa:I.q50.a2.arg4",
+          "summa:I.q50.a2.co",
+          "summa:I.q50.a2.sc"
+        ],
+        [
+          "summa:I.q66.a1.ad1",
+          "summa:I.q66.a1.ad2",
+          "summa:I.q66.a1.arg1",
+          "summa:I.q66.a1.arg2",
+          "summa:I.q66.a1.arg3",
+          "summa:I.q66.a1.co",
+          "summa:I.q66.a1.sc1",
+          "summa:I.q66.a1.sc2"
+        ],
+        [
+          "summa:I.q85.a3.ad1",
+          "summa:I.q85.a3.arg1",
+          "summa:I.q85.a3.arg2",
+          "summa:I.q85.a3.arg3",
+          "summa:I.q85.a3.arg4",
+          "summa:I.q85.a3.co",
+          "summa:I.q85.a3.sc"
+        ],
+        [
+          "summa:I-II.q52.a1.co"
+        ],
+        [
+          "summa:I-II.q54.a4.ad1",
+          "summa:I-II.q54.a4.ad2",
+          "summa:I-II.q54.a4.ad3",
+          "summa:I-II.q54.a4.arg1",
+          "summa:I-II.q54.a4.arg2",
+          "summa:I-II.q54.a4.arg3",
+          "summa:I-II.q54.a4.co",
+          "summa:I-II.q54.a4.sc"
+        ],
+        [
+          "summa:I.q76.a6.ad1",
+          "summa:I.q76.a6.ad2",
+          "summa:I.q76.a6.ad3",
+          "summa:I.q76.a6.arg1",
+          "summa:I.q76.a6.arg2",
+          "summa:I.q76.a6.arg3",
+          "summa:I.q76.a6.co",
+          "summa:I.q76.a6.sc"
+        ],
+        [
+          "summa:I.q89.a1.ad1",
+          "summa:I.q89.a1.ad2",
+          "summa:I.q89.a1.ad3",
+          "summa:I.q89.a1.co"
+        ],
+        [
+          "summa:I-II.q49.a2.ad1",
+          "summa:I-II.q49.a2.arg1",
+          "summa:I-II.q49.a2.arg2",
+          "summa:I-II.q49.a2.arg3",
+          "summa:I-II.q49.a2.co",
+          "summa:I-II.q49.a2.sc"
+        ],
+        [
+          "summa:I.q45.a5.ad1",
+          "summa:I.q45.a5.arg1",
+          "summa:I.q45.a5.arg2",
+          "summa:I.q45.a5.arg3",
+          "summa:I.q45.a5.co",
+          "summa:I.q45.a5.sc"
+        ],
+        [
+          "summa:I.q76.a2.ad1",
+          "summa:I.q76.a2.ad2",
+          "summa:I.q76.a2.ad3",
+          "summa:I.q76.a2.co"
+        ],
+        [
+          "summa:I.q76.a4.ad4"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 157.32754196505994,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0010",
+      "slice": "same-language",
+      "expected_units": [
+        "ccc:2280",
+        "ccc:2282",
+        "ccc:2283"
+      ],
+      "retrieved": [
+        [
+          "ccc:1113"
+        ],
+        [
+          "ccc:2458"
+        ],
+        [
+          "ccc:1522"
+        ],
+        [
+          "ccc:2032"
+        ],
+        [
+          "ccc:814"
+        ],
+        [
+          "ccc:2040"
+        ],
+        [
+          "ccc:1476"
+        ],
+        [
+          "ccc:1684"
+        ],
+        [
+          "ccc:1031"
+        ],
+        [
+          "ccc:2327"
+        ],
+        [
+          "ccc:2420"
+        ],
+        [
+          "ccc:827"
+        ],
+        [
+          "ccc:1118"
+        ],
+        [
+          "ccc:1314"
+        ],
+        [
+          "ccc:846"
+        ],
+        [
+          "ccc:2283"
+        ],
+        [
+          "summa:I-II.q102.a5.ad6"
+        ],
+        [
+          "ccc:1478"
+        ],
+        [
+          "ccc:775"
+        ],
+        [
+          "ccc:1510"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 1.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 177.04795801546425,
+      "query_truncated": false
+    }
+  ],
+  "slices": {
+    "all": {
+      "recall@5": {
+        "n": 8,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@10": {
+        "n": 8,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@20": {
+        "n": 8,
+        "mean": 0.25,
+        "low": 0.0,
+        "high": 0.625,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 8,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 8,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 8,
+        "mean": 0.125,
+        "low": 0.0,
+        "high": 0.375,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 8,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      }
+    },
+    "same-language": {
+      "recall@5": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@20": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 4,
+        "mean": 0.25,
+        "low": 0.0,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      }
+    },
+    "cross-lingual": {
+      "recall@5": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@20": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@5": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "MRR@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      }
+    }
+  },
+  "source_slices": {
+    "ccc": {
+      "recall@5": {
+        "n": 6,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@10": {
+        "n": 6,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@20": {
+        "n": 6,
+        "mean": 0.16666666666666666,
+        "low": 0.0,
+        "high": 0.5,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 6,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 6,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 6,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "MRR@10": {
+        "n": 6,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      }
+    },
+    "summa": {
+      "recall@5": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@10": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@20": {
+        "n": 3,
+        "mean": 0.3333333333333333,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 3,
+        "mean": 0.3333333333333333,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      }
+    }
+  },
+  "retrieval_latency_ms": {
+    "p50": 159.97712494572625,
+    "p95": 3177.156479598487
+  },
+  "end_to_end_latency_ms": null,
+  "cost_per_answer": null,
+  "cache_hit_rate": null
+}

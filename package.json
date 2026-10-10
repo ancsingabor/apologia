@@ -16,7 +16,9 @@
     "ingest": "tsx scripts/ingest/main.ts",
     "eval:lint": "tsx scripts/eval-lint.ts",
     "eval:preflight": "uv run --project harness --extra local-models --extra export python -m apologia_eval.preflight",
-    "docs:lint": "tsx scripts/docs-lint.ts"
+    "docs:lint": "tsx scripts/docs-lint.ts",
+    "eval:bakeoff": "uv run --project harness --extra db --extra export python -m apologia_eval.bakeoff",
+    "eval": "uv run --project harness --extra db --extra stats --extra export python -m apologia_eval.score"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

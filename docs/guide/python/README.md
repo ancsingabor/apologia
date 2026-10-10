@@ -13,16 +13,15 @@
     seen in" location for every entry
   - [walkthrough.md](walkthrough.md), one section per module, each with an
     exercise that breaks something on purpose
-- **This track grows with the code.** When `db.py`, `bakeoff.py` and
-  `score.py` land, each one brings its own level, its new vocabulary and its
-  exercise.
+- **This track grows with the code.** The database reader, corpus embedding
+  pass and scorer each have a level, vocabulary and a break-it exercise.
 
 ## Before you start (10 minutes)
 
 ```bash
 brew install uv                  # once. uv is npm + nvm + npx in one tool
 cd harness
-uv sync --all-groups             # ≈ npm ci: creates .venv/ from uv.lock
+uv sync --all-groups --extra db --extra stats  # CI-sized environment, no models
 uv run pytest                    # ≈ npx vitest run. Under a second, no services
 uv run ruff check .              # ≈ npx eslint .
 uv run ruff format --check .     # ≈ npx prettier --check .
@@ -97,13 +96,26 @@ commits.
 - [ ] The `ru_maxrss` unit trap (bytes on macOS, kilobytes on Linux)
 - [ ] Walkthrough exercises done (there are two)
 
-### Level 5: `bakeoff.py` 📐, written when the file lands
-Expected topics: `numpy` arrays (vs `Float32Array`), `sentence-transformers`,
-query/passage prefixes, and a CLI entry point with `if __name__ == "__main__"`.
+### Level 5: `bakeoff.py`, a resumable operator command
+- [ ] `argparse`, `Path`, and `if __name__ == "__main__"` as a CLI entry point
+- [ ] Streaming a file into SHA-256 instead of reading a model into memory
+- [ ] `dataclasses.replace`: changing a frozen record without mutating it
+- [ ] Why query prefixes differ from passage prefixes, while the artifact stays
+      the same
+- [ ] Why a batch commits separately and a changed artifact gets another key
+- [ ] Walkthrough exercise done
 
-### Level 6: `score.py` 📐, written when the file lands
-Expected topics: `pandas` DataFrames (vs arrays of objects plus `groupBy`),
-`scipy.stats.bootstrap`, and what a confidence interval says at n = 8.
+### Level 6: `score.py`, measurement with uncertainty
+Start with [Reading a retrieval report](../retrieval-reports.md) for a numerical
+example before following the Python implementation.
+
+- [ ] `np.asarray`, `np.mean`, `np.var(ddof=1)`, and `np.percentile`
+- [ ] `scipy.stats.bootstrap`: resample questions, preserve model pairing
+- [ ] Why a constant sample is not certainty, and why a singleton has no interval
+- [ ] What the exploratory total-n estimate assumes, and why a tie returns None
+- [ ] Serialising a pydantic report; null generation fields in a retrieval run
+- [ ] Why source slices overlap and cannot be averaged into the overall result
+- [ ] Walkthrough exercise done
 
 ## How this track is kept current
 

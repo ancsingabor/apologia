@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "corpus_hash": "42a33a159bfef11abeeec05ecdbdf942ebdbf89c0bde79148f6a5fe826f09597",
+  "gold_hash": "32b4d4565e2426dcb816c58281f174ce845a630211b1ed05b06fa863a6c802c6",
+  "embedding_identities": [
+    "Qwen/Qwen3-Embedding-0.6B@onnx:8c4f59b70600c4a61b8e2c793f51601f4dbb866072ce70cc4be862454ba84475",
+    "intfloat/multilingual-e5-large@onnx:c0372a01e8336707c4addb08207555769638c54ce7ad7285c1aedca8982703e7",
+    "BAAI/bge-m3@onnx:c701ad440e3ba38ae7b34fbf34a1ecdd8b0cf6154a297824316ded600d3dc9e5"
+  ],
+  "seed": 0,
+  "resamples": 9999,
+  "selection_metric": "recall@10",
+  "confidence_level": 0.95,
+  "planning_power": 0.8,
+  "sample_size_method": "exploratory paired normal approximation",
+  "slices": {
+    "all": {
+      "first": "BAAI/bge-m3@onnx:c701ad440e3ba38ae7b34fbf34a1ecdd8b0cf6154a297824316ded600d3dc9e5",
+      "second": "intfloat/multilingual-e5-large@onnx:c0372a01e8336707c4addb08207555769638c54ce7ad7285c1aedca8982703e7",
+      "paired_recall@10": {
+        "n": 8,
+        "mean": 0.125,
+        "low": -0.25,
+        "high": 0.5,
+        "status": "percentile-bootstrap"
+      },
+      "estimated_total_n": 207,
+      "first_loses": [
+        "q-0008"
+      ],
+      "first_gains": [
+        "q-0002",
+        "q-0004"
+      ]
+    },
+    "same-language": {
+      "first": "BAAI/bge-m3@onnx:c701ad440e3ba38ae7b34fbf34a1ecdd8b0cf6154a297824316ded600d3dc9e5",
+      "second": "intfloat/multilingual-e5-large@onnx:c0372a01e8336707c4addb08207555769638c54ce7ad7285c1aedca8982703e7",
+      "paired_recall@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": -0.75,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "estimated_total_n": null,
+      "first_loses": [
+        "q-0008"
+      ],
+      "first_gains": [
+        "q-0002"
+      ]
+    },
+    "cross-lingual": {
+      "first": "BAAI/bge-m3@onnx:c701ad440e3ba38ae7b34fbf34a1ecdd8b0cf6154a297824316ded600d3dc9e5",
+      "second": "intfloat/multilingual-e5-large@onnx:c0372a01e8336707c4addb08207555769638c54ce7ad7285c1aedca8982703e7",
+      "paired_recall@10": {
+        "n": 4,
+        "mean": 0.25,
+        "low": 0.0,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "estimated_total_n": 32,
+      "first_loses": [],
+      "first_gains": [
+        "q-0004"
+      ]
+    }
+  }
+}

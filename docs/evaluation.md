@@ -179,12 +179,31 @@ in a diff are at least computed correctly.
 
 ## Report format
 
-`npm run eval` will write `eval/reports/<timestamp>.json` plus a human-readable
-summary; whether it exists yet is in [guide/status.md](guide/status.md). Each
-report records the corpus manifest hash, the embedding model, the
-generation model, and the prompt version — so a number can always be traced back
-to the exact system that produced it. A metric without that provenance is not
-reproducible and therefore not evidence.
+`npm run eval` writes `eval/reports/<timestamp>.json` plus a Markdown summary.
+Use `--compare` with earlier reports for a paired comparison; executable
+commands are in [harness/README.md](../harness/README.md), and measured progress
+is in [guide/status.md](guide/status.md).
+
+The retrieval-only contract records corpus and gold-set hashes, the exact local
+artifact identity, pooling, query/passage prefixes, context limit, package
+versions, seed and bootstrap resample count. Retrieved results are locator sets,
+never source text. Generation model and prompt version are explicitly null,
+alongside answer cost, end-to-end latency and cache rate: none is measured by
+this pass. Warm query-embedding-plus-search latency is labelled separately.
+
+Reports include the fixed metrics per question, same-language/cross-lingual
+slices, and overlapping expected-source diagnostics. Per-source passage and
+per-question query truncation are counted using the tokenizer, including prefix
+and special tokens. Scoring refuses incomplete embeddings, missing expected
+locators, and document hashes inconsistent with their stored units.
+
+The statistical method is a seeded 95% percentile bootstrap of question means.
+It reports constant samples explicitly and omits intervals for empty or singleton
+slices. Comparisons pair the same questions after checking corpus and gold-set
+identity. Their exploratory total-n estimate uses paired recall@10 differences,
+a two-sided 95% normal approximation and 80% power. Ties and zero observed
+variance yield null; selecting the top two on this small authored set does not
+establish a winner. A metric without provenance is not evidence.
 
 ## Related
 

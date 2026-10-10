@@ -53,7 +53,7 @@ grep -lE '^Status:.*· \*\*' docs/adr/0*.md | wc -l
 | [005](005-verify-then-display.md) | Verify citations before display; no streaming in v1 | Accepted · its third gate check **replaced by 018** |
 | [006](006-draft-review-publish.md) | Answers are drafts until a human publishes them | Accepted, unamended |
 | 007 | Cross-lingual retrieval strategy | Deferred — constrained by [014](014-translation-and-quotation.md), decided by measurement |
-| 008 | Embedding model and provider | Deferred — Milestone 1, decided by the bake-off |
+| 008 | Embedding model and provider | Deferred — **evidence reviewed 2026-10-10**; broaden the gold set before choosing E5 or BGE-M3; tested Qwen3 configuration set aside |
 | [009](009-fail-closed-rate-limiting.md) | Cost and abuse containment; the limiter fails closed | Accepted · limiter built, **budget and kill switch are Phase 2** |
 | [010](010-authority-tiers.md) | Authority tiers as first-class metadata | Accepted · **amended 2026-09-30** — the tier is not required where it matters |
 | [011](011-semantic-layer-preregistration.md) | Pre-registration of the semantic-layer experiment | Accepted · **note added** — one threshold is already visibly mis-sized |
@@ -68,13 +68,23 @@ grep -lE '^Status:.*· \*\*' docs/adr/0*.md | wc -l
 | [020](020-asserting-a-single-signal-source.md) | Asserting a source that carries one signal | Accepted · **corrected** — `role` had been read off typography |
 | [021](021-licence-belongs-to-the-transcription.md) | A licence describes a transcription, not only a work | Accepted, unamended |
 | [022](022-asserting-a-source-with-no-sibling-edition.md) | Asserting a source with no sibling edition | Accepted · records four of its **own** claims being falsified |
-| [023](023-python-at-the-measurement-boundary.md) | Python at the measurement boundary; TypeScript everywhere else | Accepted · **a fourth outcome added**, one figure restated |
+| [023](023-python-at-the-measurement-boundary.md) | Python at the measurement boundary; TypeScript everywhere else | Accepted · **a fourth outcome added**, one figure restated; amended 2026-10-10 on prefixes, precision and serving evidence |
 
 **007 and 008 are deliberately deferred.** Picking an embedding model from
 model cards, before the gold set can measure it on Hungarian queries over a
 mixed-language corpus, would be choosing on marketing copy. They get written
 when there is a number behind them. [023](023-python-at-the-measurement-boundary.md)
 builds the harness that produces it.
+
+**008 evidence review — 2026-10-10.** The
+[completed local comparison](../../eval/reports/baseline-qwen3-fp32-2026-10-10.md)
+supports setting aside the tested Qwen3-0.6B fp32 configuration for now, rather
+than choosing E5 or BGE-M3 on their small point-estimate difference. The choice
+remains deferred until a broader reviewed, human-authored gold set and serving
+assessment provide adequate evidence. Architecture, precision, context window
+and fine-tuning vary together; this is not a causal comparison of pretraining
+families. Current expansion work and exploratory sample-size estimates live
+only in [status](../guide/status.md). No generation-provider decision is made.
 
 **008 covers embeddings only.** It used to be titled "provider boundary
 (embeddings + generation)", which promised a decision the bake-off cannot

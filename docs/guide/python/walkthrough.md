@@ -11,7 +11,7 @@ Each section follows the same shape:
 The exercises follow the repo's own rule: a check you haven't seen fail isn't
 a check yet. Every predicted outcome below was run before it was written down.
 
-Undo any exercise with `git checkout -- harness/`.
+Undo an exercise by restoring the expression you changed, then rerun its test.
 
 ---
 
@@ -292,8 +292,8 @@ ADR-008 asks.
 ## `preflight.py`: can this model actually answer a query?
 
 **What it does.** Before a candidate competes, it exports the model to a
-quantized ONNX artifact and measures whether that artifact still behaves like
-the original — because the artifact is what would serve queries in production.
+ONNX artifact (int8 by default, or explicit fp32) and measures whether that
+artifact still behaves like the original — because the artifact is what would serve queries in production.
 
 **Why it exists.** ADR-023's outcome table had no row for *"an open-weights model
 wins and cannot be served."* Retrieval lives in one embedding space, so the model
@@ -320,6 +320,18 @@ from the fp32 intermediate that already exists on disk. It cost one extra model
 load and settled the slate's one real finding immediately: `Qwen3` scored 0.62
 on int8 with a control of **1.00000**, which is attributable — the pipeline is
 exact and the quantization is not.
+
+**Precision is an input, not a hidden replacement.** `--precision fp32` keeps
+the unquantized directory instead of deleting it as an intermediate. Its report
+uses a separate filename and records `precision`; the earlier int8 evidence
+survives. The `Literal["int8", "fp32"]` annotation describes the allowed values
+to the type checker, while `argparse` checks the user's command at runtime.
+The default field value lets older int8 JSON reports load without inventing a
+new measurement. The reference loader explicitly uses CPU: automatic GPU
+selection reached roughly 8 GB of process footprint and stalled during the
+higher-precision check. That
+reference device is not the exported encoder measured for serving. Explain why retaining an fp32 graph while embedding with int8
+would still invalidate a retrieval comparison.
 
 **Two measurements that mean less than they look**, both flagged in the module
 docstring: `ru_maxrss` is **bytes on macOS and kilobytes on Linux**, and it is a
@@ -359,8 +371,189 @@ recorded "expected" value would have frozen that mistake in place.
 
 ---
 
-## Modules not yet written 📐
+## `bakeoff.py`: one artifact, a resumable corpus pass
 
-`bakeoff.py` and `score.py` get their sections here when they land. The docs
-lint requires it: a module in `harness/apologia_eval/` without a section in this
-file fails `npm run docs:lint`.
+**What it does.** It reads the current corpus, validates its stored document
+hashes, embeds passages through a local ONNX export and commits groups of
+vectors. Already committed chunks are skipped on the next run. Hosted corpus
+transmission remains refused by `assert_measurable`.
+
+**TS twin.** The ingestion CLI has the same shape: pure validation plus an
+operator-facing I/O shell. This does not port its parsers. Read it with
+`tests/test_bakeoff.py`, whose invented vectors and tiny fake files never load a
+model or touch Postgres.
+
+**The Python it teaches.** `argparse` plays the role of parsing `process.argv`,
+but generates help and validates choices. `Path` joins paths with `/` and opens
+files. `iter(lambda: stream.read(...), b"")` keeps asking for a block until it
+gets the empty bytes sentinel; it hashes gigabytes without holding them all in
+memory. `with` closes the file on success or error.
+
+`asdict` turns the candidate dataclass into a mapping for canonical JSON.
+`dataclasses.replace(candidate, passage_prefix=candidate.query_prefix)` creates
+a new frozen value: roughly `{...candidate, passage_prefix: queryPrefix}` in
+TypeScript. The shared export helper then uses the query instruction without
+changing the original candidate or implementing a second pooling path.
+
+`LocalEncoder` loads tokenizer and model once. Both passes use that class.
+Its identity hashes all artifact files and candidate settings; the inference
+version is explicit. A filesystem path alone would let overwritten weights
+reuse vectors from yesterday's model. Normalization, prefix and pooling are
+part of the embedding space too. `--batch-size` controls commit groups, not
+parallel GPU inference: the export helper embeds one text at a time.
+
+`if __name__ == "__main__": raise SystemExit(main())` runs the command when
+invoked with `python -m apologia_eval.bakeoff`, while importing its pure helpers
+in pytest does not start an embedding pass. The heavy imports are still lazy
+inside the export loader.
+
+**Exercise: let a zero vector through.** In `validate_vectors`, remove only
+`or not any(vector)` from the invalid-vector condition. Run:
+
+```bash
+uv run pytest tests/test_bakeoff.py -k invalid_vectors
+```
+
+The zero-vector case fails with `DID NOT RAISE`; the other cases still pass.
+This was run against a temporary copy before documenting it. `any(vector)` is
+false when every component is zero; JS would need `vector.some(v => v !== 0)`.
+A zero vector has no cosine direction, so accepting one does not merely lower
+retrieval quality. It permits an undefined measurement into the database.
+Restore that expression before continuing.
+
+**A live version of the exercise, run 2026-10-09.** The E5 corpus pass was
+interrupted after 176 committed vectors. Restarting began with a denominator
+of 9,007 remaining chunks, not 9,183. A database checksum comparison confirmed
+that every previously committed vector was unchanged. The important distinction
+is between the current in-memory batch (lost on interruption) and a committed
+batch (kept). Trying to score while the index was incomplete raised the intended
+refusal before any report was written. These are I/O checks against the local
+stack, separate from the pure pytest exercise above.
+
+---
+
+## `score.py`: a report that says what its numbers can support
+
+For the meaning of the measurements before their Python implementation, read
+[Reading a retrieval report](../retrieval-reports.md). It distinguishes the
+human-authored gold expectations, deterministic score calculation, bootstrap
+resampling and the later human review of an answer's supporting citations.
+
+**What it does.** It embeds each scorable gold question using `LocalEncoder`,
+searches the complete candidate index, maps ranked chunks to locator sets and
+writes JSON plus Markdown. It checks all expected locators and reads one
+repeatable database snapshot. It records corpus and gold hashes, artifact
+identity, software versions, prefixes, token limits and truncation. It runs no
+generation, so generation and answer-operational fields remain null.
+
+**TS twin.** `metrics.py` implements the definitions written in
+`docs/evaluation.md`; there is no TypeScript statistics implementation to port.
+Read this module with `tests/test_score.py`. Start with `score_question`, then
+`mean_interval`, `aggregate`, `aggregate_by_source`, `estimated_sample_size`,
+`compare_reports`, and only then `main`.
+
+**The Python it teaches.** `np.asarray(values)` turns a Python sequence into a
+NumPy array; it resembles a typed array with numerical operations attached.
+`np.mean` averages question scores. `np.var(..., ddof=1)` divides squared
+deviations by n−1, estimating sample variance; the default divides by n.
+`np.percentile` produces latency p50 and p95. These are explicit operations,
+not a DataFrame for the sake of practising pandas: dictionaries and lists keep
+this small report's question identities visible.
+
+`bootstrap((array,), np.mean, ...)` receives a one-item **tuple** of samples.
+The comma in `(array,)` creates the tuple; parentheses alone would not. SciPy
+resamples questions with replacement. A seeded NumPy generator makes that
+resampling repeatable. Percentile intervals avoid BCa's undefined constant
+sample, but an all-pass sample still cannot teach us about unseen failures;
+the report marks it as constant. Empty slices and singletons have no interval.
+
+`compare_reports` joins by question id before subtracting model scores. That
+pairing matters: the same hard question may defeat both models. Resampling
+paired differences preserves that fact; treating results as independent loses
+it. The comparison first checks corpus hash, gold hash and question identities.
+It names questions gained and lost so review can enforce the release rule.
+
+The total-n estimate uses the observed mean and sample variance of paired
+recall@10 differences. It is a normal approximation at 95% two-sided confidence
+and 80% power. Small authored slices and choosing the top two using the same
+scores make it exploratory. A tie or constant difference returns `None`, not
+an invented sample size. Source diagnostics narrow each question's expected
+units but keep its original mixed-corpus ranking; multi-source questions belong
+to overlapping slices.
+
+`Report.model_dump_json()` writes the validated contract.
+`Report.model_validate_json()` reads it for a comparison. Neither path writes
+the gold set. Markdown is a human view of the same report, not a second source
+of measurements.
+
+**Exercise: change sample variance into population variance.** In
+`estimated_sample_size`, change `ddof=1` to `ddof=0`. Run:
+
+```bash
+uv run pytest tests/test_score.py -k sample_size_is_total_paired_n
+```
+
+The test expects **32**, but the changed function returns **24**. This was run
+against a temporary copy. For differences `[1, 0, 0, 0]`, the mean is .25,
+sample variance is .25, and population variance is .1875. That silent change
+understates the planning estimate by a quarter. Restore `ddof=1`; then explain
+why the adjacent all-zero and constant-difference cases return `None` rather
+than claiming that more questions cannot matter.
+
+
+**Read a real output.** The [first E5 report](../../../eval/reports/baseline-e5-int8-2026-10-09.md)
+was scored twice on 2026-10-09. Every ranked locator set, metric and confidence
+interval matched; the latency fields differed. That is the distinction between
+reproducing a deterministic measurement from fixed inputs and reproducing a
+wall-clock observation. Find the per-question table, then explain why a hit in
+`recall@10` can coexist with a miss in `full-recall@10`. The JSON beside the
+Markdown keeps the actual locator sets needed to check that explanation.
+
+
+**Read a paired comparison.** Open the dated
+[BGE-M3 report](../../../eval/reports/baseline-bge-m3-int8-2026-10-09.md)
+and the [comparison JSON](../../../eval/reports/baseline-bge-m3-int8-2026-10-09.comparison.json).
+In the same-language slice, both models score 2/4, yet BGE-M3 gains q-0002 and
+loses q-0008. Build the paired differences by question id: one `+1`, one `-1`,
+and two zeros. Their mean is zero even though the models do not retrieve the
+same things. Explain why an aggregate tie does not mean interchangeable results,
+and why `estimated_total_n: null` does not mean zero questions are needed.
+The overall interval crosses zero; use it to explain why 5/8 versus 4/8 is not
+a model-selection verdict.
+
+**A small lifecycle lesson.** Several live BGE runs produced valid reports but
+failed during native interpreter shutdown. An explicit `gc.collect()` experiment
+sometimes exited cleanly, then failed on another run. That was insufficient
+evidence for a fix, so the code change was removed. Native objects and threads
+have lifetimes beyond a single Python name; collecting reference cycles does not
+necessarily make all native shutdown safe. A separate run with
+`TOKENIZERS_PARALLELISM=false` checks tokenizer scheduling without changing the
+measured tokens. Distinguish “a file was written,” “the contents reproduced,”
+and “the process exited successfully.” Explain why one successful retry does
+not establish that an intermittent fault has been fixed.
+
+
+**Read the third configuration.** The dated
+[Qwen3 fp32 report](../../../eval/reports/baseline-qwen3-fp32-2026-10-10.md)
+compares all three configurations. The faithful export scores 0/8 at recall@10,
+although none of its passages were truncated. Explain why neither fidelity nor
+zero truncation guarantees that the correct units appear near the top. At
+cutoff 20, q-0010 has a hit but not full recall: read its retrieved locator sets
+and find the expectation still missing. A constant sample's [0, 0] bootstrap
+interval cannot discover outcomes absent from the sample.
+
+The three-model comparison JSON chooses the top two **per slice**. Find its
+`first` and `second` identities: Qwen3 appears in the provenance list, but the
+selected pair is E5 and BGE-M3. The explicit pairwise JSON beside it compares
+Qwen3 with each baseline. Explain why an exploratory estimate of six total
+questions for one observed effect is not permission to stop testing after six.
+
+**A process is not a continuously running clock.** macOS power logs showed
+system sleeps during the Qwen3 pass. Sleep pauses computation; it does not
+undo committed database transactions. A separate temporary `caffeinate` process
+held an idle-sleep assertion until the encoder exited. After a deliberate
+encoder restart, every one of the 6,928 committed vector checksums was still
+unchanged. Distinguish an in-memory Python value, a committed database row, and
+a process identifier. Which survives interpreter exit? Why must a resumed run
+keep the same embedding identity, and why is total wall time a poor model-speed
+measurement when the machine sleeps or swaps memory?

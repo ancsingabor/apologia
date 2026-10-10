@@ -1,0 +1,1093 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-09T08:12:04.272348+00:00",
+  "corpus_hash": "42a33a159bfef11abeeec05ecdbdf942ebdbf89c0bde79148f6a5fe826f09597",
+  "gold_hash": "32b4d4565e2426dcb816c58281f174ce845a630211b1ed05b06fa863a6c802c6",
+  "embedding_identity": "intfloat/multilingual-e5-large@onnx:c0372a01e8336707c4addb08207555769638c54ce7ad7285c1aedca8982703e7",
+  "model_id": "intfloat/multilingual-e5-large",
+  "base_family": "xlm-roberta",
+  "artifact_hash": "fad71f597a30a01735d8c1fbf93906c6e4f8364c1aa1db1fde5f21c568f8d743",
+  "pooling": "mean",
+  "max_sequence_tokens": 512,
+  "dimensions": 1024,
+  "query_prefix": "query: ",
+  "passage_prefix": "passage: ",
+  "generation_model": null,
+  "prompt_version": null,
+  "seed": 0,
+  "resamples": 9999,
+  "packages": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "onnxruntime": "1.30.0",
+    "transformers": "4.57.6"
+  },
+  "excluded_question_ids": [
+    "q-0007",
+    "q-0009"
+  ],
+  "truncation_by_source": {
+    "ccc": {
+      "total": 5730,
+      "truncated": 5
+    },
+    "summa": {
+      "total": 3453,
+      "truncated": 2748
+    }
+  },
+  "questions": [
+    {
+      "id": "q-0001",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "ccc:283",
+        "ccc:284"
+      ],
+      "retrieved": [
+        [
+          "ccc:366"
+        ],
+        [
+          "ccc:831"
+        ],
+        [
+          "ccc:47"
+        ],
+        [
+          "ccc:375"
+        ],
+        [
+          "ccc:406"
+        ],
+        [
+          "ccc:2661"
+        ],
+        [
+          "ccc:830"
+        ],
+        [
+          "ccc:171"
+        ],
+        [
+          "ccc:281"
+        ],
+        [
+          "ccc:98"
+        ],
+        [
+          "ccc:2421"
+        ],
+        [
+          "ccc:2419"
+        ],
+        [
+          "ccc:266"
+        ],
+        [
+          "ccc:487"
+        ],
+        [
+          "ccc:23"
+        ],
+        [
+          "ccc:403"
+        ],
+        [
+          "ccc:282"
+        ],
+        [
+          "ccc:36"
+        ],
+        [
+          "ccc:2298"
+        ],
+        [
+          "ccc:868"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 199.54512489493936,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0002",
+      "slice": "same-language",
+      "expected_units": [
+        "ccc:159"
+      ],
+      "retrieved": [
+        [
+          "ccc:155"
+        ],
+        [
+          "ccc:47"
+        ],
+        [
+          "ccc:39"
+        ],
+        [
+          "ccc:2037"
+        ],
+        [
+          "ccc:171"
+        ],
+        [
+          "ccc:770"
+        ],
+        [
+          "ccc:176"
+        ],
+        [
+          "ccc:2038"
+        ],
+        [
+          "ccc:366"
+        ],
+        [
+          "ccc:154"
+        ],
+        [
+          "ccc:2088"
+        ],
+        [
+          "ccc:812"
+        ],
+        [
+          "ccc:2034"
+        ],
+        [
+          "ccc:286"
+        ],
+        [
+          "ccc:367"
+        ],
+        [
+          "ccc:162"
+        ],
+        [
+          "ccc:1842"
+        ],
+        [
+          "ccc:36"
+        ],
+        [
+          "ccc:2050"
+        ],
+        [
+          "ccc:152"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 54.30320801679045,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0003",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "ccc:309",
+        "ccc:310",
+        "ccc:311",
+        "summa:I.q2.a3.arg1",
+        "summa:I.q2.a3.ad1"
+      ],
+      "retrieved": [
+        [
+          "ccc:309"
+        ],
+        [
+          "ccc:324"
+        ],
+        [
+          "ccc:310"
+        ],
+        [
+          "ccc:2082"
+        ],
+        [
+          "ccc:311"
+        ],
+        [
+          "ccc:385"
+        ],
+        [
+          "ccc:272"
+        ],
+        [
+          "ccc:395"
+        ],
+        [
+          "ccc:278"
+        ],
+        [
+          "ccc:277"
+        ],
+        [
+          "ccc:412"
+        ],
+        [
+          "ccc:312"
+        ],
+        [
+          "ccc:270"
+        ],
+        [
+          "ccc:268"
+        ],
+        [
+          "ccc:271"
+        ],
+        [
+          "ccc:1918"
+        ],
+        [
+          "ccc:269"
+        ],
+        [
+          "ccc:2825"
+        ],
+        [
+          "ccc:1"
+        ],
+        [
+          "ccc:1441"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 1.0,
+        "full-recall@5": 0.0,
+        "recall@10": 1.0,
+        "full-recall@10": 0.0,
+        "recall@20": 1.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 1.0
+      },
+      "latency_ms": 47.00500005856156,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0004",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "summa:I.q2.a3.co"
+      ],
+      "retrieved": [
+        [
+          "ccc:412"
+        ],
+        [
+          "ccc:279"
+        ],
+        [
+          "ccc:36"
+        ],
+        [
+          "ccc:1047"
+        ],
+        [
+          "ccc:293"
+        ],
+        [
+          "ccc:47"
+        ],
+        [
+          "ccc:421"
+        ],
+        [
+          "ccc:313"
+        ],
+        [
+          "ccc:1308"
+        ],
+        [
+          "ccc:482"
+        ],
+        [
+          "ccc:309"
+        ],
+        [
+          "ccc:1381"
+        ],
+        [
+          "ccc:885"
+        ],
+        [
+          "ccc:325"
+        ],
+        [
+          "ccc:962"
+        ],
+        [
+          "ccc:1806"
+        ],
+        [
+          "ccc:846"
+        ],
+        [
+          "ccc:541"
+        ],
+        [
+          "ccc:810"
+        ],
+        [
+          "ccc:46"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 0.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 43.556082993745804,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0005",
+      "slice": "same-language",
+      "expected_units": [
+        "summa:I.q3.a4.co"
+      ],
+      "retrieved": [
+        [
+          "ccc:252"
+        ],
+        [
+          "summa:I.q44.a1.ad1",
+          "summa:I.q44.a1.ad2",
+          "summa:I.q44.a1.ad3",
+          "summa:I.q44.a1.arg1",
+          "summa:I.q44.a1.arg2",
+          "summa:I.q44.a1.arg3",
+          "summa:I.q44.a1.co",
+          "summa:I.q44.a1.sc"
+        ],
+        [
+          "summa:I.q75.a5.ad1",
+          "summa:I.q75.a5.ad2",
+          "summa:I.q75.a5.ad3",
+          "summa:I.q75.a5.ad4",
+          "summa:I.q75.a5.arg1",
+          "summa:I.q75.a5.arg2",
+          "summa:I.q75.a5.arg3",
+          "summa:I.q75.a5.arg4",
+          "summa:I.q75.a5.co",
+          "summa:I.q75.a5.sc"
+        ],
+        [
+          "summa:I.q90.a2.ad1",
+          "summa:I.q90.a2.ad2",
+          "summa:I.q90.a2.ad3",
+          "summa:I.q90.a2.arg1",
+          "summa:I.q90.a2.arg2",
+          "summa:I.q90.a2.arg3",
+          "summa:I.q90.a2.co",
+          "summa:I.q90.a2.sc"
+        ],
+        [
+          "summa:I.q77.a1.ad1",
+          "summa:I.q77.a1.ad2",
+          "summa:I.q77.a1.ad3",
+          "summa:I.q77.a1.ad4",
+          "summa:I.q77.a1.arg1",
+          "summa:I.q77.a1.arg2",
+          "summa:I.q77.a1.arg3",
+          "summa:I.q77.a1.arg4",
+          "summa:I.q77.a1.arg5",
+          "summa:I.q77.a1.arg6",
+          "summa:I.q77.a1.arg7",
+          "summa:I.q77.a1.co",
+          "summa:I.q77.a1.sc"
+        ],
+        [
+          "summa:I.q18.a4.ad1",
+          "summa:I.q18.a4.ad2",
+          "summa:I.q18.a4.ad3",
+          "summa:I.q18.a4.ad4",
+          "summa:I.q18.a4.arg1",
+          "summa:I.q18.a4.arg2",
+          "summa:I.q18.a4.arg3",
+          "summa:I.q18.a4.arg4",
+          "summa:I.q18.a4.co",
+          "summa:I.q18.a4.sc"
+        ],
+        [
+          "summa:I.q34.a2.ad1",
+          "summa:I.q34.a2.ad2",
+          "summa:I.q34.a2.ad3",
+          "summa:I.q34.a2.ad4",
+          "summa:I.q34.a2.ad5",
+          "summa:I.q34.a2.arg1",
+          "summa:I.q34.a2.arg2",
+          "summa:I.q34.a2.arg3",
+          "summa:I.q34.a2.arg4",
+          "summa:I.q34.a2.arg5",
+          "summa:I.q34.a2.co",
+          "summa:I.q34.a2.sc"
+        ],
+        [
+          "summa:I.q54.a1.ad1",
+          "summa:I.q54.a1.ad2",
+          "summa:I.q54.a1.ad3",
+          "summa:I.q54.a1.arg1",
+          "summa:I.q54.a1.arg2",
+          "summa:I.q54.a1.arg3",
+          "summa:I.q54.a1.co",
+          "summa:I.q54.a1.sc"
+        ],
+        [
+          "summa:I.q15.a2.ad1",
+          "summa:I.q15.a2.ad2",
+          "summa:I.q15.a2.ad3",
+          "summa:I.q15.a2.ad4",
+          "summa:I.q15.a2.arg1",
+          "summa:I.q15.a2.arg2",
+          "summa:I.q15.a2.arg3",
+          "summa:I.q15.a2.arg4",
+          "summa:I.q15.a2.co",
+          "summa:I.q15.a2.sc"
+        ],
+        [
+          "summa:III.q17.a2.ad1",
+          "summa:III.q17.a2.ad2",
+          "summa:III.q17.a2.ad3",
+          "summa:III.q17.a2.ad4",
+          "summa:III.q17.a2.arg1",
+          "summa:III.q17.a2.arg2",
+          "summa:III.q17.a2.arg3",
+          "summa:III.q17.a2.arg4",
+          "summa:III.q17.a2.co",
+          "summa:III.q17.a2.sc"
+        ],
+        [
+          "summa:I.q42.a1.ad1",
+          "summa:I.q42.a1.ad2",
+          "summa:I.q42.a1.ad3",
+          "summa:I.q42.a1.arg1",
+          "summa:I.q42.a1.arg2",
+          "summa:I.q42.a1.arg3",
+          "summa:I.q42.a1.arg4",
+          "summa:I.q42.a1.co",
+          "summa:I.q42.a1.sc"
+        ],
+        [
+          "summa:I.q77.a6.ad1",
+          "summa:I.q77.a6.ad2",
+          "summa:I.q77.a6.ad3",
+          "summa:I.q77.a6.arg1",
+          "summa:I.q77.a6.arg2",
+          "summa:I.q77.a6.arg3",
+          "summa:I.q77.a6.co",
+          "summa:I.q77.a6.sc"
+        ],
+        [
+          "summa:I.q45.a4.ad1",
+          "summa:I.q45.a4.ad2",
+          "summa:I.q45.a4.ad3",
+          "summa:I.q45.a4.arg1",
+          "summa:I.q45.a4.arg2",
+          "summa:I.q45.a4.arg3",
+          "summa:I.q45.a4.co",
+          "summa:I.q45.a4.sc"
+        ],
+        [
+          "summa:I.q88.a2.ad1",
+          "summa:I.q88.a2.ad2",
+          "summa:I.q88.a2.ad3",
+          "summa:I.q88.a2.ad4",
+          "summa:I.q88.a2.arg1",
+          "summa:I.q88.a2.arg2",
+          "summa:I.q88.a2.arg3",
+          "summa:I.q88.a2.arg4",
+          "summa:I.q88.a2.co",
+          "summa:I.q88.a2.sc"
+        ],
+        [
+          "summa:I.q18.a2.ad1",
+          "summa:I.q18.a2.ad2",
+          "summa:I.q18.a2.ad3",
+          "summa:I.q18.a2.arg1",
+          "summa:I.q18.a2.arg2",
+          "summa:I.q18.a2.arg3",
+          "summa:I.q18.a2.co",
+          "summa:I.q18.a2.sc"
+        ],
+        [
+          "ccc:1377"
+        ],
+        [
+          "summa:I.q3.a4.ad1",
+          "summa:I.q3.a4.ad2",
+          "summa:I.q3.a4.arg1",
+          "summa:I.q3.a4.arg2",
+          "summa:I.q3.a4.co",
+          "summa:I.q3.a4.sc"
+        ],
+        [
+          "summa:II-II.q179.a1.ad1",
+          "summa:II-II.q179.a1.ad2",
+          "summa:II-II.q179.a1.ad3",
+          "summa:II-II.q179.a1.arg1",
+          "summa:II-II.q179.a1.arg2",
+          "summa:II-II.q179.a1.arg3",
+          "summa:II-II.q179.a1.co",
+          "summa:II-II.q179.a1.sc"
+        ],
+        [
+          "summa:I-II.q18.a1.ad1",
+          "summa:I-II.q18.a1.ad2",
+          "summa:I-II.q18.a1.ad3",
+          "summa:I-II.q18.a1.arg1",
+          "summa:I-II.q18.a1.arg2",
+          "summa:I-II.q18.a1.arg3",
+          "summa:I-II.q18.a1.co",
+          "summa:I-II.q18.a1.sc"
+        ],
+        [
+          "ccc:184"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 0.0,
+        "full-recall@10": 0.0,
+        "recall@20": 1.0,
+        "full-recall@20": 1.0,
+        "MRR@10": 0.0
+      },
+      "latency_ms": 47.0531249884516,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0006",
+      "slice": "cross-lingual",
+      "expected_units": [
+        "ccc:284",
+        "ccc:338"
+      ],
+      "retrieved": [
+        [
+          "ccc:338"
+        ],
+        [
+          "ccc:283"
+        ],
+        [
+          "ccc:70"
+        ],
+        [
+          "ccc:317"
+        ],
+        [
+          "ccc:297"
+        ],
+        [
+          "ccc:319"
+        ],
+        [
+          "ccc:421"
+        ],
+        [
+          "ccc:279"
+        ],
+        [
+          "ccc:284"
+        ],
+        [
+          "ccc:286"
+        ],
+        [
+          "ccc:379"
+        ],
+        [
+          "ccc:390"
+        ],
+        [
+          "ccc:343"
+        ],
+        [
+          "ccc:54"
+        ],
+        [
+          "ccc:320"
+        ],
+        [
+          "ccc:380"
+        ],
+        [
+          "ccc:293"
+        ],
+        [
+          "ccc:290"
+        ],
+        [
+          "ccc:46"
+        ],
+        [
+          "ccc:315"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 1.0,
+        "full-recall@5": 0.0,
+        "recall@10": 1.0,
+        "full-recall@10": 1.0,
+        "recall@20": 1.0,
+        "full-recall@20": 1.0,
+        "MRR@10": 1.0
+      },
+      "latency_ms": 52.406499977223575,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0008",
+      "slice": "same-language",
+      "expected_units": [
+        "ccc:283",
+        "ccc:284"
+      ],
+      "retrieved": [
+        [
+          "ccc:285"
+        ],
+        [
+          "ccc:353"
+        ],
+        [
+          "ccc:2452"
+        ],
+        [
+          "ccc:2421"
+        ],
+        [
+          "ccc:354"
+        ],
+        [
+          "ccc:382"
+        ],
+        [
+          "ccc:283"
+        ],
+        [
+          "ccc:2441"
+        ],
+        [
+          "ccc:2293"
+        ],
+        [
+          "ccc:1802"
+        ],
+        [
+          "ccc:284"
+        ],
+        [
+          "ccc:366"
+        ],
+        [
+          "ccc:1936"
+        ],
+        [
+          "ccc:2124"
+        ],
+        [
+          "ccc:2318"
+        ],
+        [
+          "ccc:36"
+        ],
+        [
+          "ccc:2551"
+        ],
+        [
+          "ccc:1046"
+        ],
+        [
+          "ccc:2423"
+        ],
+        [
+          "ccc:47"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 0.0,
+        "full-recall@5": 0.0,
+        "recall@10": 1.0,
+        "full-recall@10": 0.0,
+        "recall@20": 1.0,
+        "full-recall@20": 1.0,
+        "MRR@10": 0.14285714285714285
+      },
+      "latency_ms": 43.16025006119162,
+      "query_truncated": false
+    },
+    {
+      "id": "q-0010",
+      "slice": "same-language",
+      "expected_units": [
+        "ccc:2280",
+        "ccc:2282",
+        "ccc:2283"
+      ],
+      "retrieved": [
+        [
+          "ccc:2325"
+        ],
+        [
+          "ccc:2283"
+        ],
+        [
+          "ccc:1058"
+        ],
+        [
+          "ccc:2281"
+        ],
+        [
+          "ccc:2267"
+        ],
+        [
+          "ccc:1033"
+        ],
+        [
+          "ccc:366"
+        ],
+        [
+          "ccc:1056"
+        ],
+        [
+          "ccc:403"
+        ],
+        [
+          "ccc:1472"
+        ],
+        [
+          "ccc:2271"
+        ],
+        [
+          "ccc:2320"
+        ],
+        [
+          "ccc:1487"
+        ],
+        [
+          "ccc:2282"
+        ],
+        [
+          "ccc:1014"
+        ],
+        [
+          "ccc:943"
+        ],
+        [
+          "ccc:1036"
+        ],
+        [
+          "ccc:1385"
+        ],
+        [
+          "ccc:1035"
+        ],
+        [
+          "ccc:2298"
+        ]
+      ],
+      "metrics": {
+        "recall@5": 1.0,
+        "full-recall@5": 0.0,
+        "recall@10": 1.0,
+        "full-recall@10": 0.0,
+        "recall@20": 1.0,
+        "full-recall@20": 0.0,
+        "MRR@10": 0.5
+      },
+      "latency_ms": 50.183249986730516,
+      "query_truncated": false
+    }
+  ],
+  "slices": {
+    "all": {
+      "recall@5": {
+        "n": 8,
+        "mean": 0.375,
+        "low": 0.0,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "recall@10": {
+        "n": 8,
+        "mean": 0.5,
+        "low": 0.125,
+        "high": 0.875,
+        "status": "percentile-bootstrap"
+      },
+      "recall@20": {
+        "n": 8,
+        "mean": 0.625,
+        "low": 0.25,
+        "high": 0.875,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 8,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 8,
+        "mean": 0.125,
+        "low": 0.0,
+        "high": 0.375,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@20": {
+        "n": 8,
+        "mean": 0.375,
+        "low": 0.125,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 8,
+        "mean": 0.33035714285714285,
+        "low": 0.0625,
+        "high": 0.625,
+        "status": "percentile-bootstrap"
+      }
+    },
+    "same-language": {
+      "recall@5": {
+        "n": 4,
+        "mean": 0.25,
+        "low": 0.0,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "recall@10": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "recall@20": {
+        "n": 4,
+        "mean": 0.75,
+        "low": 0.25,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 4,
+        "mean": 0.1607142857142857,
+        "low": 0.0,
+        "high": 0.375,
+        "status": "percentile-bootstrap"
+      }
+    },
+    "cross-lingual": {
+      "recall@5": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "recall@10": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "recall@20": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 4,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 4,
+        "mean": 0.25,
+        "low": 0.0,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@20": {
+        "n": 4,
+        "mean": 0.25,
+        "low": 0.0,
+        "high": 0.75,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 4,
+        "mean": 0.5,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      }
+    }
+  },
+  "source_slices": {
+    "ccc": {
+      "recall@5": {
+        "n": 6,
+        "mean": 0.5,
+        "low": 0.16666666666666666,
+        "high": 0.8333333333333334,
+        "status": "percentile-bootstrap"
+      },
+      "recall@10": {
+        "n": 6,
+        "mean": 0.6666666666666666,
+        "low": 0.3333333333333333,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "recall@20": {
+        "n": 6,
+        "mean": 0.6666666666666666,
+        "low": 0.3333333333333333,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 6,
+        "mean": 0.16666666666666666,
+        "low": 0.0,
+        "high": 0.5,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@10": {
+        "n": 6,
+        "mean": 0.3333333333333333,
+        "low": 0.0,
+        "high": 0.6666666666666666,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@20": {
+        "n": 6,
+        "mean": 0.5,
+        "low": 0.16666666666666666,
+        "high": 0.8333333333333334,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 6,
+        "mean": 0.44047619047619047,
+        "low": 0.10714285714285714,
+        "high": 0.7738095238095238,
+        "status": "percentile-bootstrap"
+      }
+    },
+    "summa": {
+      "recall@5": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@10": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "recall@20": {
+        "n": 3,
+        "mean": 0.3333333333333333,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "full-recall@5": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@10": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      },
+      "full-recall@20": {
+        "n": 3,
+        "mean": 0.3333333333333333,
+        "low": 0.0,
+        "high": 1.0,
+        "status": "percentile-bootstrap"
+      },
+      "MRR@10": {
+        "n": 3,
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "status": "constant: bootstrap cannot reveal unobserved variation"
+      }
+    }
+  },
+  "retrieval_latency_ms": {
+    "p50": 48.61818748759106,
+    "p95": 148.71045398758716
+  },
+  "end_to_end_latency_ms": null,
+  "cost_per_answer": null,
+  "cache_hit_rate": null
+}
