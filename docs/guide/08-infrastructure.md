@@ -111,9 +111,13 @@ build.
 typechecks the code using them rather than skipping it as an unresolved
 import — and so the lane matches the environment mypy passes in on an
 operator's machine, which has already caused one green-locally-red-in-CI
-failure. It never installs `local-models` or `export`: torch is gigabytes, and
+failure. SciPy's type stubs are locked in the dev group; its statistical calls
+are checked rather than covered by an unresolved-import exemption. It never installs `local-models` or `export`: torch is gigabytes, and
 a lane meant to fail in fifteen seconds cannot carry it. The modules that need
 torch import it lazily and are exercised through their pure halves.
+
+Root ESLint and TypeScript checks exclude the generated `harness/.venv`, whose
+Python packages can also bundle JavaScript and TypeScript dependency files.
 
 `docs:lint` checks five things: every ADR has a TL;DR and an index row, every
 harness module has a walkthrough section, every relative link resolves, and

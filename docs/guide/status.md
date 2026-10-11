@@ -5,23 +5,31 @@
 > in five places drifts in five places. It already had: until 2026-09-11 the
 > README still said "Milestone 0, the pipeline is not built".
 
-**Last verified: 2026-09-14.** Every claim below comes with the command that
-checks it. If a claim and its command disagree, the claim is wrong. Fix it here,
+**Code, corpus and all three local baselines checked: 2026-10-10.** The local
+database was restored, its document hashes re-derived, and E5 int8, BGE-M3 int8
+and Qwen3 fp32 embedded and scored the complete corpus. Repeated scoring
+reproduced rankings and metrics.
+Every claim below comes with the command that checks it. If a claim and its command disagree, the claim is wrong. Fix it here,
 in the same PR that changed the truth.
 
 ## TL;DR
 
 - **The corpus is done.** Three documents are ingested into Postgres: the
   Catechism in Hungarian and English, and the Summa in Latin.
-- **Measurement has started.** The Python harness can read the gold set,
-  compute the metrics and reproduce the corpus hash. It cannot yet embed or
-  score anything.
+- **Three retrieval baselines are recorded.** All three have complete local
+  indexes and reproducible reports. Recall@10 is E5 4/8, BGE-M3 5/8 and Qwen3
+  0/8. E5 versus BGE-M3 does not establish a winner; ADR-008 remains deferred.
 - **The query path does not exist yet.** Nobody can ask a question today. The
   citation gate that will guard it is built and tested on its own.
-- **Next up:** the embedding bake-off, which decides ADR-008 (the embedding
-  model). The slate is three models, deliberately spanning two pretraining
-  families — two XLM-RoBERTa derivatives compared alone could not say anything
-  about pretraining, only about fine-tuning and context window.
+- **Next up:** expand the authored gold set and assess serving feasibility
+  before deciding ADR-008 (the embedding model). The measured slate spans two
+  pretraining families, but architecture, precision, context windows and
+  fine-tuning vary together; it does not isolate a pretraining-family effect.
+- **Agreed 2026-10-10:** set aside the tested Qwen3-0.6B fp32 configuration for
+  now. First expand toward 40–60 reviewed, human-authored questions spanning
+  both language groups, then remeasure E5 and BGE-M3. This is not a rejection
+  of every Qwen3 model or configuration, and 40–60 is a staged expansion goal,
+  not a guaranteed sufficient sample size.
 - **Waiting on others:** the gold-set expansion (external authors) and a licence
   question about sending corpus text to hosted providers.
 
@@ -55,13 +63,15 @@ The roadmap is reconstructed from where the ADRs refer to it:
 | Python harness contract layer: gold-set reader, metrics, corpus-hash port | `harness/apologia_eval/` | `cd harness && uv run pytest` |
 | Corpus reader: current chunks, the unit mapping, vector writes, cosine search | `harness/apologia_eval/db.py` | `cd harness && uv run pytest` (pure half only — the SQL is not unit tested, by design) |
 | The candidate slate, with each model's prefix convention and pretraining family | `harness/apologia_eval/candidates.py` | `cd harness && uv run pytest` |
+| Local ONNX corpus pass: resumable commits, artifact-based embedding identity | `harness/apologia_eval/bakeoff.py` | `npm run eval:bakeoff -- --help` |
+| Retrieval scorer: provenance, language/source slices, bootstrap CIs, paired comparison and exploratory total-n estimate | `harness/apologia_eval/score.py` | `npm run eval -- --help` |
 | Servability pre-flight: does a candidate export, and does the export still rank like the original | `harness/apologia_eval/preflight.py` | `npm run eval:preflight -- <model-id>` (operator-initiated; needs torch) |
 | Admin auth (proxy + `requireAdmin()`), deny-by-default grants, themes, copy | inherited from the template | `npm run test:e2e` |
 | CI: a `harness` lane (Python) and a `verify` lane (lint, types, unit, docs structure, integration, build, E2E) | `.github/workflows/ci.yml` | any PR |
 | Docs structure check: ADR TL;DRs, ADR index, Python walkthrough, relative links | `lib/docs/check.ts`, `scripts/docs-lint.ts` | `npm run docs:lint` |
 
-Test counts on 2026-09-30: **350** Vitest cases in 20 files, **97** pytest
-cases.
+Test counts checked 2026-10-10: **350** Vitest cases in 20 files; **124**
+pytest cases in both the operator and CI-sized environments.
 
 How many Summa articles survive chunking whole — the lock file records chunks,
 not articles, so this is re-derived from the rows (`docker exec
@@ -123,20 +133,147 @@ The **measurement harness**, in this order, each step blocking the next:
    and it re-derives each document's `content_hash` from its stored units — a
    corpus hash is a hash of hashes and would otherwise describe a half-written
    ingest without complaint.
-2. `harness/bakeoff.py` embeds every chunk once per candidate model into
-   `chunk_embeddings(chunk_id, model)`. **Local open-weights candidates only**
-   until the ADR-003 licence question is answered; that answer must not be
-   settled by running the bake-off.
-3. `harness/score.py` scores against the gold set, with bootstrap confidence
-   intervals, because n is small — and reports, per slice, the sample size that
-   *would* separate the top two candidates.
-4. **ADR-008**, the embedding model and provider, is then written from the
+2. ~~Implement the corpus embedding pass.~~ ✅ `bakeoff.py` uses the same local
+   ONNX encoder as the query scorer. Artifact files, tokenizer, pooling,
+   prefixes, normalization and context window form its identity. It commits
+   batches and resumes without mixing model spaces. **All three full-corpus executions
+   passed by 2026-10-10.** Local artifacts only; the licence question still
+   blocks hosted corpus transmission. The Qwen3 int8 export is refused; the
+   verified fp32 replacement completes the three-candidate comparison.
+3. ~~Implement scoring and reports.~~ ✅ `score.py` checks locator coverage and
+   index completeness, reports the fixed retrieval metrics, language and
+   expected-source slices, token truncation and provenance, and writes JSON plus
+   Markdown. Paired recall@10 comparisons name gained/lost questions and give
+   an exploratory total-n estimate per slice. **All three baselines and their paired
+   comparisons are saved below.** A tie or constant paired sample yields
+   no identifiable estimate; bootstrap intervals cannot compensate for the small authored gold set.
+4. ~~Run BGE-M3 against E5.~~ ✅ Complete on the same corpus and gold set.
+   Both full indexes skip already committed chunks on rerun. E5's
+   interruption/resume and incomplete-index refusal checks passed; BGE-M3
+   preserved all E5 vector checksums and reproduced its scoring results.
+   **Qwen3 fp32 pre-flight passed on 2026-10-09**: cosine agreement
+   rounds to 1.00000 and all probe top-3 rankings match. The 2,400 MB artifact
+   loaded in 17.9 seconds locally; its larger size remains a serving tradeoff.
+   [Dated evidence](../../eval/reports/preflight-qwen3-fp32-2026-10-09.md).
+   Full-corpus embedding, two matching scoring runs, index-isolation checks and
+   a complete no-write rerun passed on 2026-10-10. Commands are in
+   [harness/README.md](../../harness/README.md).
+5. **ADR-008**, the embedding model and provider, is then written from the
    numbers — or deferred again, with the required n recorded here. A run that
-   does not separate the candidates has succeeded; a point estimate that looks
-   decisive at this n would not have. (ADR-008 covers embeddings only; the
-   generation provider is a separate ADR still owed, under Planned below.)
+   does not separate the candidates has succeeded; a point estimate alone must
+   not decide it. The generation provider remains a separate ADR still owed.
 
-`npm run eval` is not a script yet.
+`npm run eval` now scores one local artifact; `npm run eval:bakeoff` embeds it.
+Their deterministic halves pass unit, lint, format and strict typing gates.
+
+
+## First retrieval baseline — 2026-10-09
+
+[E5 int8: human report](../../eval/reports/baseline-e5-int8-2026-10-09.md) ·
+[machine report](../../eval/reports/baseline-e5-int8-2026-10-09.json)
+
+| Slice | Scorable questions | recall@10 | full-recall@10 |
+|---|---|---|---|
+| All | 8 | 4/8 | 1/8 |
+| Same-language | 4 | 2/4 | 0/4 |
+| Cross-lingual | 4 | 2/4 | 1/4 |
+
+The overall recall@10 bootstrap interval is **[0.125, 0.875]**. This is a thin
+baseline, not an ADR-008 decision. The Summa diagnostic has **0/3** questions
+finding a Summa expectation in the top 10; one finds its expected unit at rank
+17. E5 truncates **2,748/3,453** Summa passages and **5/5,730** CCC passages.
+Both are observed facts, not evidence that truncation caused the misses.
+
+The live run re-derived document hashes, matched the committed manifest's corpus
+hash, and resolved all expected gold locators. An interruption after 176 committed
+vectors preserved every checksum; restart skipped them. The partial-index scorer
+refused to write a report. Two full scoring runs produced identical ranked
+locator sets, metrics, intervals and token-truncation counts. Re-running the
+complete bake-off wrote no further batches. No hosted corpus transmission and no
+generation occurred. The Markdown report records local latency; it is not
+production or end-to-end answer latency.
+
+## BGE-M3 paired comparison — 2026-10-09
+
+[BGE-M3 int8: human report](../../eval/reports/baseline-bge-m3-int8-2026-10-09.md) ·
+[machine report](../../eval/reports/baseline-bge-m3-int8-2026-10-09.json) ·
+[paired comparison](../../eval/reports/baseline-bge-m3-int8-2026-10-09.comparison.json)
+
+| Slice | E5 recall@10 | BGE-M3 recall@10 | E5 full-recall@10 | BGE-M3 full-recall@10 |
+|---|---|---|---|---|
+| All | 4/8 | 5/8 | 1/8 | 2/8 |
+| Same-language | 2/4 | 2/4 | 0/4 | 1/4 |
+| Cross-lingual | 2/4 | 3/4 | 1/4 | 1/4 |
+
+BGE-M3 gains **q-0002** and **q-0004**, but loses **q-0008**, at recall@10.
+The overall paired difference (BGE-M3 minus E5) is **+0.125**, with a 95%
+bootstrap interval of **[-0.25, 0.50]**. Same-language is **0.00 [-0.75, 0.75]**;
+cross-lingual is **+0.25 [0.00, 0.75]**. None establishes a winner. In the tied
+same-language slice, the report's `first` field follows identity order; it is
+not evidence of superiority.
+
+The exploratory paired normal approximation gives **207 total questions** for
+the overall observed effect and **32 total cross-lingual questions** (95%
+confidence, 80% power). The same-language estimate is unidentifiable because
+its observed mean difference is zero. These are planning estimates from tiny,
+authored, post-selection samples, not stopping rules or additional-question
+counts. **ADR-008 remains deferred** pending a broader gold set and serving assessment.
+
+BGE-M3 finds a Summa expectation at rank 2 for q-0004: the Summa diagnostic
+recall@10 is **1/3**, versus E5's **0/3**. BGE-M3 truncates **0/9,183** passages
+and no scored queries. The wider context window and changed fine-tuning vary
+together, so this run cannot establish which caused the retrieval differences.
+Both candidates are XLM-RoBERTa derivatives; the Qwen3 comparison below
+adds a second family without isolating its causal contribution.
+
+The corpus and gold hashes match E5 exactly. All **9,183 E5 vector checksums**
+remained unchanged. Independent token-length counts match the report, repeated
+scoring reproduced rankings, metrics, intervals and comparisons, and a complete
+bake-off rerun wrote no additional batches. Several scoring processes wrote valid matching reports but failed during native
+shutdown. Explicit garbage collection did not reliably fix the exit. Local
+runs with `TOKENIZERS_PARALLELISM=false` were then checked separately; see the
+harness runtime note. The native shutdown fault remains an operational
+limitation; inference and the embedding identity are unchanged. No hosted corpus transmission or
+generation occurred.
+
+## Qwen3 and the completed slate — 2026-10-10
+
+[Qwen3 fp32: human report](../../eval/reports/baseline-qwen3-fp32-2026-10-10.md) ·
+[machine report](../../eval/reports/baseline-qwen3-fp32-2026-10-10.json) ·
+[three-model comparison](../../eval/reports/baseline-qwen3-fp32-2026-10-10.comparison.json) ·
+[explicit Qwen3 pairs](../../eval/reports/baseline-qwen3-fp32-2026-10-10.pairwise.json)
+
+| Configuration | recall@10 | full-recall@10 | Same-language recall@10 | Cross-lingual recall@10 |
+|---|---|---|---|---|
+| E5 int8 | 4/8 | 1/8 | 2/4 | 2/4 |
+| BGE-M3 int8 | 5/8 | 2/8 | 2/4 | 3/4 |
+| Qwen3 fp32 | 0/8 | 0/8 | 0/4 | 0/4 |
+
+Qwen3 has zero passage/query truncation. At cutoff 20 it finds an expectation
+for q-0005 and q-0010 (recall 2/8; full recall 1/8). Its recall@10 interval
+[0, 0] describes a constant observed sample, not guaranteed future failure.
+E5 minus Qwen3 is +0.50 [0.125, 0.875] overall; BGE-M3 minus Qwen3 is +0.625
+[0.25, 0.875]. The human report records every language slice and gained question.
+The three-model summary still selects E5 and BGE-M3 as its top two per slice:
+207 total overall questions and 32 total cross-lingual questions are its
+exploratory planning estimates; the tied same-language effect is unidentifiable.
+**ADR-008 remains deferred.** Qwen3 performs poorly in this configuration, while
+the eight authored scored questions do not distinguish E5 from BGE-M3 reliably.
+These estimates are not additional-question counts or stopping rules.
+
+Two scoring processes exited cleanly and reproduced all rankings, metrics,
+intervals and comparisons. Every E5/BGE vector checksum was preserved. The
+6,928 Qwen3 vectors saved before a deliberate memory-related restart also
+survived unchanged. A completed embedding rerun skipped all chunks. Targeted
+query and expected-passage checks agree with original Qwen3 CPU weights at
+cosine 1.000000; stored passage coordinates match recomputation within 8.36e-9.
+The instruction was not tuned after observing the scores.
+
+Repeated macOS system sleeps interrupted the long encoding run; temporary
+idle-sleep prevention was enabled and released when it finished. Sleep,
+swapping and restart make total elapsed time unsuitable as model throughput.
+The 2.4 GB fp32 artifact's serving memory and cold-load cost remain separate
+from retrieval quality. No generation or hosted corpus transmission occurred.
 
 ## Planned 📐
 
@@ -182,7 +319,7 @@ The **measurement harness**, in this order, each step blocking the next:
 
 | Blocked | On | Blocks |
 |---|---|---|
-| Gold set expansion to 40–60 questions | External authors with the domain knowledge; requested, no committed date. Not generated by a model, on purpose (`docs/evaluation.md`). | The *quality* of the ADR-008 decision, not the machinery — but **more than this row used to admit**. 8 of 10 questions are retrieval-scorable, and split by slice that is **4 same-language and 4 cross-lingual**. The cross-lingual slice is the one `docs/evaluation.md` calls most likely to be weak, and it has n=4. The bake-off runs regardless; `score.py` reports the n that would actually separate two candidates, and that number belongs in this cell once it exists. |
+| Gold set expansion to 40–60 questions | External authors with the domain knowledge; requested, no committed date. Not generated by a model, on purpose (`docs/evaluation.md`). | The *quality* of the ADR-008 decision, not the machinery — but **more than this row used to admit**. 8 of 10 questions are retrieval-scorable, and split by slice that is **4 same-language and 4 cross-lingual**. The cross-lingual slice is the one `docs/evaluation.md` calls most likely to be weak, and it has n=4. The bake-off runs regardless; `score.py` reports an exploratory total-n estimate for separating two candidates, the completed top-two comparison estimates 207 total overall and 32 total cross-lingual questions; same-language is unidentifiable. These exploratory estimates do not override the need for independently authored questions or establish a stopping rule. |
 | May corpus text be sent to a hosted API? | Reading provider terms against the source licences (ADR-003, § Open question) | Any hosted candidate in the bake-off. Local open-weights models are not blocked — **but generation is not exempt**, and ADR-003 asks the question only about embedding. Every generated answer puts retrieved unit text in a prompt to Anthropic, in production, per request. If the answer is "not permitted", it does not merely narrow the bake-off; it rules out the generation path the whole design assumes |
 | The Hungarian CCC's publisher/edition string | Confirmation from the printed edition | Nothing functional; `documents.edition` stays null |
 

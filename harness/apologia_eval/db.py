@@ -440,7 +440,7 @@ def search(
             join chunks c on c.id = e.chunk_id
             {_CURRENT}
             where e.model = %s
-            order by e.embedding <=> %s::vector
+            order by e.embedding <=> %s::vector, c.id
             limit %s
             """,
             (model, to_vector_literal(query_vector), k),

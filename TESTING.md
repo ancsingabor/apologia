@@ -63,15 +63,23 @@ files are):
 
 ```bash
 cd harness
-uv sync --all-groups --extra db
+uv sync --all-groups --extra db --extra stats
 uv run pytest           # no database, no network
 ```
 
 Same layer, other language: the gold-set reader, the retrieval metrics, and the
-byte-exact port of the TypeScript corpus hash. Python is confined to `harness/`
+byte-exact port of the TypeScript corpus hash, artifact/vector refusals, and
+report aggregation and paired statistics. The new cases use invented vectors
+and locator sets; no model, network or database is mocked into a unit test.
+The handbook exercises are verified against temporary mutations of these pure
+functions. Python is confined to `harness/`
 by [ADR-023](docs/adr/023-python-at-the-measurement-boundary.md) — it is
 permitted where the deliverable is a measurement, and nothing there runs in a
 request.
+
+The root ESLint and TypeScript configurations exclude `harness/.venv`: Python
+packages may bundle JavaScript and TypeScript, which are dependency files rather
+than project code. Python checks run in their own lane.
 
 The metrics are checked against **hand-computed** expectations, not against
 another implementation of the same formula. `db.py` imports its driver lazily,

@@ -63,7 +63,7 @@ first appears, so you can read it in context. Paths are relative to
 | Doc comment | JSDoc `/** … */` | docstring `"""…"""` as the first statement | every function |
 | Raw string | `String.raw` | `r"""…"""`, so `\t` stays literal in the docstring | `hashing.py:48` |
 | Variadic args | `(...groups: string[])` | `(*groups: str)` | `tests/test_metrics.py:20` |
-| Script entry point | module-scope `main()` call | `if __name__ == "__main__":` | 📐 `bakeoff.py` |
+| Script entry point | module-scope `main()` call | `if __name__ == "__main__":` | `bakeoff.py` |
 
 > **The entry-point row matters here.** `scripts/ingest/main.ts` calls `main()`
 > at module scope, so nothing in it could be imported by a test. That is how
@@ -145,3 +145,22 @@ first appears, so you can read it in context. Paths are relative to
 | **Mutable defaults** | `def f(x=[])` shares one list across every call, where JS would create a fresh one | see the note under *Types* |
 | **`zip` truncates** | `zip([1,2,3], [1,2])` yields two pairs and raises nothing. Comparing a 768-dim export against a 1024-dim reference returns a plausible cosine. `strict=True` is the fix. | `preflight.py:79`, `tests/test_preflight.py:59` |
 | **`ru_maxrss` units** | bytes on macOS, kilobytes on Linux. The raw number makes a Mac look 1,024 times hungrier than a CI runner, and nobody notices the unit. | `preflight.py:143` |
+
+
+## The embedding pass and scorer
+
+| Concept | TypeScript | Python | First seen in |
+|---|---|---|---|
+| Frozen-record update | `{...value, field: next}` | `dataclasses.replace(value, field=next)` | `bakeoff.py`, `LocalEncoder.encode` |
+| Canonical JSON fields | explicit sorted keys | `json.dumps(..., sort_keys=True)` | `bakeoff.py`, `embedding_identity` |
+| Read until sentinel | loop until stream ends | `iter(callable, sentinel)` | `bakeoff.py`, `artifact_hash` |
+| CLI parser | parsing `process.argv` | `argparse.ArgumentParser` | `bakeoff.py`, `parser` |
+| Numerical array | `Float32Array` | `np.asarray(values)` | `score.py`, `mean_interval` |
+| Sample variance | explicit squared-deviation sum / (n−1) | `np.var(values, ddof=1)` | `score.py`, `estimated_sample_size` |
+| Percentile | sort and interpolate | `np.percentile(values, p)` | `score.py`, `main` |
+| Seeded randomness | a seeded PRNG library | `np.random.default_rng(seed)` | `score.py`, `mean_interval` |
+| One-item tuple | no distinct tuple runtime | `(array,)`; the comma matters | `score.py`, `mean_interval` |
+| Confidence interval | a statistics library | `scipy.stats.bootstrap` | `score.py`, `mean_interval` |
+| UTC timestamp | `new Date().toISOString()` | `datetime.now(UTC).isoformat()` | `score.py`, `main` |
+| Installed package version | package metadata | `importlib.metadata.version(name)` | `score.py`, `main` |
+| External-library types | `@types/...` | `scipy-stubs` in the dev group | `harness/pyproject.toml` |

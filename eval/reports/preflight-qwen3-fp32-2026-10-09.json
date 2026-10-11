@@ -1,0 +1,27 @@
+[
+  {
+    "model_id": "Qwen/Qwen3-Embedding-0.6B",
+    "base_family": "qwen3",
+    "declared_dimensions": 1024,
+    "serving": "bundled-onnx",
+    "exported": true,
+    "precision": "fp32",
+    "export_error": null,
+    "artifact_bytes": 2400256077,
+    "observed_dimensions": 1024,
+    "load_seconds": 17.910947041935287,
+    "query_seconds": 0.11305006659822539,
+    "peak_rss_mb_process": 1730.5625,
+    "min_cosine": 0.9999999999734926,
+    "mean_cosine": 0.9999999999871276,
+    "ranking_agreement_at_3": 1.0,
+    "mean_reference_margin_at_3": 0.013511533889489596,
+    "cosine_perturbation": 1.2872369836713915e-11,
+    "fp32_control_cosine": null,
+    "probes_with_margin_below_perturbation": 0,
+    "probe_count": 10,
+    "notes": [
+      "pooling read from the model: lasttoken"
+    ]
+  }
+]

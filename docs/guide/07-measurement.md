@@ -31,21 +31,21 @@ flowchart LR
 
   subgraph harness["harness/ (Python)"]
     pre["preflight.py ✅<br/>can this candidate<br/>be served at all?"]
-    bake["bakeoff.py 📐<br/>embed every chunk<br/>once per candidate"]
-    score["score.py 📐<br/>recall@k · full-recall@k · MRR<br/>+ bootstrap CIs"]
+    bake["bakeoff.py ✅<br/>embed every chunk<br/>once per candidate"]
+    score["score.py ✅<br/>recall@k · full-recall@k · MRR<br/>+ bootstrap CIs"]
     lib["gold.py ✅ · metrics.py ✅ · db.py ✅<br/>hashing.py ✅ · candidates.py ✅"]
   end
 
   pre -->|admits a candidate| bake
 
-  bake -.->|"(chunk, model) rows"| emb[("chunk_embeddings")]
-  emb -.-> score
+  bake -->|"(chunk, model) rows"| emb[("chunk_embeddings")]
+  emb --> score
   lib --- score
-  score -.-> report["eval report<br/>+ provenance"]
+  score --> report["eval report<br/>+ provenance"]
   report -.-> adr["ADR-008<br/>written from the numbers"]
 
   classDef planned stroke-dasharray: 5 5
-  class bake,score,report,adr planned
+  class adr planned
 ```
 
 ## What is measured
@@ -90,6 +90,21 @@ mostly measure window size.
 The corpus hash is computed in TypeScript at ingestion and **reproduced
 byte-for-byte in Python** (`hashing.py`), and a test pins the two together.
 
+## Reading a retrieval report
+
+`eval:bakeoff` commits vectors for one local artifact; `eval` uses the same
+artifact for queries. The embedding identity includes tokenizer, prefixes and
+pooling, so changed settings cannot resume into another space. Reports include
+language and overlapping expected-source slices, token truncation, and paired
+recall@10 gains/losses. Constant bootstrap samples do not establish certainty;
+singletons have no interval. The top-two total-n estimate is exploratory, not a
+winner declaration. Generation fields remain null.
+
+Commands and statistical assumptions are in
+[harness/README.md](../../harness/README.md); [Python level 6](python/README.md)
+explains the implementation. [Reading a retrieval report](retrieval-reports.md)
+walks through expected units, paired differences and bootstrap sampling.
+
 ## The honest outcome table (from ADR-023, written before the result)
 
 **What is open here is only which row the numbers select.** Every branch is
@@ -131,10 +146,11 @@ has to be measured.
 | `harness/apologia_eval/db.py` | reads current chunks, writes vectors, cosine search |
 | `harness/apologia_eval/candidates.py` | the slate: each model's id, pretraining family, prefix convention and `Serving` |
 | `harness/apologia_eval/preflight.py` | `npm run eval:preflight` — export, size, and rank agreement |
-| `bakeoff.py`, `score.py` | not written yet |
+| `harness/apologia_eval/bakeoff.py` | local ONNX corpus pass, artifact identity and resumable commits |
+| `harness/apologia_eval/score.py` | reports, intervals, source diagnostics and paired comparison |
 
-How far each has got is [status.md](status.md); the diagram above marks what
-does not exist.
+How far each has got is [status.md](status.md). Solid arrows mean executable
+code; they do not mean a measured retrieval baseline has been produced.
 
 ## Go deeper
 

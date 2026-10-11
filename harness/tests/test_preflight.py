@@ -429,3 +429,16 @@ def test_a_clean_pass_still_states_what_was_not_established() -> None:
         a_result(min_cosine=0.999, mean_cosine=0.9995, ranking_agreement_at_3=1.0)
     )
     assert any("Not established: retrieval quality" in line for line in lines)
+
+
+def test_legacy_report_records_int8_without_claiming_fp32() -> None:
+    result = a_result()
+    payload = result.model_dump()
+    payload.pop("precision")
+    assert PreflightResult.model_validate(payload).precision == "int8"
+
+
+def test_fp32_verdict_describes_direct_agreement_not_a_missing_control() -> None:
+    text = "\n".join(verdict_lines(a_result(precision="fp32")))
+    assert "unquantized" in text
+    assert "resumed onto" not in text

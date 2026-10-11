@@ -2,6 +2,7 @@
 
 Status: **Accepted** · Milestone 1 · **a fourth outcome added 2026-09-15, and
 one figure restated — both in § Trade-offs at the foot**
+· **amended 2026-10-10 — prefixes, artifact precision and serving evidence**
 Enables [ADR-008](README.md) (deferred: the embedding provider boundary) and
 amends one consequence of [ADR-004](004-offline-ingestion-cli.md).
 
@@ -305,3 +306,30 @@ that no candidate on the current slate is excluded on size alone — the binding
 constraint is function **memory** on a cold start, which is why the pre-flight
 measures load time and artifact size rather than asserting a limit.
 
+## Amendment — 2026-10-10: prefixes, precision and the scope of serving evidence
+
+Status of this amendment: **Accepted**. The original argument above incorrectly
+groups E5 and BGE-M3 as requiring `query:` and `passage:` prefixes. E5 requires
+those prefixes; BGE-M3 requires neither. Qwen3 uses an instruction on queries
+and no passage prefix. These conventions are explicit candidate data and part
+of the embedding identity; asymmetric inputs still use the same weights.
+
+The measured configuration includes numerical precision. An int8 artifact that
+fails fidelity cannot stand in for the original model. A separately verified
+fp32 artifact may therefore compete, with its size and local load measurements
+recorded separately. The harness retains that artifact, preserves earlier int8
+evidence, and uses identical inference for queries and corpus passages. It must
+not embed passages with one precision and silently serve queries with another.
+
+Successful local export, fidelity and inference establish a candidate for
+retrieval measurement, **not production deployability**. Function memory,
+cold-start behavior and an actual serving route remain to be assessed before
+selection. A faithful export can also retrieve poorly: the
+[dated three-configuration report](../../eval/reports/baseline-qwen3-fp32-2026-10-10.md)
+records that distinction. Its statistical intervals resample recorded question
+scores, without rerunning inference or proving generated-answer correctness.
+The deterministic citation gate and human publication review remain separate.
+
+The language boundary stands. ADR-008 remains deferred in the
+[ADR index](README.md); current next steps are recorded in
+[status](../guide/status.md).

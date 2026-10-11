@@ -44,6 +44,7 @@ and the field is named to say so.
 
 from __future__ import annotations
 
+import argparse
 import errno
 import json
 import math
@@ -54,7 +55,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -220,6 +221,7 @@ class PreflightResult(BaseModel):
     serving: str
 
     exported: bool
+    precision: Literal["int8", "fp32"] = "int8"
     export_error: str | None = None
 
     artifact_bytes: int | None = None
@@ -281,7 +283,7 @@ def verdict_lines(result: PreflightResult) -> list[str]:
             "`assert_servable` it cannot compete.",
         ]
 
-    lines = [f"✓ {result.model_id}: exported"]
+    lines = [f"✓ {result.model_id}: exported ({result.precision})"]
     if result.artifact_bytes is not None:
         lines.append(f"  artifact   {result.artifact_bytes / 1e6:,.0f} MB")
     if not result.dimensions_match:
@@ -298,7 +300,11 @@ def verdict_lines(result: PreflightResult) -> list[str]:
 
     # The control decides what a low agreement MEANS, so it is printed next to
     # it rather than left in the JSON for someone to notice.
-    if result.fp32_control_cosine is None:
+    if result.precision == "fp32":
+        lines.append(
+            "  control    this artifact is unquantized; agreement above is vs original"
+        )
+    elif result.fp32_control_cosine is None:
         lines.append(
             "  control    not measured — resumed onto an existing artifact, so "
             "a low agreement below could not be attributed. Delete the "
@@ -406,6 +412,28 @@ class Probes:
         return Probes(tuple(q.question for q in load_gold_set(directory)))
 
 
+def export_fp32(candidate: Candidate, out_dir: Path) -> Path:
+    """Keep an unquantized deployment artifact, including its tokenizer.
+
+    Unlike the int8 control intermediate, this directory survives measurement.
+    A failed/incomplete export is not reusable merely because its graph exists.
+    """
+    from optimum.onnxruntime import ORTModelForFeatureExtraction
+    from transformers import AutoTokenizer
+
+    directory = out_dir / "fp32"
+    if (directory / "model.onnx").exists() and (
+        directory / "tokenizer_config.json"
+    ).exists():
+        return directory
+    model = ORTModelForFeatureExtraction.from_pretrained(
+        candidate.model_id, export=True
+    )
+    model.save_pretrained(directory)
+    AutoTokenizer.from_pretrained(candidate.model_id).save_pretrained(directory)
+    return directory
+
+
 def export_int8(candidate: Candidate, out_dir: Path) -> tuple[Path, Path | None]:
     """Export to ONNX and dynamically quantize to int8. Returns the directory.
 
@@ -417,7 +445,8 @@ def export_int8(candidate: Candidate, out_dir: Path) -> tuple[Path, Path | None]
     from optimum.onnxruntime import ORTModelForFeatureExtraction, ORTQuantizer
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
 
-    fp32_dir = out_dir / "fp32"
+    # This disposable control must not overwrite a retained fp32 candidate.
+    fp32_dir = out_dir / "fp32-control"
     int8_dir = out_dir / "int8"
 
     # Resumable, for the same reason the bake-off is: exporting a 570M-parameter
@@ -476,7 +505,9 @@ def reference_embeddings(
     """
     from sentence_transformers import SentenceTransformer
 
-    model = SentenceTransformer(candidate.model_id)
+    # The reference is a fidelity check, not an accelerator benchmark. Keep it
+    # on CPU: automatic MPS selection stalled at ~8 GB footprint during Qwen3.
+    model = SentenceTransformer(candidate.model_id, device="cpu")
     prefixed = [candidate.apply_passage_prefix(text) for text in texts]
     vectors = model.encode(
         prefixed, normalize_embeddings=candidate.normalize, convert_to_numpy=True
@@ -596,7 +627,12 @@ def exported_embeddings(
     return vectors
 
 
-def run(candidate: Candidate, probes: Probes, work_dir: Path) -> PreflightResult:
+def run(
+    candidate: Candidate,
+    probes: Probes,
+    work_dir: Path,
+    precision: Literal["int8", "fp32"] = "int8",
+) -> PreflightResult:
     """Measure one candidate end to end. Never raises for an export failure.
 
     An export that fails is a *finding*, not a crash: it establishes that the
@@ -610,13 +646,16 @@ def run(candidate: Candidate, probes: Probes, work_dir: Path) -> PreflightResult
         declared_dimensions=candidate.dimensions,
         serving=candidate.serving.value,
         exported=False,
+        precision=precision,
         probe_count=len(probes.texts),
     )
 
     try:
-        int8_dir, fp32_dir = export_int8(
-            candidate, work_dir / candidate.model_id.replace("/", "_")
-        )
+        candidate_dir = work_dir / candidate.model_id.replace("/", "_")
+        if precision == "fp32":
+            artifact_dir, fp32_dir = export_fp32(candidate, candidate_dir), None
+        else:
+            artifact_dir, fp32_dir = export_int8(candidate, candidate_dir)
 
     # ⚠️ ENVIRONMENT FAULTS ARE NOT FINDINGS, AND THIS DISTINCTION WAS PAID FOR.
     # The first `bge-m3` run died on `OSError: [Errno 28] No space left on
@@ -662,7 +701,7 @@ def run(candidate: Candidate, probes: Probes, work_dir: Path) -> PreflightResult
 
     # Cold load, timed on its own: this is what a function pays on a cold start.
     started = time.perf_counter()
-    loaded = load_exported(int8_dir)
+    loaded = load_exported(artifact_dir)
     load_seconds = time.perf_counter() - started
 
     # One warm embed first, discarded. The very first inference pays for lazy
@@ -707,7 +746,7 @@ def run(candidate: Candidate, probes: Probes, work_dir: Path) -> PreflightResult
     return result.model_copy(
         update={
             "exported": True,
-            "artifact_bytes": directory_bytes(int8_dir),
+            "artifact_bytes": directory_bytes(artifact_dir),
             "observed_dimensions": len(exported[0]),
             "load_seconds": load_seconds,
             "query_seconds": query_seconds,
@@ -727,7 +766,9 @@ def run(candidate: Candidate, probes: Probes, work_dir: Path) -> PreflightResult
 
 
 def main() -> int:
-    """`npm run eval:preflight -- [model-id]`. One candidate per run by default.
+    """`npm run eval:preflight -- [model-id] [--precision int8|fp32]`.
+
+    Prefer one candidate per invocation for attributable memory measurements.
 
     One at a time because `peak_rss_mb_process` is a process high-water mark:
     measuring three in one process would report the largest, three times.
@@ -737,7 +778,11 @@ def main() -> int:
     work_dir = repo / ".preflight"
     work_dir.mkdir(exist_ok=True)
 
-    wanted = sys.argv[1:] or [candidate.model_id for candidate in SLATE]
+    cli = argparse.ArgumentParser(description=main.__doc__)
+    cli.add_argument("models", nargs="*", choices=[c.model_id for c in SLATE])
+    cli.add_argument("--precision", choices=("int8", "fp32"), default="int8")
+    args = cli.parse_args()
+    wanted = args.models or [candidate.model_id for candidate in SLATE]
     chosen = [candidate for candidate in SLATE if candidate.model_id in wanted]
     if not chosen:
         print(f"no candidate matches {wanted}", file=sys.stderr)
@@ -746,14 +791,17 @@ def main() -> int:
     results: list[PreflightResult] = []
     for candidate in chosen:
         print(f"\n▶ {candidate.model_id}", flush=True)
-        result = run(candidate, probes, work_dir)
+        result = run(candidate, probes, work_dir, precision=args.precision)
         results.append(result)
         for line in verdict_lines(result):
             print(line, flush=True)
 
     reports = repo / "eval" / "reports"
     reports.mkdir(parents=True, exist_ok=True)
-    out = reports / "preflight.json"
+    # Keep the failed quantized evidence when measuring a replacement precision.
+    out = reports / (
+        "preflight.json" if args.precision == "int8" else "preflight-fp32.json"
+    )
     print(f"\n→ {out.relative_to(repo)}")
     out.write_text(json.dumps(merge_results(out, results), indent=2) + "\n", "utf-8")
     return 0

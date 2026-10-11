@@ -44,7 +44,7 @@ to write no tests because "it's AI", when most of the system is plain code.
 | Pure Python | pytest, `uv run pytest` | metrics (hand-computed), gold-set parsing, hash port, the candidate slate, and the pure halves of `db.py` and the pre-flight |
 | Real Postgres | Vitest + local Supabase, `npm run test:integration` | upsert ordering invariants, text probes over stored units, cross-lingual role sets |
 | Browser | Playwright, `npm run test:e2e` | admin auth guard |
-| Probabilistic | eval harness | **nothing yet** — the metric *functions* are unit tested, but no retrieval has been scored, because `bakeoff.py` and `score.py` are not written ([status.md](status.md)) |
+| Probabilistic | eval harness | retrieval reports and paired comparisons; measured baseline progress is in [status.md](status.md) |
 
 Case counts are in [status.md](status.md), re-derived from a run. They used to
 sit in this table and were stale within three days.

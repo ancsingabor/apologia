@@ -18,9 +18,9 @@ local-models = ["sentence-transformers>=3.0", "torch>=2.4"]
 stats = ["numpy>=2.0", "scipy>=1.14", "pandas>=2.2"]
 
 # The servability pre-flight. Separate from `local-models` because exporting is
-# a different job from embedding: the bake-off needs weights, the pre-flight
-# needs an exporter and a runtime that is NOT torch — the whole question it
-# answers is what happens once torch is gone.
+# a different job from inference: the pre-flight needs the exporter and
+# reference weights, while bakeoff/score load the resulting local artifact.
+# This extra supplies the ONNX loader too; it does not imply an export occurs.
 export = [
     "optimum[onnxruntime]>=1.23",
     "onnx>=1.17",
@@ -33,6 +33,7 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "types-pyyaml>=6.0",
+    "scipy-stubs>=1.18.1.1",
 ]
 
 [tool.ruff]

@@ -168,8 +168,8 @@ measurement rather than by reputation. The order is deliberate:
 
 ```bash
 npm run eval:preflight -- <model-id>   # ■ can this candidate be served?
-                                       # ░ bakeoff.py — embed the corpus, per candidate
-                                       # ░ score.py   — score the gold set, with CIs
+                                       # ■ bakeoff.py — local ONNX corpus pass, per artifact
+                                       # ■ score.py   — score the gold set, with CIs
 ```
 
 The pre-flight runs **first**, before any candidate embeds a corpus, because a
